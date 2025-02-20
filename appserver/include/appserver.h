@@ -5,20 +5,9 @@
 extern "C" {
 #endif
 
-    #include "platform.h"
+    #include "../src/appservertype.h"
 
 
-    typedef struct _AppServerInfo AppServerInfo;
-
-
-    struct _AppServerInfo
-    {
-        void* Handle;
-        void* AcceptThread;
-        char* Prefix;
-        void(*DataReceivedClient)(ClientData*);
-        AppClientList* Clients;
-    };
 
 
     PLATFORM_API AppServerInfo* appserver_create(const int port, const char* prefix);

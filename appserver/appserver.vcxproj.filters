@@ -15,6 +15,9 @@
     <ClInclude Include="src\appclient.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\appservertype.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appserver.c">

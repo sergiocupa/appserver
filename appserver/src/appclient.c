@@ -1,5 +1,4 @@
 #include "appclient.h"
-#include "../include/appserver.h"
 #include <winsock2.h>
 #include <process.h>
 #include <string.h>
@@ -58,6 +57,7 @@ void appclient_dispatch(void* ptr)
     if (data->Client->Server->DataReceivedClient)
     {
         data->Client->Server->DataReceivedClient(data);
+
         free(data->Data);
         free(data);
     }
@@ -67,42 +67,45 @@ void appclient_received(void* ptr)
 {
     AppClientInfo* cli = (AppClientInfo*)ptr;
 
-    byte buffer[BUFFER_SIZE+1];
-
-    // Recebe dados do cliente
-    int bytes_received = recv(cli->Handle, buffer, BUFFER_SIZE, 0);
-    if (bytes_received > 0)
+    while (cli->IsConnected)
     {
-        buffer[bytes_received] = '\0';
+        byte buffer[BUFFER_SIZE + 1];
 
-        ClientData cd;
-        memset(&cd, 0, sizeof(ClientData));
-        cd.Client = cli;
-        cd.Data   = (byte*)malloc(sizeof(byte) * (bytes_received + 1));
-        cd.Length = bytes_received;
+        // Recebe dados do cliente
+        int bytes_received = recv(cli->Handle, buffer, BUFFER_SIZE, 0);
+        if (bytes_received > 0)
+        {
+            buffer[bytes_received] = '\0';
 
-        memcpy(cd.Data, buffer, bytes_received + 1);
+            ClientData cd;
+            memset(&cd, 0, sizeof(ClientData));
+            cd.Client = cli;
+            cd.Data = (byte*)malloc(sizeof(byte) * (bytes_received + 1));
+            cd.Length = bytes_received;
 
-        cd.DispatcherThread = _beginthread(appclient_dispatch, 0, (void*)&cd);
+            memcpy(cd.Data, buffer, bytes_received + 1);
+
+            cd.DispatcherThread = _beginthread(appclient_dispatch, 0, (void*)&cd);
+        }
+        else
+        {
+            cli->IsConnected = false;
+
+            closesocket(cli->Handle);
+
+            // TO-DO: precisa desconecter o TCP CLient??
+        }
     }
-    else
-    {
-        // Close
-        ...
-    }
-
-
-   
 }
 
 
 AppClientInfo* appclient_create(void* ptr, AppServerInfo* server)
 {
-    AppClientInfo* client;
-    client = (AppClientInfo*)malloc(sizeof(AppClientInfo));
+    AppClientInfo* client = (AppClientInfo*)malloc(sizeof(AppClientInfo));
     memset(client, 0, sizeof(AppClientInfo));
     client->Handle = ptr;
     client->Server = server;
+    client->IsConnected = true;
 
     client->ReceivedThread = _beginthread(appclient_received, 0, (void*)&client);
 

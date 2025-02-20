@@ -36,10 +36,11 @@ void accept_client_proc(void* ptr)
     int client_size = sizeof(client);
 
     SOCKET client_socket = accept(server->Handle, (struct sockaddr*)&client, &client_size);
+
     if (client_socket == INVALID_SOCKET)
     {
         printf("Erro ao aceitar conexão. Código: %d\n", WSAGetLastError());
-        closesocket(server->Handle);
+        //closesocket(server->Handle);
         WSACleanup();
         return 1;
     }

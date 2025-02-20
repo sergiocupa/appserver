@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="include\appserver.h" />
     <ClInclude Include="src\appclient.h" />
+    <ClInclude Include="src\appservertype.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appclient.c" />

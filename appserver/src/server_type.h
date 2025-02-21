@@ -76,6 +76,16 @@ extern "C" {
     };
 
 
+
+    MessageField* message_field_create();
+    void message_field_release(MessageField* ins);
+    void message_field_list_init(MessageFieldList* list);
+    void message_field_list_add(MessageFieldList* list, MessageField* field);
+    void message_field_list_release(MessageFieldList* list);
+    Message* message_create();
+    void message_release(Message* m);
+
+
     void appclient_list_add(AppClientList* list, AppClientInfo* cli);
     AppClientList* appclient_list_release(AppClientList* list);
     AppClientList* appclient_list_create();

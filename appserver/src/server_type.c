@@ -9,14 +9,14 @@ MessageField* message_field_create()
     MessageField* ins = (MessageField*)malloc(sizeof(MessageField));
     memset(ins, 0, sizeof(MessageField));
     string_init(&ins->Name);
-    string_array_new (&ins->Content);
+    string_array_init(&ins->Content);
     return ins;
 }
 
 void message_field_release(MessageField* ins)
 {
     string_release(&ins->Name);
-    string_release(&ins->Content);
+    string_array_release(&ins->Content, true);
     free(ins);
 }
 
@@ -75,6 +75,8 @@ void message_release(Message* m)
     string_release(&m->Route);
     free(m);
 }
+
+
 
 
 

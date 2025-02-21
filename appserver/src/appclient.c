@@ -9,47 +9,6 @@
 #define BUFFER_SIZE 4096  
 
 
-void appclient_list_add(AppClientList* list, AppClientInfo* cli)
-{
-    if (list)
-    {
-        if (list->Count >= list->MaxCount)
-        {
-            list->MaxCount = ((list->Count + sizeof(AppClientInfo)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
-        }
-
-        list->Items[list->Count] = cli;
-        list->Count++;
-    }
-}
-
-AppClientList* appclient_list_release(AppClientList* list)
-{
-    if (list)
-    {
-        int ix = 0;
-        while (ix < list->Count)
-        {
-            free(list->Items[ix]);
-            ix++;
-        }
-        free(list->Items);
-        free(list);
-    }
-    return 0;
-}
-
-AppClientList* appclient_list_create()
-{
-    AppClientList* ar = (AppClientList*)malloc(sizeof(AppClientList));
-    ar->Count    = 0;
-    ar->MaxCount = 100;
-    ar->Items    = (void**)malloc(ar->MaxCount * sizeof(void*));
-    return ar;
-}
-
-
 void appclient_dispatch(void* ptr)
 {
     ClientData* data = (ClientData*)ptr;

@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    #include "appservertype.h"
+    #include "server_type.h"
 
 
 

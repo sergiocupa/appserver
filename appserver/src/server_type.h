@@ -5,12 +5,40 @@
 extern "C" {
 #endif
 
+    #include "stringlib.h"
     #include "platform.h"
+
+
 
     typedef struct _AppClientInfo AppClientInfo;
     typedef struct _AppClientList AppClientList;
     typedef struct _ClientData    ClientData;
     typedef struct _AppServerInfo AppServerInfo;
+
+
+
+    typedef struct _MessageField
+    {
+        String Name;
+        StringArray Content;
+    }
+    MessageField;
+    
+    typedef struct _MessageFieldList
+    {
+        int MaxCount;
+        int Count;
+        MessageField** Items;
+    }
+    MessageFieldList;
+
+    typedef struct _Message
+    {
+        bool IsResponse;
+        String Route;
+        MessageFieldList Fields;
+    }
+    Message;
 
 
     struct _AppClientInfo
@@ -46,6 +74,12 @@ extern "C" {
         void(*DataReceivedClient)(ClientData*);
         AppClientList* Clients;
     };
+
+
+    void appclient_list_add(AppClientList* list, AppClientInfo* cli);
+    AppClientList* appclient_list_release(AppClientList* list);
+    AppClientList* appclient_list_create();
+
 
 
 #ifdef __cplusplus

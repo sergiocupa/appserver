@@ -1,0 +1,3 @@
+[submodule "submodules/utility"]
+	path = submodules/utility
+	url = https://github.com/sergiocupa/utility.git

@@ -15,7 +15,10 @@
     <ClInclude Include="src\appclient.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\appservertype.h">
+    <ClInclude Include="src\server_type.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\client_message.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -24,6 +27,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\appclient.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\client_message.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\server_type.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

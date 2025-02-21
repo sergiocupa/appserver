@@ -50,6 +50,11 @@ void accept_client_proc(void* ptr)
 }
 
 
+// Bind de funcoes
+//     funcao com parametro estrutura do Request
+//     funcao com retorno o objeto Response;
+
+
 AppServerInfo* appserver_create(const int port, const char* prefix)
 {
     AppServerInfo* info;

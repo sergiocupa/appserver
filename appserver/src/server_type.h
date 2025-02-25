@@ -9,18 +9,16 @@ extern "C" {
     #include "platform.h"
 
 
-
     typedef struct _AppClientInfo AppClientInfo;
     typedef struct _AppClientList AppClientList;
     typedef struct _ClientData    ClientData;
     typedef struct _AppServerInfo AppServerInfo;
 
 
-
     typedef struct _MessageField
     {
-        String Name;
-        StringArray Content;
+        String*      Name;
+        StringArray* Content;
     }
     MessageField;
     
@@ -32,13 +30,38 @@ extern "C" {
     }
     MessageFieldList;
 
+    typedef enum _MessageCommand
+    {
+        NONE                = 0,
+        HTTP_RESPONSE       = 1,
+        HTTP_REQUEST        = 2,
+        AOTP_ACTION         = 3,
+        AOTP_CALLBACK       = 4,
+        AOTP_ACKNOWLEDGMENT = 5
+    }
+    MessageCommand;
+
     typedef struct _Message
     {
-        bool IsResponse;
-        String Route;
+        MessageCommand   Cmd;
+        String           Route;
+        String           HttpMethod;
+        String           Version;
+        int              HttpStatus;
         MessageFieldList Fields;
+        void*            MatchThread;
     }
     Message;
+
+
+    typedef struct _MessageParser
+    {
+        int                  Position;
+        Message*             Partial;
+        String*              Buffer;
+        void(*MatchCallback) (Message*);
+    }
+    MessageParser;
 
 
     struct _AppClientInfo
@@ -68,16 +91,16 @@ extern "C" {
 
     struct _AppServerInfo
     {
-        void* Handle;
-        void* AcceptThread;
-        char* Prefix;
-        void(*DataReceivedClient)(ClientData*);
-        AppClientList* Clients;
+        void*                     Handle;
+        void*                     AcceptThread;
+        char*                     Prefix;
+        void(*DataReceivedClient) (ClientData*);
+        AppClientList*            Clients;
     };
 
 
 
-    MessageField* message_field_create();
+    MessageField* message_field_create(bool allocate_content);
     void message_field_release(MessageField* ins);
     void message_field_list_init(MessageFieldList* list);
     void message_field_list_add(MessageFieldList* list, MessageField* field);

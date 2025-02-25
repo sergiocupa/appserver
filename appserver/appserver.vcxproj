@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="include\appserver.h" />
     <ClInclude Include="src\appclient.h" />
+    <ClInclude Include="src\message_parser.h" />
     <ClInclude Include="src\server_type.h" />
     <ClInclude Include="src\client_message.h" />
   </ItemGroup>
@@ -28,6 +29,7 @@
     <ClCompile Include="src\appclient.c" />
     <ClCompile Include="src\appserver.c" />
     <ClCompile Include="src\client_message.c" />
+    <ClCompile Include="src\message_parser.c" />
     <ClCompile Include="src\server_type.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

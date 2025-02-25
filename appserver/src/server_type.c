@@ -4,12 +4,16 @@
 
 
 
-MessageField* message_field_create()
+MessageField* message_field_create(bool allocate_content)
 {
     MessageField* ins = (MessageField*)malloc(sizeof(MessageField));
     memset(ins, 0, sizeof(MessageField));
-    string_init(&ins->Name);
-    string_array_init(&ins->Content);
+
+    if (allocate_content)
+    {
+        ins->Name    = string_new();
+        ins->Content = string_array_new();
+    }
     return ins;
 }
 

@@ -21,6 +21,9 @@
     <ClInclude Include="src\client_message.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\message_parser.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appserver.c">
@@ -33,6 +36,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\server_type.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\message_parser.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

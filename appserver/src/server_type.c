@@ -4,15 +4,20 @@
 
 
 
-MessageField* message_field_create(bool allocate_content)
+MessageField* message_field_create(bool init_content)
 {
     MessageField* ins = (MessageField*)malloc(sizeof(MessageField));
     memset(ins, 0, sizeof(MessageField));
 
-    if (allocate_content)
+    if (init_content)
     {
-        ins->Name    = string_new();
-        ins->Content = string_array_new();
+        string_init(&ins->Name);
+        string_array_init(&ins->Content);
+    }
+    else
+    {
+        ins->Name.MaxLength   = -1;
+        ins->Content.MaxCount = -1;
     }
     return ins;
 }
@@ -67,7 +72,7 @@ Message* message_create()
 {
     Message* ar = (Message*)malloc(sizeof(Message));
     memset(ar,0, sizeof(Message));
-    string_init(&ar->Route);
+    string_array_init(&ar->Route);
     message_field_list_init(&ar->Fields);
     return ar;
 }

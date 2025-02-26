@@ -17,8 +17,8 @@ extern "C" {
 
     typedef struct _MessageField
     {
-        String*      Name;
-        StringArray* Content;
+        String      Name;
+        StringArray Content;
     }
     MessageField;
     
@@ -32,24 +32,45 @@ extern "C" {
 
     typedef enum _MessageCommand
     {
-        NONE                = 0,
-        HTTP_RESPONSE       = 1,
-        HTTP_REQUEST        = 2,
-        AOTP_ACTION         = 3,
-        AOTP_CALLBACK       = 4,
-        AOTP_ACKNOWLEDGMENT = 5
+        CMD_NONE           = 0,
+        CMD_GET            = 1,
+        CMD_OPTIONS        = 2,
+        CMD_POST           = 3,
+        CMD_ACTION         = 4,
+        CMD_CALLBACK       = 5,
+        CMD_ACKNOWLEDGMENT = 6
     }
     MessageCommand;
 
+    typedef enum _MessageProtocol
+    {
+        NONE = 0,
+        HTTP = 1,
+        AOTP = 2
+    }
+    MessageProtocol;
+
+    typedef enum _ContentTypeOption
+    { 
+        TXT  = 0,
+        BIN  = 1,
+        JSON = 2
+    }
+    ContentTypeOption;
+
     typedef struct _Message
     {
-        MessageCommand   Cmd;
-        String           Route;
-        String           HttpMethod;
-        String           Version;
-        int              HttpStatus;
-        MessageFieldList Fields;
-        void*            MatchThread;
+        bool              IsMatch;
+        MessageProtocol   Protocol;
+        String            Version;
+        MessageCommand    Cmd;
+        StringArray       Route;
+        String            Host;
+        String            Content;
+        ContentTypeOption ContentType;
+        int               ContentLength;
+        MessageFieldList  Fields;
+        void*             MatchThread;
     }
     Message;
 
@@ -100,7 +121,7 @@ extern "C" {
 
 
 
-    MessageField* message_field_create(bool allocate_content);
+    MessageField* message_field_create(bool init_content);
     void message_field_release(MessageField* ins);
     void message_field_list_init(MessageFieldList* list);
     void message_field_list_add(MessageFieldList* list, MessageField* field);

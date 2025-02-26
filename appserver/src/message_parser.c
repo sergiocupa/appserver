@@ -1,6 +1,10 @@
 #include "message_parser.h"
+#include "numeric.h"
 #include "stdlib.h"
 #include "string.h"
+
+
+const char* AOTP_HEADER_SIGN = "AOTP[9DAC10BA43E2402694C84B21A4219497]";
 
 
 int message_parser_field(byte* data, int length, MessageFieldList* fields, int* position)
@@ -17,9 +21,9 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 
 			if (r == 0)
 			{ 
-				MessageField* field = message_field_create(false);
-				field->Name = string_sub_new(data, length, p, r - p);
-				field->Content = string_split((data + r + 1), (o - r), " ", 1);
+				MessageField* field = message_field_create(true);
+				string_sub(data, length, p, r - p, false, &field->Name);
+				string_split_param((data + r + 1), (o - r), " ", 1, &field->Content);
 				message_field_list_add(fields, field);
 				result = 1;
 			}
@@ -43,9 +47,9 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 }
 
 
-bool message_parser_start_line(byte* data, int length, String* method, String* route, String* version, int* position)
+MessageProtocol message_parser_start_line(byte* data, int length, int* position, Message* message)
 {
-	bool result = false;
+	MessageProtocol protocol = HTTP;
 	int p = *position;
 	int o = string_index_of(data, length, "\r\n", 2, p);
 	if (o >= p)
@@ -54,35 +58,80 @@ bool message_parser_start_line(byte* data, int length, String* method, String* r
 		if (parts->Count >= 3)
 		{
 			String* s0 = parts->Items[0]; String* s1 = parts->Items[1]; String* s2 = parts->Items[2];
-			string_append_sub(method, s0->Data, s0->Length, 0, s0->Length);
-			string_append_sub(route, s1->Data, s1->Length, 0, s1->Length);
-			string_append_sub(version, s2->Data, s2->Length, 0, s2->Length);
-		
+
+			int pos  = 0;
+			int cmdp = string_index_first_string(s0->Data, s0->Length, 0, (char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, &pos);
+			switch (cmdp)
+			{
+				case 0: message->Cmd = CMD_GET; break;
+				case 1: message->Cmd = CMD_POST; break;
+				case 2: message->Cmd = CMD_OPTIONS; break;
+			}
+
+			string_split_param(s1->Data, s1->Length, " ", 1, &message->Route);
+			string_append_sub(&message->Version, s2->Data, s2->Length, 0, s2->Length);
+
 			*position = o + 2;
-			result = true;
+			protocol = HTTP;
 		}
 		else if (parts->Count == 2)
 		{
 			// HTTP sem rota
 			String* s0 = parts->Items[0]; String* s1 = parts->Items[1];
-			string_append_sub(method, s0->Data, s0->Length, 0, s0->Length);
-			string_append_sub(version, s1->Data, s1->Length, 0, s1->Length);
+
+			int pos = 0;
+			int cmdp = string_index_first_string(s0->Data, s0->Length, 0, (char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, & pos);
+			switch (cmdp)
+			{
+			case 0: message->Cmd = CMD_GET; break;
+			case 1: message->Cmd = CMD_POST; break;
+			case 2: message->Cmd = CMD_OPTIONS; break;
+			}
+
+			string_append_sub(&message->Version, s1->Data, s1->Length, 0, s1->Length);
 			
 			*position = o + 2;
-			result = true;
+			protocol = HTTP;
 		}
 		else if (parts->Count == 1)
 		{
-			// AOTP (Asynchronous Object Transport Protocol)
-			const char* ASSIGN_HEADER = "AOTP(01953aa1-75ef-7b71-960a-f3f80f6d0f87)";
+			String* s0 = parts->Items[0];
 
-			// ...
-			// *position = o + 2;
-			// result = true;
+			if (string_equals(s0, AOTP_HEADER_SIGN))
+			{
+				protocol = AOTP;
+			}
+			*position = o + 2;
 		}
 		string_array_release(parts,false);
 	}
-	return result;
+	return protocol;
+}
+
+
+void message_get_standard_header(Message* message)
+{
+	int ix = 0;
+
+	while (ix < message->Fields.Count)
+	{
+		MessageField* field = message->Fields.Items[ix];
+
+		if (field->Content.Count > 0)
+		{
+			if (string_equals(&field->Name, "Content-Length"))
+			{
+				int error = 0;
+				int num = numeric_parse_int(field->Content.Items[0]->Data, &error);
+
+				if (!error)
+				{
+					message->ContentLength = num;
+				}
+			}
+		}
+		ix++;
+	}
 }
 
 
@@ -91,21 +140,87 @@ void message_buildup(MessageParser* parser, byte* data, int length)
 	string_append(parser->Buffer, data);
 
 	int pos = 0;
-	while (pos < length)
+	while (pos < length && parser->Buffer->Length > 0)
 	{
-		String m, r, v;
+		if (parser->Partial != 0)
+		{
+			if (parser->Buffer->Length == parser->Partial->ContentLength)
+			{
+				parser->Partial->IsMatch = true;
 
-		bool res = message_parser_start_line(data, length, &m, &r, &v, &parser->Position);
+				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
+
+				parser->Position = 0;
+				// string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
+
+				// criar funcao que chama Thread. Liberar dentro da funcao da thread
+				parser->MatchCallback(parser->Partial);
+				parser->Partial = 0;
+				break;
+			}
+			else if (parser->Buffer->Length > parser->Partial->ContentLength)
+			{
+				parser->Partial->IsMatch = true;
+
+				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
+
+				parser->Position = 0;
+				// string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
+
+				// criar funcao que chama Thread. Liberar dentro da funcao da thread
+				parser->MatchCallback(parser->Partial);
+				parser->Partial = 0;
+			}
+			else break;
+		}
+
+		Message* msg = message_create();
+
+		bool res = message_parser_start_line(data, length, &parser->Position, msg);
 		if (res)
 		{
-			Message* msg = message_create();
-			string_populate(&m, &msg->HttpMethod);
-			string_populate( &r, &msg->Route);
-			string_populate(&v, &msg->Version);
-
 			int rf = message_parser_field(data, length, &msg->Fields, &parser->Position);
 			if (rf > 0)
 			{
+				message_get_standard_header(msg);
+
+				if (msg->ContentLength > 0)
+				{
+					int st = parser->Buffer->Length - parser->Position;
+
+					if (st >= msg->ContentLength)// conteudo completo
+					{
+						msg->IsMatch = true;
+
+						string_sub(parser->Buffer->Data, parser->Buffer->Length, parser->Position, msg->ContentLength, true, &msg->Content);
+
+						// string_resize_forward(parser->Buffer, parser->Position);
+						parser->Position = 0;
+
+						// criar funcao que chama Thread. Liberar dentro da funcao da thread
+						parser->MatchCallback(msg);
+						msg = 0;
+
+						// liberer msg
+
+					}
+					else// partial
+					{
+						parser->Partial = msg;
+
+						// string_resize_forward(parser->Buffer, parser->Position);
+						parser->Position = 0;
+						break;
+					}
+				}
+				else
+				{
+					msg->IsMatch    = true;
+					parser->Partial = 0;
+					// string_resize_forward(parser->Buffer, parser->Position);
+					parser->Position = 0;
+				}
+
 				// remover resto do buffer
 				// se nao foi possivel construir cabecalhos, entao sair para que proxima chegado de dados, acumular mais no buffer
 			}

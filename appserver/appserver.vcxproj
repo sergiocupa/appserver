@@ -93,7 +93,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include;E:/git/appserver/submodules/utility/numericlib/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -102,7 +102,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -140,7 +140,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include;E:/git/appserver/submodules/utility/numericlib/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -149,7 +149,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

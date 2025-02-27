@@ -18,7 +18,7 @@ void appclient_dispatch(void* ptr)
         data->Client->Server->DataReceivedClient(data);
 
         free(data->Data);
-        free(data);
+        //free(data);
     }
 }
 
@@ -66,7 +66,7 @@ AppClientInfo* appclient_create(void* ptr, AppServerInfo* server)
     client->Server = server;
     client->IsConnected = true;
 
-    client->ReceivedThread = _beginthread(appclient_received, 0, (void*)&client);
+    client->ReceivedThread = _beginthread(appclient_received, 0, (void*)client);
 
     return client;
 }

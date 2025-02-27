@@ -81,7 +81,27 @@ Message* message_create()
 void message_release(Message* m)
 {
     message_field_list_release(&m->Fields);
-    string_release(&m->Route);
+
+    if (m->Route.MaxCount > 0)
+    {
+        string_array_release(&m->Route, false);
+    }
+
+    if (m->Version.MaxLength > 0)
+    {
+        string_release(&m->Version);
+    }
+
+    if (m->Host.MaxLength > 0)
+    {
+        string_release(&m->Host);
+    }
+
+    if (m->Content.MaxLength > 0)
+    {
+        string_release(&m->Content);
+    }
+
     free(m);
 }
 

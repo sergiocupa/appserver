@@ -16,7 +16,7 @@ void appserver_received(ClientData* data)
 
 
 bool WsaInitialized = false;
-void WsaInit()
+int WsaInit()
 {
     WSADATA wsa;
     if (!WsaInitialized && WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
@@ -32,21 +32,24 @@ void accept_client_proc(void* ptr)
 {
     AppServerInfo* server = (AppServerInfo*)ptr;
 
-    struct sockaddr_in client;
-    int client_size = sizeof(client);
-
-    SOCKET client_socket = accept(server->Handle, (struct sockaddr*)&client, &client_size);
-
-    if (client_socket == INVALID_SOCKET)
+    while (server->IsRunning)
     {
-        printf("Erro ao aceitar conexão. Código: %d\n", WSAGetLastError());
-        //closesocket(server->Handle);
-        WSACleanup();
-        return 1;
-    }
+        struct sockaddr_in client;
+        int client_size = sizeof(client);
 
-    AppClientInfo* cli = appclient_create(&client_socket, server);
-    appclient_list_add(server->Clients, cli);
+        SOCKET client_socket = accept(server->Handle, (struct sockaddr*)&client, &client_size);
+
+        if (client_socket == INVALID_SOCKET)
+        {
+            printf("Erro ao aceitar conexão. Código: %d\n", WSAGetLastError());
+            //closesocket(server->Handle);
+            WSACleanup();
+            return 1;
+        }
+
+        AppClientInfo* cli = appclient_create(client_socket, server);
+        appclient_list_add(server->Clients, cli);
+    }
 }
 
 
@@ -54,6 +57,12 @@ void accept_client_proc(void* ptr)
 //     funcao com parametro estrutura do Request
 //     funcao com retorno o objeto Response;
 
+void appserver_release(AppServerInfo* server)
+{
+    server->IsRunning = false;
+
+    // ...
+}
 
 AppServerInfo* appserver_create(const int port, const char* prefix)
 {
@@ -61,6 +70,7 @@ AppServerInfo* appserver_create(const int port, const char* prefix)
     info = (AppServerInfo*)malloc(sizeof(AppServerInfo));
     memset(info,0, sizeof(AppServerInfo));
     info->Clients = appclient_list_create();
+    info->IsRunning = true;
 
     struct sockaddr_in server, client;
 
@@ -96,7 +106,7 @@ AppServerInfo* appserver_create(const int port, const char* prefix)
         return 1;
     }
 
-    info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)&info);
+    info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)info);
     info->Handle             = server_socket;
     info->Prefix             = prefix;
     info->DataReceivedClient = appserver_received;

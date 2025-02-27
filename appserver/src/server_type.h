@@ -71,6 +71,7 @@ extern "C" {
         int               ContentLength;
         MessageFieldList  Fields;
         void*             MatchThread;
+        AppClientInfo*    Client;
     }
     Message;
 
@@ -112,6 +113,7 @@ extern "C" {
 
     struct _AppServerInfo
     {
+        bool                      IsRunning;
         void*                     Handle;
         void*                     AcceptThread;
         char*                     Prefix;

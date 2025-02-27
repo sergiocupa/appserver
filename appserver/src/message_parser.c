@@ -2,9 +2,18 @@
 #include "numeric.h"
 #include "stdlib.h"
 #include "string.h"
+#include <process.h>
 
 
 const char* AOTP_HEADER_SIGN = "AOTP[9DAC10BA43E2402694C84B21A4219497]";
+
+
+typedef struct _ParseMatch
+{
+	MessageParser* Parser;
+	Message*       Msg;
+}
+ParseMatch;
 
 
 int message_parser_field(byte* data, int length, MessageFieldList* fields, int* position)
@@ -17,7 +26,7 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 		int o = string_index_of(data, length, "\r\n", 2, p);
 		if (o >= p)
 		{
-			int r = string_index_first_string(data, length, (char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, position);
+			int r = string_index_first_string(data, length, (o+2), (char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, &p);
 
 			if (r == 0)
 			{ 
@@ -29,7 +38,10 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 			}
 			else if(r == 1)
 			{
-				if (fields->Count > 0) result = 1;
+				if (fields->Count > 0)
+				{
+					result = 1;
+				}
 				break;// fim cabecalho
 			}
 			else
@@ -43,6 +55,8 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 			break;
 		}
 	}
+
+	(*position) = p;
 	return result;
 }
 
@@ -135,7 +149,25 @@ void message_get_standard_header(Message* message)
 }
 
 
-void message_buildup(MessageParser* parser, byte* data, int length)
+void on_message_match(void* ptr)
+{
+	ParseMatch* msg = (ParseMatch*)ptr;
+	msg->Parser->MatchCallback(msg->Msg);
+	message_release(msg->Msg);
+}
+
+
+void create_on_message_match(MessageParser* parser, Message* msg, AppClientInfo* client)
+{
+	msg->Client = client;
+	ParseMatch pmatch;
+	pmatch.Parser = parser;
+	pmatch.Msg = msg;
+	msg->MatchThread = _beginthread(on_message_match, 0, (void*)&pmatch);
+}
+
+
+void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, int length)
 {
 	string_append(parser->Buffer, data);
 
@@ -151,10 +183,9 @@ void message_buildup(MessageParser* parser, byte* data, int length)
 				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
 
 				parser->Position = 0;
-				// string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
+			    string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
 
-				// criar funcao que chama Thread. Liberar dentro da funcao da thread
-				parser->MatchCallback(parser->Partial);
+				create_on_message_match(parser, parser->Partial, client);
 				parser->Partial = 0;
 				break;
 			}
@@ -165,10 +196,9 @@ void message_buildup(MessageParser* parser, byte* data, int length)
 				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
 
 				parser->Position = 0;
-				// string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
+			    string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
 
-				// criar funcao que chama Thread. Liberar dentro da funcao da thread
-				parser->MatchCallback(parser->Partial);
+				create_on_message_match(parser, parser->Partial, client);
 				parser->Partial = 0;
 			}
 			else break;
@@ -194,21 +224,16 @@ void message_buildup(MessageParser* parser, byte* data, int length)
 
 						string_sub(parser->Buffer->Data, parser->Buffer->Length, parser->Position, msg->ContentLength, true, &msg->Content);
 
-						// string_resize_forward(parser->Buffer, parser->Position);
+					    string_resize_forward(parser->Buffer, parser->Position);
 						parser->Position = 0;
 
-						// criar funcao que chama Thread. Liberar dentro da funcao da thread
-						parser->MatchCallback(msg);
-						msg = 0;
-
-						// liberer msg
-
+						create_on_message_match(parser, msg, client);
 					}
 					else// partial
 					{
 						parser->Partial = msg;
 
-						// string_resize_forward(parser->Buffer, parser->Position);
+					    string_resize_forward(parser->Buffer, parser->Position);
 						parser->Position = 0;
 						break;
 					}
@@ -217,7 +242,7 @@ void message_buildup(MessageParser* parser, byte* data, int length)
 				{
 					msg->IsMatch    = true;
 					parser->Partial = 0;
-					// string_resize_forward(parser->Buffer, parser->Position);
+				    string_resize_forward(parser->Buffer, parser->Position);
 					parser->Position = 0;
 				}
 

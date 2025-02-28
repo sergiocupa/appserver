@@ -8,7 +8,8 @@ extern "C" {
     #include "server_type.h"
 
 
-
+    void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, int length);
+    MessageParser* message_parser_create(void(*match_callback) (Message*));
 
 
 #ifdef __cplusplus

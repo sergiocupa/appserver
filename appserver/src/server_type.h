@@ -92,6 +92,7 @@ extern "C" {
         void* Handle;
         void* ReceivedThread;
         AppServerInfo* Server;
+        MessageParser* Parser;
     };
 
 
@@ -117,7 +118,6 @@ extern "C" {
         void*                     Handle;
         void*                     AcceptThread;
         char*                     Prefix;
-        void(*DataReceivedClient) (ClientData*);
         AppClientList*            Clients;
     };
 

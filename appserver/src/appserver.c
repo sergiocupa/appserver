@@ -1,5 +1,6 @@
 #include "../include/appserver.h"
 #include "appclient.h"
+#include "message_parser.h"
 #include <winsock2.h>
 #include <stdio.h>
 #include <process.h>
@@ -8,7 +9,7 @@
 
 
 
-void appserver_received(ClientData* data)
+void appserver_received(Message* request)
 {
     // Recepção de todos os clients
     // Cada entrada tem uma thread;
@@ -48,6 +49,7 @@ void accept_client_proc(void* ptr)
         }
 
         AppClientInfo* cli = appclient_create(client_socket, server);
+        cli->Parser = message_parser_create(appserver_received);
         appclient_list_add(server->Clients, cli);
     }
 }
@@ -109,6 +111,5 @@ AppServerInfo* appserver_create(const int port, const char* prefix)
     info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)info);
     info->Handle             = server_socket;
     info->Prefix             = prefix;
-    info->DataReceivedClient = appserver_received;
     return info;
 }

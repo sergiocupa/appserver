@@ -9,6 +9,7 @@ Features to be implemented:
 - Method mapping, to forward actions to requests.
 - Method mapping tests.
 - Download resources and HTML pages for presentation in browser.
+- LINUX platform.
 - Websocket.
 - Javascript for routing the client side of the websocket connection, for bidirectional communication using mapping.
 - Websocket tests.

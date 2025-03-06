@@ -3,6 +3,19 @@
 #include "stdlib.h"
 
 
+void message_field_param_release(MessageFieldParam* param);
+
+void message_field_param_release(MessageFieldParam* param)
+{
+    string_release_data(&param->Name);
+    string_release_data(&param->Value);
+
+    while (!param->Next)
+    {
+        message_field_param_release(param->Next);
+    }
+}
+
 
 MessageField* message_field_create(bool init_content)
 {
@@ -12,20 +25,19 @@ MessageField* message_field_create(bool init_content)
     if (init_content)
     {
         string_init(&ins->Name);
-        string_array_init(&ins->Content);
     }
     else
     {
-        ins->Name.MaxLength   = -1;
-        ins->Content.MaxCount = -1;
+        ins->Name.MaxLength = -1;
     }
     return ins;
 }
 
+
 void message_field_release(MessageField* ins)
 {
     string_release(&ins->Name);
-    string_array_release(&ins->Content, true);
+    message_field_param_release(&ins->Param);
     free(ins);
 }
 

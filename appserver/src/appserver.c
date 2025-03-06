@@ -50,6 +50,7 @@ void accept_client_proc(void* ptr)
 
         AppClientInfo* cli = appclient_create(client_socket, server);
         cli->Parser = message_parser_create(appserver_received);
+
         appclient_list_add(server->Clients, cli);
     }
 }

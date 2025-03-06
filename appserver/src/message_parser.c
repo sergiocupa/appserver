@@ -16,25 +16,92 @@ typedef struct _ParseMatch
 ParseMatch;
 
 
+void message_field_param_add(byte* data, int data_leng, int position, int length, MessageFieldParam* param);
+
+
+void message_field_param_data(byte* data, int data_leng, int position, int length, MessageFieldParam* param)
+{
+	int s = string_index_of_char(data, data_leng, '=', position, length);
+	if (s >= 0)
+	{
+		string_sub(data, data_leng, position, (s - position), false, &param->Name);
+		string_sub(data, data_leng, (s + 1), (length - (s - position)-1), false, &param->Value);
+	}
+	else
+	{
+		string_sub(data, data_leng, position, length, false, &param->Value);
+	}
+}
+
+
+void message_field_param_add(byte* data, int begin, int end, bool first, MessageFieldParam* param)
+{
+	if (((begin +1) < end) && (data[begin] == ' '))
+	{
+		begin++;
+	}
+
+	int m = 0;
+	int r = string_index_first(data, end+1, " ,;", 3, begin, &m);
+
+	if (r >= 0)
+	{
+		int en = m - begin;
+
+		if (en > 0)
+		{
+			message_field_param_data(data, end+1, begin, (m- begin), param);
+
+			if (r == 0 || r == 1) param->IsEndGroup = true;
+			                 else param->IsEndParam = true;
+
+			param->Next = (MessageFieldParam*)malloc(sizeof(MessageFieldParam));
+			memset(param->Next, 0, sizeof(MessageFieldParam));
+
+			message_field_param_add(data, (m + 1), end, false, param->Next);
+		}
+		else
+		{
+			param->IsEndGroup = true;
+			param->IsEndParam = true;
+			param->IsScalar   = first;
+			message_field_param_data(data, end +1, begin, (end-begin), param);
+		}
+	}
+	else
+	{
+		param->IsEndGroup = true;
+		param->IsEndParam = true;
+		param->IsScalar   = first;
+		message_field_param_data(data, end +1, begin, (end-begin), param);
+	}
+}
+
+
 int message_parser_field(byte* data, int length, MessageFieldList* fields, int* position)
 {
 	int result = 0;
 	int p = *position;
+	int m = 0;
+	int end = 0;
 
 	while (p < length)
 	{
-		int o = string_index_of(data, length, "\r\n", 2, p);
-		if (o >= p)
+		end = string_index_of(data, length, "\r\n", 2, p);
+		if (end >= p)
 		{
-			int r = string_index_first_string(data, length, (o+2), (char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, &p);
+			int r = string_index_first_string(data, length, p, (char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, &m);
 
 			if (r == 0)
 			{ 
 				MessageField* field = message_field_create(true);
-				string_sub(data, length, p, r - p, false, &field->Name);
-				string_split_param((data + r + 1), (o - r), " ", 1, &field->Content);
+				string_sub(data, length, p, m - p, false, &field->Name);
+
+				message_field_param_add(data, (m + 1), end, true, &field->Param);
+
 				message_field_list_add(fields, field);
 				result = 1;
+				p = end + 2;
 			}
 			else if(r == 1)
 			{
@@ -42,6 +109,7 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 				{
 					result = 1;
 				}
+				p = m +2;
 				break;// fim cabecalho
 			}
 			else
@@ -68,7 +136,7 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 	int o = string_index_of(data, length, "\r\n", 2, p);
 	if (o >= p)
 	{
-		StringArray* parts = string_split((data + p), (o - p), " ", 1);
+		StringArray* parts = string_split((data + p), (o - p), " ", 1, true);
 		if (parts->Count >= 3)
 		{
 			String* s0 = parts->Items[0]; String* s1 = parts->Items[1]; String* s2 = parts->Items[2];
@@ -82,11 +150,12 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 				case 2: message->Cmd = CMD_OPTIONS; break;
 			}
 
-			string_split_param(s1->Data, s1->Length, " ", 1, &message->Route);
+			string_split_param(s1->Data, s1->Length, "/", 1, true, &message->Route);
 			string_append_sub(&message->Version, s2->Data, s2->Length, 0, s2->Length);
 
 			*position = o + 2;
 			protocol = HTTP;
+			message->Protocol = protocol;
 		}
 		else if (parts->Count == 2)
 		{
@@ -106,6 +175,7 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 			
 			*position = o + 2;
 			protocol = HTTP;
+			message->Protocol = protocol;
 		}
 		else if (parts->Count == 1)
 		{
@@ -114,6 +184,7 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 			if (string_equals(s0, AOTP_HEADER_SIGN))
 			{
 				protocol = AOTP;
+				message->Protocol = protocol;
 			}
 			*position = o + 2;
 		}
@@ -131,16 +202,135 @@ void message_get_standard_header(Message* message)
 	{
 		MessageField* field = message->Fields.Items[ix];
 
-		if (field->Content.Count > 0)
+		if (field->Name.Length > 0 && field->Param.Value.Length > 0)
 		{
-			if (string_equals(&field->Name, "Content-Length"))
+			if (string_equals_range_s2leng(&field->Name, 0, 8, "Host", 8))
 			{
-				int error = 0;
-				int num = numeric_parse_int(field->Content.Items[0]->Data, &error);
-
-				if (!error)
+				string_init_copy(&message->Host, field->Param.Value.Data, field->Param.Value.Length);
+			}
+			else if (string_equals_range_s2leng(&field->Name, 0, 10, "User-Agent", 10))
+			{
+				string_init_copy(&message->UserAgent, field->Param.Value.Data, field->Param.Value.Length);
+			}
+			else if (string_equals_range_s2leng(&field->Name, 0, 10, "Connection", 10))
+			{
+				if (string_equals(&field->Param.Value, "keep-alive"))
 				{
-					message->ContentLength = num;
+					message->ConnectionOption = CONNECTION_KEEP_ALIVE;
+				}
+				else if (string_equals(&field->Param.Value, "close"))
+				{
+					message->ConnectionOption = CONNECTION_CLOSE;
+				}
+			}
+			else if (string_equals_range_s2leng(&field->Name,  0, 8, "Content-", 8))
+			{
+				if (string_equals_range_s2leng(&field->Name, 8, 6, "Length", 6))
+				{
+					int error = 0;
+					int num = numeric_parse_int(field->Param.Value.Data, &error);
+
+					if (!error)
+					{
+						message->ContentLength = num;
+					}
+				}
+				else if (string_equals_range_s2leng(&field->Name, 8, 4, "Type", 4))
+				{
+					if (string_equals_range_s2leng(&field->Param.Value, 0, 5, "text/", 5))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 5, 4, "html", 4))
+						{
+							message->ContentType = TEXT_HTML;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 5, 3, "css",3))
+						{
+							message->ContentType = TEXT_CSS;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 5, 10, "javascript",10))
+						{
+							message->ContentType = TEXT_JAVASCRIPT;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 5, 5, "plain", 5))
+						{
+							message->ContentType = TEXT_PLAIN;
+						}
+					}
+					else if (string_equals_range_s2leng(&field->Param.Value, 0, 12, "application/", 12))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 12, 10, "javascript", 10))
+						{
+							message->ContentType = APPLICATION_JAVASCRIPT;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 4, "json", 4))
+						{
+							message->ContentType = APPLICATION_JSON;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 3, "xml", 3))
+						{
+							message->ContentType = APPLICATION_XML;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 3, "pdf", 3))
+						{
+							message->ContentType = APPLICATION_PDF;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 4, "gzip", 4))
+						{
+							message->ContentType = APPLICATION_GZIP;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 3, "zip", 3))
+						{
+							message->ContentType = APPLICATION_ZIP;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 12, 12, "octet-stream", 12))
+						{
+							message->ContentType = APPLICATION_OCTET_STREAM;
+						}
+					}
+					else if (string_equals_range_s2leng(&field->Param.Value, 0, 6, "image/", 6))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 6, 4, "jpeg", 4))
+						{
+							message->ContentType = IMAGE_JPEG;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 6, 3, "png", 3))
+						{
+							message->ContentType = IMAGE_PNG;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 6, 3, "gif", 3))
+						{
+							message->ContentType = IMAGE_GIF;
+						}
+					}
+					else if (string_equals_range_s2leng(&field->Param.Value, 0, 6,"audio/", 6))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 6, 4, "mpeg", 4))
+						{
+							message->ContentType = AUDIO_MPEG;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 6, 3, "ogg", 3))
+						{
+							message->ContentType = AUDIO_OGG;
+						}
+					}
+					else if (string_equals_range_s2leng(&field->Param.Value, 0, 6, "video/", 6))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 6, 3, "mp4", 3))
+						{
+							message->ContentType = VIDEO_MP4;
+						}
+						else if (string_equals_range_s2leng(&field->Param.Value, 6, 4, "webm", 4))
+						{
+							message->ContentType = VIDEO_WEBM;
+						}
+					}
+					else if (string_equals_range_s2leng(&field->Param.Value, 0, 10, "multipart/", 10))
+					{
+						if (string_equals_range_s2leng(&field->Param.Value, 10, 9, "form-data", 9))
+						{
+							message->ContentType = MULTIPART_FORMDATA;
+						}
+					}
 				}
 			}
 		}
@@ -152,18 +342,19 @@ void message_get_standard_header(Message* message)
 void on_message_match(void* ptr)
 {
 	ParseMatch* msg = (ParseMatch*)ptr;
-	msg->Parser->MatchCallback(msg->Msg);
+	msg->Parser->MessageMatch(msg->Msg);
 	message_release(msg->Msg);
+	free(msg);
 }
 
 
 void create_on_message_match(MessageParser* parser, Message* msg, AppClientInfo* client)
 {
 	msg->Client = client;
-	ParseMatch pmatch;
-	pmatch.Parser = parser;
-	pmatch.Msg = msg;
-	msg->MatchThread = _beginthread(on_message_match, 0, (void*)&pmatch);
+	ParseMatch* pmatch = malloc(sizeof(ParseMatch));
+	pmatch->Parser = parser;
+	pmatch->Msg = msg;
+	msg->MatchThread = _beginthread(on_message_match, 0, (void*)pmatch);
 }
 
 
@@ -183,7 +374,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
 
 				parser->Position = 0;
-			    string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
+			    string_resize_forward(parser->Buffer, parser->Position + parser->Partial->ContentLength);
 
 				create_on_message_match(parser, parser->Partial, client);
 				parser->Partial = 0;
@@ -206,7 +397,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 
 		Message* msg = message_create();
 
-		bool res = message_parser_start_line(data, length, &parser->Position, msg);
+		MessageProtocol res = message_parser_start_line(data, length, &parser->Position, msg);
 		if (res)
 		{
 			int rf = message_parser_field(data, length, &msg->Fields, &parser->Position);
@@ -224,7 +415,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 
 						string_sub(parser->Buffer->Data, parser->Buffer->Length, parser->Position, msg->ContentLength, true, &msg->Content);
 
-					    string_resize_forward(parser->Buffer, parser->Position);
+					    string_resize_forward(parser->Buffer, parser->Position + msg->ContentLength);
 						parser->Position = 0;
 
 						create_on_message_match(parser, msg, client);
@@ -244,6 +435,8 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 					parser->Partial = 0;
 				    string_resize_forward(parser->Buffer, parser->Position);
 					parser->Position = 0;
+
+					create_on_message_match(parser, msg, client);
 				}
 
 				// remover resto do buffer
@@ -257,11 +450,13 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 
 MessageParser* message_parser_create(void(*match_callback) (Message*))
 {
+	void* calback = match_callback;
+
 	MessageParser* parser = (MessageParser*)malloc(sizeof(MessageParser));
 	memset(parser, 0, sizeof(MessageParser));
 
 	parser->Buffer        = string_new();
-	parser->MatchCallback = match_callback;
+	parser->MessageMatch  = calback;
 
 	return parser;
 }

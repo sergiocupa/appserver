@@ -9,16 +9,28 @@ extern "C" {
     #include "platform.h"
 
 
-    typedef struct _AppClientInfo AppClientInfo;
-    typedef struct _AppClientList AppClientList;
-    typedef struct _ClientData    ClientData;
-    typedef struct _AppServerInfo AppServerInfo;
+    typedef struct _AppClientInfo     AppClientInfo;
+    typedef struct _AppClientList     AppClientList;
+    typedef struct _ClientData        ClientData;
+    typedef struct _AppServerInfo     AppServerInfo;
+    typedef struct _MessageFieldParam MessageFieldParam;
+
+
+    struct _MessageFieldParam
+    {
+        bool IsScalar;
+        bool IsEndGroup;
+        bool IsEndParam;
+        String Name;
+        String Value;
+        MessageFieldParam* Next;
+    };
 
 
     typedef struct _MessageField
     {
-        String      Name;
-        StringArray Content;
+        String            Name;
+        MessageFieldParam Param;
     }
     MessageField;
     
@@ -44,17 +56,43 @@ extern "C" {
 
     typedef enum _MessageProtocol
     {
-        NONE = 0,
-        HTTP = 1,
-        AOTP = 2
+        PROTOCOL_NONE = 0,
+        HTTP          = 1,
+        AOTP          = 2
     }
     MessageProtocol;
 
+    typedef enum _MessageConnection
+    {
+        CONNECTION_NONE       = 0,
+        CONNECTION_KEEP_ALIVE = 1,
+        CONNECTION_CLOSE      = 2
+    }
+    MessageConnection;
+
     typedef enum _ContentTypeOption
     { 
-        TXT  = 0,
-        BIN  = 1,
-        JSON = 2
+        CONTENT_TYPE_NONE        = 0,
+        TEXT_HTML                = 1,
+        TEXT_CSS                 = 2,
+        TEXT_JAVASCRIPT          = 3,
+        TEXT_PLAIN               = 4,
+        APPLICATION_JAVASCRIPT   = 5,
+        APPLICATION_JSON         = 6,
+        APPLICATION_XML          = 7,
+        APPLICATION_OCTET_STREAM = 8,
+        APPLICATION_PDF          = 9,
+        APPLICATION_ZIP          = 10,
+        APPLICATION_GZIP         = 11,
+        IMAGE_JPEG               = 12,
+        IMAGE_PNG                = 13,
+        IMAGE_GIF                = 14,
+        IMAGE_SVG                = 15,
+        AUDIO_MPEG               = 16,
+        AUDIO_OGG                = 17,
+        VIDEO_MP4                = 18,
+        VIDEO_WEBM               = 19,
+        MULTIPART_FORMDATA       = 20
     }
     ContentTypeOption;
 
@@ -66,6 +104,8 @@ extern "C" {
         MessageCommand    Cmd;
         StringArray       Route;
         String            Host;
+        MessageConnection ConnectionOption;
+        String            UserAgent;
         String            Content;
         ContentTypeOption ContentType;
         int               ContentLength;
@@ -76,14 +116,18 @@ extern "C" {
     Message;
 
 
+
+    typedef void(*MessageMatchCallback) (int*);
+
     typedef struct _MessageParser
     {
         int                  Position;
         Message*             Partial;
         String*              Buffer;
-        void(*MatchCallback) (Message*);
+        MessageMatchCallback MessageMatch;
     }
     MessageParser;
+
 
 
     struct _AppClientInfo

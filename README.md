@@ -6,8 +6,7 @@ At the moment, 06/03/2025, the implementation is not complete.
 Features to be implemented:
 
 - [x] Finalize parser and tests.
-- [ ] Method mapping, to forward actions to requests.
-- [ ] Method mapping tests.
+- [ ] Method mapping, to forward actions to requests. Create tests.
 - [ ] Download resources and HTML pages for presentation in browser.
 - [ ] LINUX platform.
 - [ ] Websocket.

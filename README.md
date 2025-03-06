@@ -5,7 +5,7 @@ At the moment, 06/03/2025, the implementation is not complete.
 
 Features to be implemented:
 
-- [x] Finalize parser tests.
+- [x] Finalize parser and tests.
 - [ ] Method mapping, to forward actions to requests.
 - [ ] Method mapping tests.
 - [ ] Download resources and HTML pages for presentation in browser.

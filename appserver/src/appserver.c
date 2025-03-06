@@ -11,6 +11,12 @@
 
 void appserver_received(Message* request)
 {
+    // Converter JSON
+    // rotear metodo
+
+    // chamar metodo
+
+
     // Recepção de todos os clients
     // Cada entrada tem uma thread;
 }

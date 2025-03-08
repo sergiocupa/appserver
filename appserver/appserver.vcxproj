@@ -24,6 +24,7 @@
     <ClInclude Include="src\message_parser.h" />
     <ClInclude Include="src\server_type.h" />
     <ClInclude Include="src\client_message.h" />
+    <ClInclude Include="src\url_encoder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appclient.c" />
@@ -31,6 +32,7 @@
     <ClCompile Include="src\client_message.c" />
     <ClCompile Include="src\message_parser.c" />
     <ClCompile Include="src\server_type.c" />
+    <ClCompile Include="src\url_encoder.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -51,7 +53,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -64,7 +66,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -93,7 +95,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include;E:/git/appserver/submodules/utility/numericlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -101,8 +103,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;numericlib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -115,7 +117,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)submodules\utility\stringlib\include;$(ProjectDir)submodules\utility\platformlib\include;$(ProjectDir)submodules\utility\numericlib\include;$(ProjectDir)submodules\utility\listlib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -125,10 +127,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>stringlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
     <Lib>
-      <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Release</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -140,7 +142,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include;E:/git/appserver/submodules/utility/platformlib/include;E:/git/appserver/submodules/utility/numericlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -148,8 +150,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;numericlib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,7 +164,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:/git/appserver/submodules/utility/stringlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)submodules\utility\stringlib\include;$(ProjectDir)submodules\utility\platformlib\include;$(ProjectDir)submodules\utility\numericlib\include;$(ProjectDir)submodules\utility\listlib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -172,10 +174,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>stringlib.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
     </Lib>
     <Lib>
-      <AdditionalLibraryDirectories>E:\git\appserver\submodules\utility\x64\Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Release</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

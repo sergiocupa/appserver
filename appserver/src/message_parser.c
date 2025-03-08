@@ -1,8 +1,8 @@
 #include "message_parser.h"
-#include "numeric.h"
-#include "stdlib.h"
-#include "string.h"
+#include "url_encoder.h"
 #include <process.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 const char* AOTP_HEADER_SIGN = "AOTP[9DAC10BA43E2402694C84B21A4219497]";
@@ -55,9 +55,7 @@ void message_field_param_add(byte* data, int begin, int end, bool first, Message
 			if (r == 0 || r == 1) param->IsEndGroup = true;
 			                 else param->IsEndParam = true;
 
-			param->Next = (MessageFieldParam*)malloc(sizeof(MessageFieldParam));
-			memset(param->Next, 0, sizeof(MessageFieldParam));
-
+			param->Next = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
 			message_field_param_add(data, (m + 1), end, false, param->Next);
 		}
 		else
@@ -129,6 +127,92 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 }
 
 
+
+void message_parser_method_param_populate(String* content, int name_begin, int name_end, int value_begin, int value_end, MessageFieldParam* param)
+{
+	if (name_begin >= 0)
+	{
+		param->Name.Data      = url_decode_s(content->Data + name_begin, name_end - name_begin, &param->Name.Length);
+		param->Name.MaxLength = param->Name.Length;
+	}
+	if (value_begin > name_begin)
+	{
+		param->Value.Data      = url_decode_s(content->Data + value_begin, value_end- value_begin, &param->Value.Length);
+		param->Value.MaxLength = param->Value.Length;
+	}
+}
+
+
+void message_parser_method_param_rec(String* content, int start, MessageFieldParam* param)
+{
+	int m = 0;
+	int r = string_index_first(content->Data, content->Length, "=&[", 3, start, &m);
+
+	if (r == 0)
+	{
+		int n = string_index_of_char(content->Data, content->Length, '&', m + 1, content->Length);
+
+		if (n > m) 
+		{
+			message_parser_method_param_populate(content->Data, start, m, m+1, n-1, param);
+
+			param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+			message_parser_method_param_rec(content, n + 1, param->Next);
+		}
+		else// last
+		{
+			message_parser_method_param_populate(content->Data, start, m, m + 1, content->Length-1, param);
+		}
+	}
+	else if (r == 1)
+	{
+		string_sub(content->Data, content->Length, start, m, false, &param->Value);
+
+		param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+		message_parser_method_param_rec(content, m + 1, param->Next);
+	}
+	else if (r == 2)
+	{
+		if ((m + 4) < content->Length)
+		{
+			if (content->Data[m+1] == ']' && content->Data[m + 2] == '=')
+			{
+				int o = string_index_of_char(content->Data, content->Length, '&', m + 3, content->Length);
+
+				if (o > m + 3)
+				{
+					message_parser_method_param_populate(content->Data, start, m, m + 3, o-1, param);
+
+					param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+					message_parser_method_param_rec(content, o + 1, param->Next);
+				}
+				else// last
+				{
+					message_parser_method_param_populate(content->Data, start, m, m + 3, content->Length-1, param);
+				}
+			}
+		}
+	}
+}
+
+void message_parser_method_param(Message* message)
+{
+	if (message->Route.Count > 0)
+	{
+		String* data = message->Route.Items[message->Route.Count - 1];
+		int start = string_index_of_char(data, data->Length, '?', 0, data->Length);
+		if (start > 0)
+		{
+			message->Param = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
+			message_parser_method_param_rec(data, start+1, message->Param);
+
+			data->Data[start] = '\0';
+			data->Length      = start;
+		}
+	}
+}
+
+
 MessageProtocol message_parser_start_line(byte* data, int length, int* position, Message* message)
 {
 	MessageProtocol protocol = HTTP;
@@ -151,6 +235,9 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 			}
 
 			string_split_param(s1->Data, s1->Length, "/", 1, true, &message->Route);
+
+			message_parser_method_param(message);
+
 			string_append_sub(&message->Version, s2->Data, s2->Length, 0, s2->Length);
 
 			*position = o + 2;

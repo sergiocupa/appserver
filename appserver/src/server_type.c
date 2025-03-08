@@ -1,6 +1,4 @@
 #include "server_type.h"
-#include "string.h"
-#include "stdlib.h"
 
 
 void message_field_param_release(MessageFieldParam* param);
@@ -161,3 +159,67 @@ AppClientList* appclient_list_create()
     ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
     return ar;
 }
+
+
+
+
+
+FunctionBind* bind_create(const char* route, MessageMatchCallback function)
+{
+    FunctionBind* ar = (FunctionBind*)malloc(sizeof(FunctionBind));
+    string_init_copy(&ar->Route, route, strlen(route));
+    ar->Function = function;
+    return ar;
+}
+
+FunctionBind* bind_release(FunctionBind* _this)
+{
+    if (_this)
+    {
+        string_release_data(&_this->Route);
+        free(_this);
+    }
+    return 0;
+}
+
+void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function)
+{
+    if (list)
+    {
+        if (list->Count >= list->MaxCount)
+        {
+            list->MaxCount = ((list->Count + sizeof(FunctionBind)) + list->MaxCount) * 2;
+            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+        }
+
+        list->Items[list->Count] = bind_create(route, function);
+        list->Count++;
+    }
+}
+
+FunctionBindList* bind_list_release(FunctionBindList* list)
+{
+    if (list)
+    {
+        int ix = 0;
+        while (ix < list->Count)
+        {
+            bind_release(list->Items[ix]);
+            ix++;
+        }
+        free(list->Items);
+        free(list);
+    }
+    return 0;
+}
+
+FunctionBindList* bind_list_create()
+{
+    FunctionBindList* ar = (FunctionBindList*)malloc(sizeof(FunctionBindList));
+    ar->Count = 0;
+    ar->MaxCount = 100;
+    ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
+    return ar;
+}
+
+

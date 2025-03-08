@@ -5,9 +5,17 @@
 extern "C" {
 #endif
 
+    // TO-DO: esta com referencia INCLUDE redundante por submodules em muitos niveis. listlib.h encontrada em varias origens.
+    //        reestruturar os submudules para nao ter esta origem redundante em varios niveis
+    #include "../submodules/utility/listlib/include/listlib.h"
     #include "stringlib.h"
     #include "platform.h"
+    #include "numeric.h"
+    
 
+    #define LIST_CREATE(TYPE, THIS) THIS = list_create(sizeof(TYPE))
+    #define LIST_ADD(TYPE, THIS, ITEM) list_add(THIS, ITEM, sizeof(TYPE))
+ 
 
     typedef struct _AppClientInfo     AppClientInfo;
     typedef struct _AppClientList     AppClientList;
@@ -98,20 +106,23 @@ extern "C" {
 
     typedef struct _Message
     {
-        bool              IsMatch;
-        MessageProtocol   Protocol;
-        String            Version;
-        MessageCommand    Cmd;
-        StringArray       Route;
-        String            Host;
-        MessageConnection ConnectionOption;
-        String            UserAgent;
-        String            Content;
-        ContentTypeOption ContentType;
-        int               ContentLength;
-        MessageFieldList  Fields;
-        void*             MatchThread;
-        AppClientInfo*    Client;
+        bool               IsMatch;
+        MessageProtocol    Protocol;
+        String             Version;
+        MessageCommand     Cmd;
+        StringArray        Route;
+        String             Host;
+        MessageConnection  ConnectionOption;
+        String             UserAgent;
+        String             Content;
+        ContentTypeOption  ContentType;
+        int                ContentLength;
+        MessageFieldList   Fields;
+        MessageFieldParam* Param;
+        void*              MatchThread;
+     
+        AppClientInfo*     Client;
+        void*              Object;
     }
     Message;
 
@@ -156,6 +167,27 @@ extern "C" {
         byte* Data;
     };
 
+
+
+    typedef void(*RequestCallback) (Message* request);
+
+    typedef struct _FunctionBind
+    {
+        String Route;
+        MessageMatchCallback Function;
+    }
+    FunctionBind;
+
+    typedef struct _FunctionBindList
+    {
+        int Count;
+        int MaxCount;
+        FunctionBind** Items;
+    }
+    FunctionBindList;
+
+
+
     struct _AppServerInfo
     {
         bool                      IsRunning;
@@ -163,6 +195,7 @@ extern "C" {
         void*                     AcceptThread;
         char*                     Prefix;
         AppClientList*            Clients;
+        FunctionBindList*         BindList;
     };
 
 
@@ -179,6 +212,10 @@ extern "C" {
     void appclient_list_add(AppClientList* list, AppClientInfo* cli);
     AppClientList* appclient_list_release(AppClientList* list);
     AppClientList* appclient_list_create();
+
+    void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function);
+    FunctionBindList* bind_list_release(FunctionBindList* list);
+    FunctionBindList* bind_list_create();
 
 
 

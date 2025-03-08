@@ -1,5 +1,5 @@
 #include "appserver.h"
-#include "../appserver/src/message_parser.h"
+//#include "message_parser.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -24,7 +24,7 @@ int main()
 	////message_parser_field(HEADER_001, L001, &msg->Fields, &pos);
 
 
-	AppServerInfo* server = appserver_create(1234, "api");
+	//AppServerInfo* server = appserver_create(1234, "api");
 
 	getchar();
 	return 0;

@@ -1,6 +1,7 @@
 #include "../include/appserver.h"
 #include "appclient.h"
 #include "message_parser.h"
+#include "yason.h"
 #include <winsock2.h>
 #include <stdio.h>
 #include <process.h>
@@ -9,9 +10,23 @@
 
 
 
+//void appserver_
+
+
 void appserver_received(Message* request)
 {
-    // Converter JSON
+   /* if (request->ContentLength > 0)
+    {
+        if (request->ContentType == APPLICATION_JSON)
+        {
+            request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
+        }
+    }*/
+
+
+
+
+
     // rotear metodo
 
     // chamar metodo
@@ -73,12 +88,18 @@ void appserver_release(AppServerInfo* server)
     // ...
 }
 
-AppServerInfo* appserver_create(const int port, const char* prefix)
+
+
+
+
+
+AppServerInfo* appserver_create(const int port, const char* prefix, FunctionBindList* bind_list)
 {
     AppServerInfo* info;
     info = (AppServerInfo*)malloc(sizeof(AppServerInfo));
     memset(info,0, sizeof(AppServerInfo));
     info->Clients = appclient_list_create();
+    info->BindList = bind_list;
     info->IsRunning = true;
 
     struct sockaddr_in server, client;

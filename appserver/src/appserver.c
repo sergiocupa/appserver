@@ -1,5 +1,6 @@
 #include "../include/appserver.h"
 #include "appclient.h"
+#include "message_assembler.h"
 #include "message_parser.h"
 #include "yason.h"
 #include <winsock2.h>
@@ -9,21 +10,85 @@
 #pragma comment(lib, "ws2_32.lib")
 
 
+FunctionBind* appserver_find_bind(Message* request)
+{
+    AppServerInfo* server = request->Client->Server;
 
-//void appserver_
+    if (request->Route.Count > 0)
+    {
+        int ix = 0;
+        if (server->Prefix)
+        {
+            while (ix < server->Prefix->Count && ix < request->Route.Count)
+            {
+                if (!string_equals_s(server->Prefix->Items[ix], request->Route.Items[ix]))
+                {
+                    return false;
+                }
+                ix++;
+            }
+        }
+
+        int ax = 0;
+        while (ax < server->BindList->Count)
+        {
+            FunctionBind* bind = server->BindList->Items[ax];
+
+            int cnt = 0;
+            int iz = ix;
+            while (iz < request->Route.Count)
+            {
+                if (!string_equals_s(bind->Route.Items[iz], request->Route.Items[ix]))
+                {
+                    cnt++;
+                }
+                iz++;
+            }
+
+            if (cnt == request->Route.Count)
+            {
+                return  bind;
+            }
+            ax++;
+        }
+    }
+    return 0;
+}
+
+
+
+void appserver_response_create(AppServerInfo* server, Message* request, HttpStatusCode http_status, Element* object)
+{
+    String http;
+    string_init(&http);
+
+    //
+
+
+   // message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0,0, server->DefaultWebApiObjectType, )
+}
+
 
 
 void appserver_received(Message* request)
 {
-   /* if (request->ContentLength > 0)
+    if (request->ContentLength > 0)
     {
         if (request->ContentType == APPLICATION_JSON)
         {
             request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
         }
-    }*/
+    }
 
+    FunctionBind* bind = appserver_find_bind(request);
+    if (bind)
+    {
+        bind->Function(request);
+    }
+    else
+    {
 
+    }
 
 
 
@@ -93,7 +158,7 @@ void appserver_release(AppServerInfo* server)
 
 
 
-AppServerInfo* appserver_create(const int port, const char* prefix, FunctionBindList* bind_list)
+AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, FunctionBindList* bind_list)
 {
     AppServerInfo* info;
     info = (AppServerInfo*)malloc(sizeof(AppServerInfo));
@@ -101,6 +166,9 @@ AppServerInfo* appserver_create(const int port, const char* prefix, FunctionBind
     info->Clients = appclient_list_create();
     info->BindList = bind_list;
     info->IsRunning = true;
+    info->DefaultWebApiObjectType = APPLICATION_JSON;
+
+    string_append(&info->AgentName, agent_name);
 
     struct sockaddr_in server, client;
 
@@ -138,6 +206,8 @@ AppServerInfo* appserver_create(const int port, const char* prefix, FunctionBind
 
     info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)info);
     info->Handle             = server_socket;
-    info->Prefix             = prefix;
+
+    info->Prefix = string_split(prefix, strlen(prefix), '/', 1, true);
+               
     return info;
 }

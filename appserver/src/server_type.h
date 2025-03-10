@@ -22,6 +22,25 @@ extern "C" {
     typedef struct _ClientData        ClientData;
     typedef struct _AppServerInfo     AppServerInfo;
     typedef struct _MessageFieldParam MessageFieldParam;
+    typedef struct _Message           Message;
+
+
+    typedef enum _HttpStatusCode
+    {
+        HTTP_STATUS_NONE                = 0,
+        HTTP_STATUS_OK                  = 200,
+        HTTP_STATUS_ACCEPT              = 202,
+        HTTP_STATUS_BAD_REQUEST         = 400,
+        HTTP_STATUS_UNAUTHORIZED        = 401,
+        HTTP_STATUS_FORBIDDEN           = 403,
+        HTTP_STATUS_NOT_FOUND           = 404,
+        HTTP_STATUS_PRECONDITION_FAILED = 412,
+        HTTP_STATUS_INTERNAL_ERROR      = 500,
+        HTTP_STATUS_NOT_IMPLEMENTED     = 501,
+        HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
+        HTTP_STATUS_SWITCHING_PROTOCOLS = 101
+    }
+    HttpStatusCode;
 
 
     struct _MessageFieldParam
@@ -104,7 +123,7 @@ extern "C" {
     }
     ContentTypeOption;
 
-    typedef struct _Message
+    struct _Message
     {
         bool               IsMatch;
         MessageProtocol    Protocol;
@@ -120,15 +139,13 @@ extern "C" {
         MessageFieldList   Fields;
         MessageFieldParam* Param;
         void*              MatchThread;
-     
+
         AppClientInfo*     Client;
         void*              Object;
-    }
-    Message;
+    };
 
 
-
-    typedef void(*MessageMatchCallback) (int*);
+    typedef void(*MessageMatchCallback) (Message*);
 
     typedef struct _MessageParser
     {
@@ -143,9 +160,11 @@ extern "C" {
 
     struct _AppClientInfo
     {
-        bool  IsConnected;
-        void* Handle;
-        void* ReceivedThread;
+        bool           IsConnected;
+        String         LocalHost;
+        String         RemoteHost;
+        void*          Handle;
+        void*          ReceivedThread;
         AppServerInfo* Server;
         MessageParser* Parser;
     };
@@ -173,7 +192,7 @@ extern "C" {
 
     typedef struct _FunctionBind
     {
-        String Route;
+        StringArray          Route;
         MessageMatchCallback Function;
     }
     FunctionBind;
@@ -191,9 +210,12 @@ extern "C" {
     struct _AppServerInfo
     {
         bool                      IsRunning;
+        int                       Port;
+        String                    AgentName;
+        ContentTypeOption         DefaultWebApiObjectType;
+        StringArray*              Prefix;
         void*                     Handle;
         void*                     AcceptThread;
-        char*                     Prefix;
         AppClientList*            Clients;
         FunctionBindList*         BindList;
     };

@@ -7,7 +7,7 @@ Features to be implemented:
 
 - [X] Finalize parser and tests;
 - [X] Method mapping, to forward actions to requests;
-- [ ] Create method mapping tests;
+- [X] Create method mapping tests;
 - [ ] Download resources and HTML pages for presentation in browser;
 - [ ] LINUX platform;
 - [ ] Optimization and simplification;

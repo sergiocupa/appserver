@@ -17,3 +17,4 @@ Features to be implemented:
 - [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser;
 - [ ] Javascript to manage the arrival buffer of video parts on the client side;
 - [ ] Testing the video stream with browser;
+- [ ] SSL support for HTTPs;

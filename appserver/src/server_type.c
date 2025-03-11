@@ -10,7 +10,7 @@ void message_field_param_release(MessageFieldParam* param)
     string_release_data(&param->Name);
     string_release_data(&param->Value);
 
-    while (!param->Next)
+    while (param->Next)
     {
         message_field_param_release(param->Next);
     }
@@ -34,13 +34,6 @@ MessageField* message_field_create(bool init_content)
 }
 
 
-void message_field_release(MessageField* ins)
-{
-    string_release(&ins->Name);
-    message_field_param_release(&ins->Param);
-    free(ins);
-}
-
 void message_field_list_init(MessageFieldList* list)
 {
     list->Count = 0;
@@ -63,7 +56,15 @@ void message_field_list_add(MessageFieldList* list, MessageField* field)
     }
 }
 
-void message_field_list_release(MessageFieldList* list)
+MessageField* message_field_release(MessageField* ins)
+{
+    string_release_data(&ins->Name);
+    message_field_param_release(&ins->Param);
+    free(ins);
+    return 0;
+}
+
+void message_field_list_release(MessageFieldList* list, bool only_data)
 {
     if (list)
     {
@@ -74,7 +75,11 @@ void message_field_list_release(MessageFieldList* list)
             ix++;
         }
         free(list->Items);
-        free(list);
+
+        if (!only_data)
+        {
+            free(list);
+        }
     }
     return 0;
 }
@@ -92,26 +97,31 @@ Message* message_create()
 
 void message_release(Message* m)
 {
-    message_field_list_release(&m->Fields);
+    message_field_list_release(&m->Fields, true);
 
     if (m->Route.MaxCount > 0)
     {
-        string_array_release(&m->Route, false);
+        string_array_release(&m->Route, true);
     }
 
     if (m->Version.MaxLength > 0)
     {
-        string_release(&m->Version);
+        string_release_data(&m->Version);
     }
 
     if (m->Host.MaxLength > 0)
     {
-        string_release(&m->Host);
+        string_release_data(&m->Host);
     }
 
     if (m->Content.MaxLength > 0)
     {
-        string_release(&m->Content);
+        string_release_data(&m->Content);
+    }
+
+    if (m->Param)
+    {
+        message_field_param_release(m->Param);
     }
 
     free(m);

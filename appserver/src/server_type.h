@@ -223,7 +223,7 @@ extern "C" {
 
 
     MessageField* message_field_create(bool init_content);
-    void message_field_release(MessageField* ins);
+    MessageField* message_field_release(MessageField* ins);
     void message_field_list_init(MessageFieldList* list);
     void message_field_list_add(MessageFieldList* list, MessageField* field);
     void message_field_list_release(MessageFieldList* list);

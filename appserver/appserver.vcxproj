@@ -21,20 +21,22 @@
   <ItemGroup>
     <ClInclude Include="include\appserver.h" />
     <ClInclude Include="src\appclient.h" />
-    <ClInclude Include="src\message_assembler.h" />
-    <ClInclude Include="src\message_parser.h" />
     <ClInclude Include="src\server_type.h" />
     <ClInclude Include="src\client_message.h" />
-    <ClInclude Include="src\url_encoder.h" />
+    <ClInclude Include="src\utils\activity_binder.h" />
+    <ClInclude Include="src\utils\message_assembler.h" />
+    <ClInclude Include="src\utils\message_parser.h" />
+    <ClInclude Include="src\utils\url_encoder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appclient.c" />
     <ClCompile Include="src\appserver.c" />
     <ClCompile Include="src\client_message.c" />
-    <ClCompile Include="src\message_assembler.c" />
-    <ClCompile Include="src\message_parser.c" />
     <ClCompile Include="src\server_type.c" />
-    <ClCompile Include="src\url_encoder.c" />
+    <ClCompile Include="src\utils\activity_binder.c" />
+    <ClCompile Include="src\utils\message_assembler.c" />
+    <ClCompile Include="src\utils\message_parser.c" />
+    <ClCompile Include="src\utils\url_encoder.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -105,8 +107,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug;$(ProjectDir)\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -152,8 +154,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug;$(ProjectDir)\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

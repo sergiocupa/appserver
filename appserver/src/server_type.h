@@ -145,7 +145,7 @@ extern "C" {
     };
 
 
-    typedef void(*MessageMatchCallback) (Message*);
+    typedef void* (*MessageMatchCallback) (Message*);
 
     typedef struct _MessageParser
     {

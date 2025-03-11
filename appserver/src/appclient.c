@@ -1,5 +1,5 @@
 #include "appclient.h"
-#include "message_parser.h"
+#include "utils/message_parser.h"
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <process.h>
@@ -9,6 +9,14 @@
 
 #define BUFFER_SIZE 4096  
 
+
+void appclient_send(AppClientInfo* cli, char* content, int length)
+{
+    if (send(cli->Handle, content, length, 0) < 0)
+    {
+        perror("Erro ao enviar mensagem");
+    }
+}
 
 
 void appclient_received(void* ptr)

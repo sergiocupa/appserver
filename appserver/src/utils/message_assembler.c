@@ -1,4 +1,5 @@
 #include "message_assembler.h"
+#include "yason.h"
 
 
 const char* message_assembler_append_http_status(HttpStatusCode http_satus)
@@ -48,21 +49,47 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 }
 
 
-void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ContentTypeOption content_type, int length, String* content)
+String* message_write_content(void* object, ContentTypeOption content_type)
 {
-	string_append_format(content, "HTTP/1.1 %d %s", (int)http_status, message_assembler_append_http_status(http_status));
-	string_append_format(content, "Host: %s\r\n", host);
-	string_append_format(content, "User-Agent: %s\r\n", agent);
-	string_append(content, "Access-Control-Allow-Origin: *\r\n");
+	if (object)
+	{
+		if (content_type == APPLICATION_JSON)
+		{
+			return yason_render((Element*)object, 1);
+		}
+	}
+	return 0;
+}
+
+
+void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ContentTypeOption content_type, void* object, String* http)
+{
+	string_append_format(http, "HTTP/1.1 %d %s\r\n", (int)http_status, message_assembler_append_http_status(http_status));
+	string_append_format(http, "Host: %s\r\n", host);
+	string_append_format(http, "User-Agent: %s\r\n", agent);
+	string_append(http, "Access-Control-Allow-Origin: *\r\n");
 
 	int ix = 0;
 	while (ix < header_length)
 	{
 		MessageField* header = headers[ix];
-		string_append_format(content, "%s: %s\r\n", header->Name.Data, header->Param.Value.Data);
+		string_append_format(http, "%s: %s\r\n", header->Name.Data, header->Param.Value.Data);
 		ix++;
 	}
 
-	string_append_format(content, "Content-Type: %s\r\n", message_assembler_append_content_type(content_type));
-	string_append_format(content, "Content-Length: %d\r\n", length);
+	string_append_format(http, "Content-Type: %s\r\n", message_assembler_append_content_type(content_type));
+
+	int leng = 0;
+	String* obj_content = message_write_content(object, content_type);
+	if (obj_content && obj_content->Length > 0)
+	{
+		leng = obj_content->Length;
+		string_append_format(http, "Content-Length: %d\r\n\r\n", leng);
+		string_append_s(http, obj_content);
+		string_release(obj_content);
+	}
+	else
+	{
+		string_append_format(http, "Content-Length: %d\r\n\r\n", leng);
+	}
 }

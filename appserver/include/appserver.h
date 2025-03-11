@@ -9,7 +9,7 @@ extern "C" {
 
 
 
-    PLATFORM_API AppServerInfo* appserver_create(const int port, const char* prefix, FunctionBindList* bind_list);
+    PLATFORM_API AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, FunctionBindList* bind_list);
 
 
 #ifdef __cplusplus

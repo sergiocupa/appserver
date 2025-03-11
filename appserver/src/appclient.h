@@ -8,6 +8,7 @@ extern "C" {
     #include "server_type.h"
 
 
+    void appclient_send(AppClientInfo* cli, char* content, int length);
 
     void appclient_list_add(AppClientList* list, AppClientInfo* cli);
     AppClientList* appclient_list_release(AppClientList* list);

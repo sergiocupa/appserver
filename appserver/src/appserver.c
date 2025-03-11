@@ -1,7 +1,8 @@
 #include "../include/appserver.h"
 #include "appclient.h"
-#include "message_assembler.h"
-#include "message_parser.h"
+#include "utils/message_assembler.h"
+#include "utils/message_parser.h"
+#include "utils/activity_binder.h"
 #include "yason.h"
 #include <winsock2.h>
 #include <stdio.h>
@@ -10,62 +11,16 @@
 #pragma comment(lib, "ws2_32.lib")
 
 
-FunctionBind* appserver_find_bind(Message* request)
-{
-    AppServerInfo* server = request->Client->Server;
-
-    if (request->Route.Count > 0)
-    {
-        int ix = 0;
-        if (server->Prefix)
-        {
-            while (ix < server->Prefix->Count && ix < request->Route.Count)
-            {
-                if (!string_equals_s(server->Prefix->Items[ix], request->Route.Items[ix]))
-                {
-                    return false;
-                }
-                ix++;
-            }
-        }
-
-        int ax = 0;
-        while (ax < server->BindList->Count)
-        {
-            FunctionBind* bind = server->BindList->Items[ax];
-
-            int cnt = 0;
-            int iz = ix;
-            while (iz < request->Route.Count)
-            {
-                if (!string_equals_s(bind->Route.Items[iz], request->Route.Items[ix]))
-                {
-                    cnt++;
-                }
-                iz++;
-            }
-
-            if (cnt == request->Route.Count)
-            {
-                return  bind;
-            }
-            ax++;
-        }
-    }
-    return 0;
-}
 
 
-
-void appserver_response_create(AppServerInfo* server, Message* request, HttpStatusCode http_status, Element* object)
+void appserver_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, void* object)
 {
     String http;
     string_init(&http);
 
-    //
+    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0, 0, server->DefaultWebApiObjectType, object, &http);
 
-
-   // message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0,0, server->DefaultWebApiObjectType, )
+    appclient_send(request->Client, http.Data, http.Length);
 }
 
 
@@ -80,25 +35,17 @@ void appserver_received(Message* request)
         }
     }
 
-    FunctionBind* bind = appserver_find_bind(request);
+    AppServerInfo* server = request->Client->Server;
+    FunctionBind*  bind   = binder_route_exist(server->BindList, server->Prefix, &request->Route);
     if (bind)
     {
-        bind->Function(request);
+        void* result = bind->Function(request);
+        appserver_response_send(server, request, HTTP_STATUS_OK, result);
     }
     else
     {
-
+        appserver_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
     }
-
-
-
-    // rotear metodo
-
-    // chamar metodo
-
-
-    // Recepção de todos os clients
-    // Cada entrada tem uma thread;
 }
 
 
@@ -207,7 +154,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)info);
     info->Handle             = server_socket;
 
-    info->Prefix = string_split(prefix, strlen(prefix), '/', 1, true);
+    info->Prefix = string_split(prefix, strlen(prefix), "/", 1, true);
                
     return info;
 }

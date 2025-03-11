@@ -7,6 +7,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{e474680e-7cdd-48af-8b06-18e9bb3fc820}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{0058662a-fc2d-41d4-9972-4bc354d87d3e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\appserver.h">
@@ -21,14 +24,17 @@
     <ClInclude Include="src\client_message.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\message_parser.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\utils\activity_binder.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\url_encoder.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\utils\message_assembler.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\message_assembler.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\utils\message_parser.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\url_encoder.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44,14 +50,17 @@
     <ClCompile Include="src\server_type.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\message_parser.c">
-      <Filter>src</Filter>
+    <ClCompile Include="src\utils\activity_binder.c">
+      <Filter>src\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\url_encoder.c">
-      <Filter>src</Filter>
+    <ClCompile Include="src\utils\message_assembler.c">
+      <Filter>src\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\message_assembler.c">
-      <Filter>src</Filter>
+    <ClCompile Include="src\utils\message_parser.c">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\url_encoder.c">
+      <Filter>src\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

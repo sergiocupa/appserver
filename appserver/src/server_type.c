@@ -171,7 +171,7 @@ FunctionBind* bind_create(const char* route, MessageMatchCallback function)
     FunctionBind* ar = (FunctionBind*)calloc(1,sizeof(FunctionBind));
 
     string_array_init(&ar->Route);
-    string_split_param(route, strlen(route), '/', 1, true, &ar->Route);
+    string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
 
     ar->Function = function;
     return ar;

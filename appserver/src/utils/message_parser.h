@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-    #include "server_type.h"
+    #include "../server_type.h"
 
 
     int message_parser_field(byte* data, int length, MessageFieldList* fields, int* position);

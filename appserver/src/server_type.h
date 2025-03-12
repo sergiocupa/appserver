@@ -43,6 +43,14 @@ extern "C" {
     HttpStatusCode;
 
 
+    typedef struct _ResourceBuffer
+    {
+        int Length;
+        byte* Data;
+    }
+    ResourceBuffer;
+
+
     struct _MessageFieldParam
     {
         bool IsScalar;
@@ -192,7 +200,9 @@ extern "C" {
 
     typedef struct _FunctionBind
     {
+        bool                 IsWebApplication;
         StringArray          Route;
+        String               AbsPathWebContent;
         MessageMatchCallback Function;
     }
     FunctionBind;
@@ -206,6 +216,14 @@ extern "C" {
     FunctionBindList;
 
 
+    typedef struct _AppServerList
+    {
+        int Count;
+        int MaxCount;
+        AppServerInfo** Items;
+    }
+    AppServerList;
+
 
     struct _AppServerInfo
     {
@@ -213,6 +231,7 @@ extern "C" {
         int                       Port;
         String                    AgentName;
         ContentTypeOption         DefaultWebApiObjectType;
+        String                    AbsLocal;
         StringArray*              Prefix;
         void*                     Handle;
         void*                     AcceptThread;
@@ -235,9 +254,16 @@ extern "C" {
     AppClientList* appclient_list_release(AppClientList* list);
     AppClientList* appclient_list_create();
 
-    void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function);
+    void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function, bool is_web_application);
     FunctionBindList* bind_list_release(FunctionBindList* list);
     FunctionBindList* bind_list_create();
+
+
+    void serverinfo_list_init(AppServerList* list);
+    void serverinfo_list_release(AppServerList* list);
+    void serverinfo_list_add(AppServerList* list, AppServerInfo* server);
+    void serverinfo_release(AppServerInfo* server);
+    AppServerInfo* serverinfo_create();
 
 
 

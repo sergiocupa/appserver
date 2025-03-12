@@ -176,9 +176,10 @@ AppClientList* appclient_list_create()
 
 
 
-FunctionBind* bind_create(const char* route, MessageMatchCallback function)
+FunctionBind* bind_create(const char* route, MessageMatchCallback function, bool is_web_application)
 {
     FunctionBind* ar = (FunctionBind*)calloc(1,sizeof(FunctionBind));
+    ar->IsWebApplication = is_web_application;
 
     string_array_init(&ar->Route);
     string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
@@ -197,7 +198,7 @@ FunctionBind* bind_release(FunctionBind* _this)
     return 0;
 }
 
-void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function)
+void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function, bool is_web_application)
 {
     if (list)
     {
@@ -207,7 +208,7 @@ void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallba
             list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
         }
 
-        list->Items[list->Count] = bind_create(route, function);
+        list->Items[list->Count] = bind_create(route, function, is_web_application);
         list->Count++;
     }
 }
@@ -236,5 +237,63 @@ FunctionBindList* bind_list_create()
     ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
     return ar;
 }
+
+
+
+
+void serverinfo_list_init(AppServerList* list)
+{
+    list->Count = 0;
+    list->MaxCount = 100;
+    list->Items = (void**)malloc(list->MaxCount * sizeof(void*));
+}
+
+
+void serverinfo_list_release(AppServerList* list)
+{
+    if (list)
+    {
+        free(list->Items);
+        free(list);
+    }
+    return 0;
+}
+
+
+void serverinfo_list_add(AppServerList* list, AppServerInfo* server)
+{
+    if (list)
+    {
+        if (list->Count >= list->MaxCount)
+        {
+            list->MaxCount = ((list->Count + sizeof(AppServerInfo)) + list->MaxCount) * 2;
+            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+        }
+
+        list->Items[list->Count] = server;
+        list->Count++;
+    }
+}
+
+void serverinfo_release(AppServerInfo* server)
+{
+    string_release_data(&server->AbsLocal);
+
+    appclient_list_release(server->Clients);
+    free(server);
+}
+
+AppServerInfo* serverinfo_create()
+{
+    AppServerInfo* server;
+    server = (AppServerInfo*)calloc(1, sizeof(AppServerInfo));
+    server->Clients = appclient_list_create();
+    server->DefaultWebApiObjectType = APPLICATION_JSON;
+
+    string_init(&server->AbsLocal);
+
+    return server;
+}
+
 
 

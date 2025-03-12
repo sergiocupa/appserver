@@ -26,6 +26,7 @@
     <ClInclude Include="src\utils\activity_binder.h" />
     <ClInclude Include="src\utils\message_assembler.h" />
     <ClInclude Include="src\utils\message_parser.h" />
+    <ClInclude Include="src\utils\program_util.h" />
     <ClInclude Include="src\utils\url_encoder.h" />
   </ItemGroup>
   <ItemGroup>
@@ -99,7 +100,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -146,7 +147,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

@@ -10,23 +10,113 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+int ServerInitialized = false;
+MessageField HTTP_HEADER_ALLOW_HEADERS;
+MessageField HTTP_HEADER_ALLOW_METHODS;
+AppServerList Servers;
 
 
 
-void appserver_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, void* object)
+int WsaInit()
+{
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+    {
+        printf("Erro na inicialização do Winsock. Código: %d\n", WSAGetLastError());
+        return 1;
+    }
+}
+
+
+void appserver_create_default_headers()
+{
+    memset(&HTTP_HEADER_ALLOW_HEADERS, 0, sizeof(MessageField));
+    memset(&HTTP_HEADER_ALLOW_METHODS, 0, sizeof(MessageField));
+
+    string_init(&HTTP_HEADER_ALLOW_HEADERS.Name);
+    string_init(&HTTP_HEADER_ALLOW_HEADERS.Param.Value);
+    string_append(&HTTP_HEADER_ALLOW_HEADERS.Name, "Access-Control-Allow-Headers");
+    string_append(&HTTP_HEADER_ALLOW_HEADERS.Param.Value, "Content-Type, Authorization");
+
+    string_init(&HTTP_HEADER_ALLOW_METHODS.Name);
+    string_init(&HTTP_HEADER_ALLOW_METHODS.Param.Value);
+    string_append(&HTTP_HEADER_ALLOW_METHODS.Name, "Access-Control-Allow-Methods");
+    string_append(&HTTP_HEADER_ALLOW_METHODS.Param.Value, "GET, POST, OPTIONS");
+}
+
+
+void appserver_init()
+{
+    if (ServerInitialized) return;
+
+    WsaInit();
+    appserver_create_default_headers();
+    serverinfo_list_init(&Servers);
+
+    ServerInitialized = true;
+}
+
+
+void appserver_shutdown()
+{
+    if (!ServerInitialized) return;
+
+
+    //...
+
+
+    ServerInitialized = false;
+}
+
+
+void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, void* object)
 {
     String http;
     string_init(&http);
-
     message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0, 0, server->DefaultWebApiObjectType, object, &http);
+    appclient_send(request->Client, http.Data, http.Length);
+}
 
+void appserver_http_default_options(AppServerInfo* server, Message* request)
+{
+    String http;
+    string_init(&http);
+    MessageField defauts[2] = {HTTP_HEADER_ALLOW_METHODS, HTTP_HEADER_ALLOW_HEADERS};
+    message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Data, request->Client->LocalHost.Data, &defauts, 2, 0, 0, &http);
     appclient_send(request->Client, http.Data, http.Length);
 }
 
 
+bool appserver_web_process(AppServerInfo* server, Message* request)
+{
+    // busca no bind, para ver se pelo menos um em parte da rota, somente para direcionar pasta com conteudo
+    ResourceBuffer buffer = {0,0};
+    bool found = binder_get_web_content(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, &buffer);
+
+    if (found)
+    {
+        // Implementar opção de objeto com conteudo binario de uma pagina HTML ou Imagem por exemplo
+        ...
+
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer);
+    }
+    else
+    {
+        appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
+    }
+}
+
 
 void appserver_received(Message* request)
 {
+    AppServerInfo* server = request->Client->Server;
+
+    if (request->Cmd == CMD_OPTIONS)
+    {
+        appserver_http_default_options(server, request);
+        return;
+    }
+
     if (request->ContentLength > 0)
     {
         if (request->ContentType == APPLICATION_JSON)
@@ -35,31 +125,22 @@ void appserver_received(Message* request)
         }
     }
 
-    AppServerInfo* server = request->Client->Server;
-    FunctionBind*  bind   = binder_route_exist(server->BindList, server->Prefix, &request->Route);
+    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
     if (bind)
     {
         void* result = bind->Function(request);
-        appserver_response_send(server, request, HTTP_STATUS_OK, result);
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, result);
     }
     else
     {
-        appserver_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
+        bool found = appserver_web_process(server, request);
+        if (found)
+        {
+            appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
+        }
     }
 }
 
-
-bool WsaInitialized = false;
-int WsaInit()
-{
-    WSADATA wsa;
-    if (!WsaInitialized && WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-    {
-        printf("Erro na inicialização do Winsock. Código: %d\n", WSAGetLastError());
-        return 1;
-    }
-    WsaInitialized = true;
-}
 
 
 void accept_client_proc(void* ptr)
@@ -89,31 +170,15 @@ void accept_client_proc(void* ptr)
 }
 
 
-// Bind de funcoes
-//     funcao com parametro estrutura do Request
-//     funcao com retorno o objeto Response;
-
-void appserver_release(AppServerInfo* server)
-{
-    server->IsRunning = false;
-
-    // ...
-}
-
-
-
-
 
 
 AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, FunctionBindList* bind_list)
 {
-    AppServerInfo* info;
-    info = (AppServerInfo*)malloc(sizeof(AppServerInfo));
-    memset(info,0, sizeof(AppServerInfo));
-    info->Clients = appclient_list_create();
-    info->BindList = bind_list;
+    appserver_init();
+
+    AppServerInfo* info = serverinfo_create();
+    info->BindList  = bind_list;
     info->IsRunning = true;
-    info->DefaultWebApiObjectType = APPLICATION_JSON;
 
     string_append(&info->AgentName, agent_name);
 
@@ -155,6 +220,9 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->Handle             = server_socket;
 
     info->Prefix = string_split(prefix, strlen(prefix), "/", 1, true);
-               
+
+    binder_get_web_content_path(info->BindList, info->Prefix, &info->AbsLocal);
+
+    serverinfo_list_add(&Servers, info);          
     return info;
 }

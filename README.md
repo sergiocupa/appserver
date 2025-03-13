@@ -10,7 +10,7 @@ Features to be implemented:
 - [X] Create method mapping tests;
 - [X] Download resources and HTML pages for presentation in browser;
 - [ ] Browser tests
-- [ ] Websocket;
+- [ ] Handshake for websocket protocol;
 - [ ] Javascript for routing the client side of the websocket connection, for bidirectional communication using mapping;
 - [ ] Websocket tests;
 - [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser;

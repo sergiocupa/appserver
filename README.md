@@ -8,13 +8,14 @@ Features to be implemented:
 - [X] Finalize parser and tests;
 - [X] Method mapping, to forward actions to requests;
 - [X] Create method mapping tests;
-- [ ] Download resources and HTML pages for presentation in browser;
-- [ ] LINUX platform;
-- [ ] Optimization and simplification;
-- [ ] Websocket;
+- [X] Download resources and HTML pages for presentation in browser;
+- [ ] Browser tests
+- [ ] Handshake for websocket protocol;
 - [ ] Javascript for routing the client side of the websocket connection, for bidirectional communication using mapping;
 - [ ] Websocket tests;
 - [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser;
 - [ ] Javascript to manage the arrival buffer of video parts on the client side;
 - [ ] Testing the video stream with browser;
+- [ ] LINUX platform;
+- [ ] Optimization and simplification;
 - [ ] SSL support for HTTPs;

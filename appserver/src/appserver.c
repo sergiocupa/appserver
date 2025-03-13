@@ -4,7 +4,12 @@
 #include "utils/message_parser.h"
 #include "utils/activity_binder.h"
 #include "yason.h"
-#include <winsock2.h>
+
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
+#include <ws2tcpip.h>
+#endif
+
 #include <stdio.h>
 #include <process.h>
 
@@ -95,15 +100,14 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
 
     if (found)
     {
-        // Implementar opção de objeto com conteudo binario de uma pagina HTML ou Imagem por exemplo
-        ...
-
         appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer);
     }
     else
     {
         appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
     }
+
+    return false;
 }
 
 
@@ -133,11 +137,7 @@ void appserver_received(Message* request)
     }
     else
     {
-        bool found = appserver_web_process(server, request);
-        if (found)
-        {
-            appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
-        }
+        appserver_web_process(server, request);
     }
 }
 

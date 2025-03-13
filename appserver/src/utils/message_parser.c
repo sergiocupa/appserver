@@ -1,5 +1,4 @@
 #include "message_parser.h"
-#include "url_encoder.h"
 #include <process.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,12 +131,12 @@ void message_parser_method_param_populate(String* content, int name_begin, int n
 {
 	if (name_begin >= 0)
 	{
-		param->Name.Data      = url_decode_s(content->Data + name_begin, name_end - name_begin, &param->Name.Length);
+		param->Name.Data      = string_http_url_decode_s(content->Data + name_begin, name_end - name_begin, &param->Name.Length);
 		param->Name.MaxLength = param->Name.Length;
 	}
 	if (value_begin > name_begin)
 	{
-		param->Value.Data      = url_decode_s(content->Data + value_begin, value_end- value_begin, &param->Value.Length);
+		param->Value.Data      = string_http_url_decode_s(content->Data + value_begin, value_end- value_begin, &param->Value.Length);
 		param->Value.MaxLength = param->Value.Length;
 	}
 }

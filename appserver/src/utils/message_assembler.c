@@ -49,13 +49,24 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 }
 
 
-String* message_write_content(void* object, ContentTypeOption content_type)
+
+ResourceBuffer* message_write_content(void* object, ContentTypeOption content_type)
 {
-	if (object)
+	if (object && content_type != CONTENT_TYPE_NONE)
 	{
 		if (content_type == APPLICATION_JSON)
 		{
-			return yason_render((Element*)object, 1);
+			String* json = yason_render((Element*)object, 1);
+
+			ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+			string_utf8_to_bytes(json->Data, &buffer->Data, &buffer->Length);
+			return buffer;
+		}
+		else
+		{
+			ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+			resource_buffer_copy((ResourceBuffer*)object, buffer);
+			return buffer;
 		}
 	}
 	return 0;

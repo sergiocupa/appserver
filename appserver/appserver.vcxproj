@@ -27,7 +27,6 @@
     <ClInclude Include="src\utils\message_assembler.h" />
     <ClInclude Include="src\utils\message_parser.h" />
     <ClInclude Include="src\utils\program_util.h" />
-    <ClInclude Include="src\utils\url_encoder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appclient.c" />
@@ -37,7 +36,6 @@
     <ClCompile Include="src\utils\activity_binder.c" />
     <ClCompile Include="src\utils\message_assembler.c" />
     <ClCompile Include="src\utils\message_parser.c" />
-    <ClCompile Include="src\utils\url_encoder.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -101,6 +99,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -123,6 +122,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)submodules\utility\stringlib\include;$(ProjectDir)submodules\utility\platformlib\include;$(ProjectDir)submodules\utility\numericlib\include;$(ProjectDir)submodules\utility\listlib\include</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -148,6 +150,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -170,6 +173,9 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(ProjectDir)submodules\utility\stringlib\include;$(ProjectDir)submodules\utility\platformlib\include;$(ProjectDir)submodules\utility\numericlib\include;$(ProjectDir)submodules\utility\listlib\include</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>

@@ -245,7 +245,7 @@ extern "C" {
     MessageField* message_field_release(MessageField* ins);
     void message_field_list_init(MessageFieldList* list);
     void message_field_list_add(MessageFieldList* list, MessageField* field);
-    void message_field_list_release(MessageFieldList* list);
+    void message_field_list_release(MessageFieldList* list, bool only_data);
     Message* message_create();
     void message_release(Message* m);
 
@@ -264,7 +264,7 @@ extern "C" {
     void serverinfo_list_add(AppServerList* list, AppServerInfo* server);
     void serverinfo_release(AppServerInfo* server);
     AppServerInfo* serverinfo_create();
-
+    void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest);
 
 
 #ifdef __cplusplus

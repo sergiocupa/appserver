@@ -297,3 +297,15 @@ AppServerInfo* serverinfo_create()
 
 
 
+void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest)
+{
+    if (source && dest && source->Data && source->Length >= 0)
+    {
+        dest->Length = source->Length;
+        dest->Data = malloc(dest->Length);
+
+        memcpy(dest->Data, source->Data, dest->Length);
+    }
+}
+
+

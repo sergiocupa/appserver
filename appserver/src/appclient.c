@@ -1,7 +1,11 @@
 #include "appclient.h"
 #include "utils/message_parser.h"
-#include <winsock2.h>
+
+#ifndef _WINSOCKAPI_
+#define _WINSOCKAPI_
 #include <ws2tcpip.h>
+#endif
+
 #include <process.h>
 #include <string.h>
 #include <stdlib.h>

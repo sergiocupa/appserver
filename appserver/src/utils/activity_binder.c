@@ -145,7 +145,7 @@ void binder_assemble_local(String* local, const char* abs_path, StringArray* pre
 
     if (abs_path)
     {
-        string_append(&local, abs_path);
+        string_append(local, abs_path);
     }
 
     binder_append_route(local, prefix, 0, (local->Length > leng));

@@ -108,7 +108,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug;$(ProjectDir)\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib;filelib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -159,7 +159,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug;$(ProjectDir)\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib;filelib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

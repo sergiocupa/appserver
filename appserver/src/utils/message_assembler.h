@@ -7,6 +7,10 @@ extern "C" {
 
     #include "../server_type.h"
 
+
+	const char* message_assembler_append_http_status(HttpStatusCode http_satus);
+	const char* message_assembler_append_content_type(ContentTypeOption content_type);
+
 	
 	void message_assembler_prepare
 	(

@@ -14,11 +14,11 @@ void binder_append_route(String* content, StringArray* route, int route_start, b
         int im = route_start;
         while (im < CNT)
         {
-            string_append(content, route->Items[im]);
+            string_append_s(content, route->Items[im]);
             string_append_char(content, '\\');
             im++;
         }
-        string_append(content, route->Items[im]);
+        string_append_s(content, route->Items[im]);
     }
 }
 
@@ -109,6 +109,7 @@ bool binder_get_web_content(FunctionBindList* binders, StringArray* prefix, Stri
                     if (bind->Route.Count > 0 && string_equals_s(bind->Route.Items[0], route->Items[ix]))
                     {
                         found2 = true;
+                        break;
                     }
                     ax++;
                 }
@@ -120,17 +121,22 @@ bool binder_get_web_content(FunctionBindList* binders, StringArray* prefix, Stri
                     string_append_s(&amm, abs_path);
                     binder_append_route(&amm, route, ix, true);
 
-                    if (file_exists(amm.Data))
-                    {
+                    // pegar extensão do arquivo para definir o type para o request
+                    // corrigir erro na funcao file_exists()
+
+                    
+
+                  //  if (file_exists(amm.Data))
+                   // {
                         byte* data = 0; int length = 0;
-                        bool read = file_read_bin(amm.Data, (byte**)data, &length);
+                        bool read = file_read_bin(amm.Data, (byte**)&data, &length);
                         if (read)
                         {
                             buffer->Length = length;
                             buffer->Data   = data;
                             return true;
                         }
-                    }
+                    //}
                 }
             }
         }

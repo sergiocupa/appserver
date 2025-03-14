@@ -46,6 +46,8 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 	case VIDEO_WEBM:               return "video/webm";
 	case MULTIPART_FORMDATA:       return "multipart/form-data";
 	}
+
+	return "<unknown>";
 }
 
 
@@ -59,7 +61,7 @@ ResourceBuffer* message_write_content(void* object, ContentTypeOption content_ty
 			String* json = yason_render((Element*)object, 1);
 
 			ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-			string_utf8_to_bytes(json->Data, &buffer->Data, &buffer->Length);
+			string_utf8_to_bytes(json->Data, (byte**)&buffer->Data, &buffer->Length);
 			return buffer;
 		}
 		else

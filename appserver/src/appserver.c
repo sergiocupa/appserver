@@ -21,6 +21,37 @@ MessageField HTTP_HEADER_ALLOW_METHODS;
 AppServerList Servers;
 
 
+void _ReportRequest(Message* request)
+{
+    char* a  = message_command_titule(request->Cmd);
+    char* tp = message_assembler_append_content_type(request->ContentType);
+
+    String b;
+    string_init(&b);
+    if (request->Route.Count > 0)
+    {
+        int CNT = request->Route.Count - 1;
+        int ix = 0;
+        while (ix < CNT)
+        {
+            string_append_s(&b, request->Route.Items[ix]);
+            string_append_char(&b, '/');
+            ix++;
+        }
+        string_append_s(&b, request->Route.Items[ix]);
+    }
+
+    printf("Received Request: %s | Route: '%s' | Type: %s | Content Length: %d", a, b.Data, tp, request->ContentLength);
+    string_release_data(&b);
+}
+
+void ReportRequest(Message* request)
+{
+    //#ifdef _DEBUG
+    _ReportRequest(request);
+    //#endif 
+}
+
 
 int WsaInit()
 {
@@ -111,9 +142,13 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
 }
 
 
+
 void appserver_received(Message* request)
 {
     AppServerInfo* server = request->Client->Server;
+
+    ReportRequest(request);
+    
 
     if (request->Cmd == CMD_OPTIONS)
     {

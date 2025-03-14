@@ -15,6 +15,21 @@ typedef struct _ParseMatch
 ParseMatch;
 
 
+const char* message_command_titule(MessageCommand cmd)
+{
+	switch (cmd)
+	{
+	case CMD_NONE:           return "<None>";
+	case CMD_GET:            return "GET";
+	case CMD_OPTIONS:        return "OPTIONS";
+	case CMD_POST:           return "POST";
+	case CMD_ACTION:         return "ACTION";
+	case CMD_CALLBACK:       return "CALLBACK";
+	case CMD_ACKNOWLEDGMENT: return "ACKNOWLEDGMENT";
+	}
+}
+
+
 void message_field_param_add(byte* data, int data_leng, int position, int length, MessageFieldParam* param);
 
 

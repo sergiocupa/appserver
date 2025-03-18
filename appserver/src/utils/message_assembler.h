@@ -10,19 +10,7 @@ extern "C" {
 
 	const char* message_assembler_append_http_status(HttpStatusCode http_satus);
 	const char* message_assembler_append_content_type(ContentTypeOption content_type);
-
-	
-	void message_assembler_prepare
-	(
-		HttpStatusCode http_status,
-		const char* agent, 
-		const char* host, 
-		MessageField** headers,
-		int header_length, 
-		ContentTypeOption content_type, 
-		void* object, 
-		String* http
-	);
+	void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ResourceBuffer* object, ResourceBuffer* http, int cid);
 
 
 #ifdef __cplusplus

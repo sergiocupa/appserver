@@ -14,6 +14,7 @@ extern "C" {
     void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, int length);
     MessageParser* message_parser_create(void(*match_callback) (Message*));
 
+    void message_field_param_add(byte* data, int begin, int end, bool first, bool is_within, MessageFieldParam* param);
 
 #ifdef __cplusplus
 }

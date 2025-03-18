@@ -30,7 +30,7 @@ const char* message_command_titule(MessageCommand cmd)
 }
 
 
-void message_field_param_add(byte* data, int data_leng, int position, int length, MessageFieldParam* param);
+//void message_field_param_add(byte* data, int data_leng, int position, int length, MessageFieldParam* param);
 
 
 void message_field_param_data(byte* data, int data_leng, int position, int length, MessageFieldParam* param)
@@ -48,7 +48,7 @@ void message_field_param_data(byte* data, int data_leng, int position, int lengt
 }
 
 
-void message_field_param_add(byte* data, int begin, int end, bool first, MessageFieldParam* param)
+void message_field_param_add(byte* data, int begin, int end, bool first, bool is_within, MessageFieldParam* param)
 {
 	if (((begin +1) < end) && (data[begin] == ' '))
 	{
@@ -56,28 +56,43 @@ void message_field_param_add(byte* data, int begin, int end, bool first, Message
 	}
 
 	int m = 0;
-	int r = string_index_first(data, end+1, " ,;", 3, begin, &m);
+	int r = !is_within ? string_index_first(data, end +1, " ,;(", 4, begin, &m)
+		               : string_index_first(data, end +1, ",;)", 3, begin, &m);
 
 	if (r >= 0)
 	{
-		int en = m - begin;
+		if (!is_within && r == 3)
+		{
+			param->IsHardware = true;
+			is_within = true;
+			message_field_param_add(data, (m + 1), end, false, is_within, param);
+			return;
+		}
 
+		int en = m - begin;
 		if (en > 0)
 		{
-			message_field_param_data(data, end+1, begin, (m- begin), param);
+			if (is_within && r == 2)
+			{
+				is_within = false;
+			}
 
-			if (r == 0 || r == 1) param->IsEndGroup = true;
-			                 else param->IsEndParam = true;
+			message_field_param_data(data, end + 1, begin, (m - begin), param);
 
-			param->Next = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
-			message_field_param_add(data, (m + 1), end, false, param->Next);
+			param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+			param->Next->Previus = param;
+			param->Next->IsHardware = is_within;
+
+			message_field_param_add(data, (m + 1), end, false, is_within, param->Next);
+
+			if (r == 0 || r == 1) param->IsEndGroup = true; else param->IsEndParam = true;
 		}
 		else
 		{
 			param->IsEndGroup = true;
 			param->IsEndParam = true;
-			param->IsScalar   = first;
-			message_field_param_data(data, end +1, begin, (end-begin), param);
+			param->IsScalar = first;
+			message_field_param_data(data, end + 1, begin, (end - begin), param);
 		}
 	}
 	else
@@ -109,7 +124,7 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 				MessageField* field = message_field_create(true);
 				string_sub(data, length, p, m - p, false, &field->Name);
 
-				message_field_param_add(data, (m + 1), end, true, &field->Param);
+				message_field_param_add(data, (m + 1), end, true, false, &field->Param);
 
 				message_field_list_add(fields, field);
 				result = 1;
@@ -549,15 +564,13 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 }
 
 
-MessageParser* message_parser_create(void(*match_callback) (Message*))
+MessageParser* message_parser_create(MessageMatchCallback call)
 {
-	void* calback = match_callback;
-
 	MessageParser* parser = (MessageParser*)malloc(sizeof(MessageParser));
 	memset(parser, 0, sizeof(MessageParser));
 
 	parser->Buffer        = string_new();
-	parser->MessageMatch  = calback;
+	parser->MessageMatch  = call;
 
 	return parser;
 }

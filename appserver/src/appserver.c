@@ -41,7 +41,7 @@ void _ReportRequest(Message* request)
         string_append_s(&b, request->Route.Items[ix]);
     }
 
-    printf("Received Request: %s | Route: '%s' | Type: %s | Content Length: %d", a, b.Data, tp, request->ContentLength);
+    printf("REQUEST  | Client: %d | Method: %s | Route: '%s' | Type: %s | Content Length: %d\n", (int)request->Client->Handle, a, b.Data, tp, request->ContentLength);
     string_release_data(&b);
 }
 
@@ -105,20 +105,22 @@ void appserver_shutdown()
 }
 
 
-void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, void* object)
+void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, ResourceBuffer* object)
 {
-    String http;
-    string_init(&http);
-    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0, 0, server->DefaultWebApiObjectType, object, &http);
+    ResourceBuffer http;
+    resource_buffer_init(&http);
+
+    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0, 0, object, &http, (int)request->Client->Handle);
     appclient_send(request->Client, http.Data, http.Length);
 }
 
 void appserver_http_default_options(AppServerInfo* server, Message* request)
 {
-    String http;
-    string_init(&http);
+    ResourceBuffer http;
+    resource_buffer_init(&http);
+
     MessageField defauts[2] = {HTTP_HEADER_ALLOW_METHODS, HTTP_HEADER_ALLOW_HEADERS};
-    message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Data, request->Client->LocalHost.Data, &defauts, 2, 0, 0, &http);
+    message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Data, request->Client->LocalHost.Data, &defauts, 2, 0, &http, (int)request->Client->Handle);
     appclient_send(request->Client, http.Data, http.Length);
 }
 
@@ -126,8 +128,9 @@ void appserver_http_default_options(AppServerInfo* server, Message* request)
 bool appserver_web_process(AppServerInfo* server, Message* request)
 {
     // busca no bind, para ver se pelo menos um em parte da rota, somente para direcionar pasta com conteudo
-    ResourceBuffer buffer = {0,0};
-    bool found = binder_get_web_content(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, &buffer);
+    ResourceBuffer buffer;
+    memset(&buffer, 0, sizeof(ResourceBuffer));
+    bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, &buffer);
 
     if (found)
     {
@@ -148,7 +151,6 @@ void appserver_received(Message* request)
     AppServerInfo* server = request->Client->Server;
 
     ReportRequest(request);
-    
 
     if (request->Cmd == CMD_OPTIONS)
     {
@@ -156,19 +158,25 @@ void appserver_received(Message* request)
         return;
     }
 
-    if (request->ContentLength > 0)
-    {
-        if (request->ContentType == APPLICATION_JSON)
-        {
-            request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
-        }
-    }
-
     FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
     if (bind)
     {
+        if (request->ContentLength > 0)
+        {
+            if (request->ContentType == APPLICATION_JSON)
+            {
+                request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
+            }
+        }
+
         void* result = bind->Function(request);
-        appserver_http_response_send(server, request, HTTP_STATUS_OK, result);
+
+        String* json = yason_render((Element*)result, 1);
+        ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+        buffer->Type = APPLICATION_JSON;
+        string_utf8_to_bytes(json->Data, (byte**)&buffer->Data, &buffer->Length);
+
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer);
     }
     else
     {
@@ -197,9 +205,7 @@ void accept_client_proc(void* ptr)
             return 1;
         }
 
-        AppClientInfo* cli = appclient_create(client_socket, server);
-        cli->Parser = message_parser_create(appserver_received);
-
+        AppClientInfo* cli = appclient_create(client_socket, server, appserver_received);
         appclient_list_add(server->Clients, cli);
     }
 }
@@ -258,6 +264,8 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 
     binder_get_web_content_path(info->BindList, info->Prefix, &info->AbsLocal);
 
-    serverinfo_list_add(&Servers, info);          
+    serverinfo_list_add(&Servers, info);       
+
+    printf("Server instantiated '%s' | Port: %d | Prefix: '%s'\n", agent_name, port, prefix);
     return info;
 }

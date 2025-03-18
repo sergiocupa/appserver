@@ -51,58 +51,45 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 }
 
 
-
-ResourceBuffer* message_write_content(void* object, ContentTypeOption content_type)
+void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ResourceBuffer* object, ResourceBuffer* http, int cid)
 {
-	if (object && content_type != CONTENT_TYPE_NONE)
-	{
-		if (content_type == APPLICATION_JSON)
-		{
-			String* json = yason_render((Element*)object, 1);
+	const char* es = message_assembler_append_http_status(http_status);
 
-			ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-			string_utf8_to_bytes(json->Data, (byte**)&buffer->Data, &buffer->Length);
-			return buffer;
-		}
-		else
-		{
-			ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-			resource_buffer_copy((ResourceBuffer*)object, buffer);
-			return buffer;
-		}
-	}
-	return 0;
-}
+	resource_buffer_append_format(http, "HTTP/1.1 %d %s\r\n", (int)http_status, es);
+	resource_buffer_append_format(http, "Host: %s\r\n", host);
 
+	byte* buffer = 0; int leng = 0;
+	string_utf8_to_bytes(agent, (byte**)&buffer, &leng);
+	resource_buffer_append_string(http, "User-Agent: ");
+	resource_buffer_append(http, buffer, leng);
+	resource_buffer_append_string(http, "\r\n");
+	free(buffer);
 
-void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ContentTypeOption content_type, void* object, String* http)
-{
-	string_append_format(http, "HTTP/1.1 %d %s\r\n", (int)http_status, message_assembler_append_http_status(http_status));
-	string_append_format(http, "Host: %s\r\n", host);
-	string_append_format(http, "User-Agent: %s\r\n", agent);
-	string_append(http, "Access-Control-Allow-Origin: *\r\n");
+	resource_buffer_append_string(http, "Access-Control-Allow-Origin: *\r\n");
 
 	int ix = 0;
 	while (ix < header_length)
 	{
 		MessageField* header = headers[ix];
-		string_append_format(http, "%s: %s\r\n", header->Name.Data, header->Param.Value.Data);
+		resource_buffer_append_format(http, "%s: %s\r\n", header->Name.Data, header->Param.Value.Data);
 		ix++;
 	}
 
-	string_append_format(http, "Content-Type: %s\r\n", message_assembler_append_content_type(content_type));
-
-	int leng = 0;
-	String* obj_content = message_write_content(object, content_type);
-	if (obj_content && obj_content->Length > 0)
+	if (object && object->Length > 0)
 	{
-		leng = obj_content->Length;
-		string_append_format(http, "Content-Length: %d\r\n\r\n", leng);
-		string_append_s(http, obj_content);
-		string_release(obj_content);
+		const char* desc_type = message_assembler_append_content_type(object->Type);
+
+		resource_buffer_append_format(http, "Content-Type: %s\r\n", desc_type);
+
+		resource_buffer_append_format(http, "Content-Length: %d\r\n\r\n", object->Length);
+		resource_buffer_append(http, object->Data, object->Length);
+
+		printf("RESPONSE | Client: %d | Status: %s | Type: %s | Content Length: %d\n", cid, es, desc_type, object->Length);
 	}
 	else
 	{
-		string_append_format(http, "Content-Length: %d\r\n\r\n", leng);
+		string_append_format(http, "Content-Length: %d\r\n\r\n", 0);
+
+		printf("RESPONSE | Client: %d | Status: %s | Type: | Content Length: 0\n", cid, es);
 	}
 }

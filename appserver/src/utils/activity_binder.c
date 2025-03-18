@@ -2,6 +2,148 @@
 #include "program_util.h"
 #include "stringlib.h"
 #include "filelib.h"
+#include <stdlib.h>
+
+
+bool _file_exists(const char* path)
+{
+    bool result = false;
+
+    DWORD file_attr = GetFileAttributes(path);
+
+    if (file_attr == INVALID_FILE_ATTRIBUTES)
+    {
+        result = (GetLastError() != ERROR_FILE_NOT_FOUND);
+    }
+    else
+    {
+        result = true;
+    }
+    return result;
+}
+
+
+static ContentTypeOption get_type_file(String* path)
+{
+    int ix = path->Length;
+    while (ix > 0)
+    {
+        ix--;
+        if (path->Data[ix] == '.')
+        {
+            break;
+        }
+    }
+    if (ix + 1 < path->Length)
+    {
+        int cnt = path->Length - ix;
+        if (string_equals_range(path, ix, cnt, ".html"))
+        {
+            return TEXT_HTML;
+        }
+        else if (string_equals_range(path, ix, cnt, ".css"))
+        {
+            return TEXT_CSS;
+        }
+        else if (string_equals_range(path, ix, cnt, ".js"))
+        {
+            return APPLICATION_JAVASCRIPT;
+        }
+        else if (string_equals_range(path, ix, cnt, ".json"))
+        {
+            return APPLICATION_JSON;
+        }
+        else if (string_equals_range(path, ix, cnt, ".xml"))
+        {
+            return APPLICATION_XML;
+        }
+        else if (string_equals_range(path, ix, cnt, ".jpeg"))
+        {
+            return IMAGE_JPEG;
+        }
+        else if (string_equals_range(path, ix, cnt, ".png"))
+        {
+            return IMAGE_PNG;
+        }
+        else if (string_equals_range(path, ix, cnt, ".gif"))
+        {
+            return IMAGE_GIF;
+        }
+        else if (string_equals_range(path, ix, cnt, ".svg"))
+        {
+            return IMAGE_SVG;
+        }
+        else if (string_equals_range(path, ix, cnt, ".mp3"))
+        {
+            return AUDIO_MPEG;
+        }
+        else if (string_equals_range(path, ix, cnt, ".ogg"))
+        {
+            return AUDIO_OGG;
+        }
+        else if (string_equals_range(path, ix, cnt, ".mp4"))
+        {
+            return VIDEO_MP4;
+        }
+        else if (string_equals_range(path, ix, cnt, ".webm"))
+        {
+            return VIDEO_WEBM;
+        }
+        else if (string_equals_range(path, ix, cnt, ".pdf"))
+        {
+            return APPLICATION_PDF;
+        }
+        else if (string_equals_range(path, ix, cnt, ".gzip"))
+        {
+            return APPLICATION_GZIP;
+        }
+        else if (string_equals_range(path, ix, cnt, ".zip"))
+        {
+            return APPLICATION_ZIP;
+        }
+        else if (string_equals_range(path, ix, cnt, ".bin"))
+        {
+            return APPLICATION_OCTET_STREAM;
+        }
+        /* else if (string_equals_range(path, ix, cnt, ".txt"))
+         {
+             return TEXT_PLAIN;
+         }*/
+
+    }
+    return TEXT_PLAIN;
+}
+
+
+ResourceBuffer _file_read_bin(const char* path_file)
+{
+    ResourceBuffer buffer;
+    memset(&buffer,0,sizeof(ResourceBuffer));
+
+    FILE* file;
+    errno_t fe = fopen_s(&file, path_file, "rb");
+
+    if (fe == 0)
+    {
+        fseek(file, 0, SEEK_END);
+        buffer.Length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        buffer.Data = malloc(buffer.Length);
+        size_t bytesRead = fread(buffer.Data, 1, buffer.Length, file);
+
+        if (bytesRead != buffer.Length)
+        {
+            perror("Erro ao ler o arquivo");
+            fclose(file);
+            return buffer;
+        }
+
+        fclose(file);
+        buffer.Type = APPLICATION_OCTET_STREAM;
+    }
+    return buffer;
+}
 
 
 void binder_append_route(String* content, StringArray* route, int route_start, bool append_backslash)
@@ -89,7 +231,7 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix,
 }
 
 
-bool binder_get_web_content(FunctionBindList* binders, StringArray* prefix, StringArray* route, String* abs_path, ResourceBuffer* buffer)
+bool binder_get_web_resource(FunctionBindList* binders, StringArray* prefix, StringArray* route, String* abs_path, ResourceBuffer* buffer)
 {
     if (route->Count > 0)
     {
@@ -121,28 +263,30 @@ bool binder_get_web_content(FunctionBindList* binders, StringArray* prefix, Stri
                     string_append_s(&amm, abs_path);
                     binder_append_route(&amm, route, ix, true);
 
-                    // pegar extensão do arquivo para definir o type para o request
-                    // corrigir erro na funcao file_exists()
+                    ContentTypeOption type = get_type_file(&amm);
+                    bool is_text = type == TEXT_HTML || type == TEXT_CSS || type == TEXT_JAVASCRIPT || type == TEXT_PLAIN || type == APPLICATION_JAVASCRIPT || type == APPLICATION_JSON || type == APPLICATION_XML;
 
-                    
-
-                  //  if (file_exists(amm.Data))
-                   // {
+                    // TO-DO: corrigir file_exists() na biblioteca 'filelib'
+                    if (_file_exists(amm.Data))
+                    {
                         byte* data = 0; int length = 0;
-                        bool read = file_read_bin(amm.Data, (byte**)&data, &length);
-                        if (read)
+                        bool s = is_text ? file_read_text(amm.Data, (byte**)&data, &length) : file_read_bin(amm.Data, (byte**)&data, &length);
+                        if (s != 0)
                         {
+                            buffer->Type   = type;
                             buffer->Length = length;
                             buffer->Data   = data;
                             return true;
                         }
-                    //}
+                    }
                 }
             }
         }
     }
     return false;
 }
+
+
 
 
 void binder_assemble_local(String* local, const char* abs_path, StringArray* prefix, StringArray* route)

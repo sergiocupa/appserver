@@ -43,22 +43,16 @@ extern "C" {
     HttpStatusCode;
 
 
-    typedef struct _ResourceBuffer
-    {
-        int Length;
-        byte* Data;
-    }
-    ResourceBuffer;
-
-
     struct _MessageFieldParam
     {
         bool IsScalar;
         bool IsEndGroup;
         bool IsEndParam;
+        bool IsHardware;
         String Name;
         String Value;
         MessageFieldParam* Next;
+        MessageFieldParam* Previus;
     };
 
 
@@ -130,6 +124,17 @@ extern "C" {
         MULTIPART_FORMDATA       = 20
     }
     ContentTypeOption;
+
+
+    typedef struct _ResourceBuffer
+    {
+        ContentTypeOption Type;
+        int               MaxLength;
+        int               Length;
+        byte*             Data;
+    }
+    ResourceBuffer;
+
 
     struct _Message
     {
@@ -264,7 +269,15 @@ extern "C" {
     void serverinfo_list_add(AppServerList* list, AppServerInfo* server);
     void serverinfo_release(AppServerInfo* server);
     AppServerInfo* serverinfo_create();
+
     void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest);
+    void resource_buffer_release(ResourceBuffer* source, bool only_data);
+
+    void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length);
+    void resource_buffer_init(ResourceBuffer* source);
+    void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, ...);
+    void resource_buffer_append_string(ResourceBuffer* buffer, const char* data);
+
 
 
 #ifdef __cplusplus

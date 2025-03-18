@@ -52,7 +52,7 @@ void appclient_received(void* ptr)
 }
 
 
-AppClientInfo* appclient_create(void* ptr, AppServerInfo* server)
+AppClientInfo* appclient_create(void* ptr, AppServerInfo* server, MessageMatchCallback receiver)
 {
     AppClientInfo* client = (AppClientInfo*)calloc(1, sizeof(AppClientInfo));
 
@@ -82,11 +82,12 @@ AppClientInfo* appclient_create(void* ptr, AppServerInfo* server)
     string_append_format(&client->RemoteHost, "%s:%d", ip_str, ntohs(addr.sin_port));
 
 
-    client->Handle      = ptr;
-    client->Server      = server;
-    client->IsConnected = true;
-
+    client->Handle         = ptr;
+    client->Server         = server;
+    client->IsConnected    = true;
+    client->Parser         = message_parser_create(receiver);
     client->ReceivedThread = _beginthread(appclient_received, 0, (void*)client);
 
+    printf("Accepted client '%s' | Handle: %d\n", client->LocalHost.Data, (int)ptr);
     return client;
 }

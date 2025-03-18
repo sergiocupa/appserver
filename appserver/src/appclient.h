@@ -13,7 +13,7 @@ extern "C" {
     void appclient_list_add(AppClientList* list, AppClientInfo* cli);
     AppClientList* appclient_list_release(AppClientList* list);
     AppClientList* appclient_list_create();
-    AppClientInfo* appclient_create(void* ptr, AppServerInfo* server);
+    AppClientInfo* appclient_create(void* ptr, AppServerInfo* server, MessageMatchCallback receiver);
 
 
 #ifdef __cplusplus

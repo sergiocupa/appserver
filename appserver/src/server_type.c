@@ -7,10 +7,20 @@ void message_field_param_release(MessageFieldParam* param);
 
 void message_field_param_release(MessageFieldParam* param)
 {
-    string_release_data(&param->Name);
-    string_release_data(&param->Value);
+    if (param->Name.MaxLength > 0)
+    {
+        string_release_data(&param->Name);
+        param->Name.MaxLength = 0;
+        param->Name.Length = 0;
+    }
+    if (param->Value.MaxLength > 0)
+    {
+        string_release_data(&param->Value);
+        param->Value.MaxLength = 0;
+        param->Value.Length = 0;
+    }
 
-    while (param->Next)
+    if (param->Next)
     {
         message_field_param_release(param->Next);
     }
@@ -19,8 +29,7 @@ void message_field_param_release(MessageFieldParam* param)
 
 MessageField* message_field_create(bool init_content)
 {
-    MessageField* ins = (MessageField*)malloc(sizeof(MessageField));
-    memset(ins, 0, sizeof(MessageField));
+    MessageField* ins = (MessageField*)calloc(1,sizeof(MessageField));
 
     if (init_content)
     {
@@ -58,7 +67,13 @@ void message_field_list_add(MessageFieldList* list, MessageField* field)
 
 MessageField* message_field_release(MessageField* ins)
 {
-    string_release_data(&ins->Name);
+    if (ins->Name.MaxLength > 0)
+    {
+        string_release_data(&ins->Name);
+        ins->Name.MaxLength = 0;
+        ins->Name.Length    = 0;
+    }
+
     message_field_param_release(&ins->Param);
     free(ins);
     return 0;
@@ -297,14 +312,99 @@ AppServerInfo* serverinfo_create()
 
 
 
+
+
+
+void resource_buffer_init(ResourceBuffer* source)
+{
+    memset(source, 0, sizeof(ResourceBuffer));
+    source->MaxLength = 1024;
+    source->Data      = calloc(1, source->MaxLength);
+}
+void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length)
+{
+    if (buffer)
+    {
+        if ((buffer->Length + length) >= buffer->MaxLength)
+        {
+            buffer->MaxLength = (int)((double)(buffer->Length + length) * 1.5);
+            buffer->Data      = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+        }
+
+        memcpy(buffer->Data + buffer->Length, data, length);
+        buffer->Length += length;
+        *(buffer->Data + buffer->Length) = 0;
+    }
+}
+void resource_buffer_append_string(ResourceBuffer* buffer, const char* data)
+{
+    if (buffer)
+    {
+        int length = strlen(data);
+
+        if ((buffer->Length + length) >= buffer->MaxLength)
+        {
+            buffer->MaxLength = (int)((double)(buffer->Length + length) * 1.5);
+            buffer->Data = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+        }
+
+        memcpy(buffer->Data + buffer->Length, data, length);
+        buffer->Length += length;
+        *(buffer->Data + buffer->Length) = 0;
+    }
+}
+
+void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, ...)
+{
+    if (buffer)
+    {
+        va_list ap;
+        char* fstr = NULL;
+        va_start(ap, format);
+        int len = vsnprintf(NULL, 0, format, ap);
+        va_end(ap);
+        fstr = (char*)malloc(len + 1);
+        va_start(ap, format);
+        if (fstr) vsnprintf(fstr, len + 1, format, ap);
+        va_end(ap);
+
+        if (len > 0)
+        {
+            if ((buffer->Length + len) >= buffer->MaxLength)
+            {
+                buffer->MaxLength = (int)((double)(buffer->Length + len) * 1.5);
+                buffer->Data = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+            }
+
+            memcpy(buffer->Data + buffer->Length, fstr, len);
+            buffer->Length += len;
+            *(buffer->Data + buffer->Length) = 0;
+        }
+        free(fstr);
+    }
+}
+
 void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest)
 {
     if (source && dest && source->Data && source->Length >= 0)
     {
         dest->Length = source->Length;
-        dest->Data = malloc(dest->Length);
+        dest->Data   = malloc(dest->Length);
 
         memcpy(dest->Data, source->Data, dest->Length);
+    }
+}
+
+void resource_buffer_release(ResourceBuffer* source, bool only_data)
+{
+    if (source)
+    {
+        if (!only_data)
+        {
+            free(source->Data);
+        }
+
+        free(source);
     }
 }
 

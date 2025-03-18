@@ -313,7 +313,7 @@ AppServerInfo* serverinfo_create()
 
 
 
-
+// TO-TO: revisar calculos de MaxLength. Definir curva para crescimento do tamanho de uso da memoria
 
 void resource_buffer_init(ResourceBuffer* source)
 {
@@ -327,7 +327,7 @@ void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length)
     {
         if ((buffer->Length + length) >= buffer->MaxLength)
         {
-            buffer->MaxLength = (int)((double)(buffer->Length + length) * 1.5);
+            buffer->MaxLength = (int)((double)(buffer->Length + length + buffer->MaxLength) * 1.5);
             buffer->Data      = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
         }
 
@@ -344,8 +344,8 @@ void resource_buffer_append_string(ResourceBuffer* buffer, const char* data)
 
         if ((buffer->Length + length) >= buffer->MaxLength)
         {
-            buffer->MaxLength = (int)((double)(buffer->Length + length) * 1.5);
-            buffer->Data = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+            buffer->MaxLength = (int)((double)(buffer->Length + length + buffer->MaxLength) * 1.5);
+            buffer->Data      = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
         }
 
         memcpy(buffer->Data + buffer->Length, data, length);

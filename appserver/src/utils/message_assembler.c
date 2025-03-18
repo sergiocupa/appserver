@@ -58,12 +58,15 @@ void message_assembler_prepare(HttpStatusCode http_status, const char* agent, co
 	resource_buffer_append_format(http, "HTTP/1.1 %d %s\r\n", (int)http_status, es);
 	resource_buffer_append_format(http, "Host: %s\r\n", host);
 
-	byte* buffer = 0; int leng = 0;
+	/*byte* buffer = 0; int leng = 0;
 	string_utf8_to_bytes(agent, (byte**)&buffer, &leng);
 	resource_buffer_append_string(http, "User-Agent: ");
 	resource_buffer_append(http, buffer, leng);
 	resource_buffer_append_string(http, "\r\n");
-	free(buffer);
+	free(buffer);*/
+
+	resource_buffer_append_format(http, "User-Agent: %s\r\n", agent);
+
 
 	resource_buffer_append_string(http, "Access-Control-Allow-Origin: *\r\n");
 
@@ -88,7 +91,7 @@ void message_assembler_prepare(HttpStatusCode http_status, const char* agent, co
 	}
 	else
 	{
-		string_append_format(http, "Content-Length: %d\r\n\r\n", 0);
+		resource_buffer_append_string(http, "Content-Length: 0\r\n\r\n");
 
 		printf("RESPONSE | Client: %d | Status: %s | Type: | Content Length: 0\n", cid, es);
 	}

@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <stdint.h>
+#include "../appserver/submodules/yason/yason/include/yason.h"
 
 
 void* video_player(Message* message)
@@ -27,6 +28,7 @@ void* app_root(Message* message)
 
 void* app_login(Message* message)
 {
+	Element* obj = (Element*)message->Object;
 
 	return 0;
 }
@@ -35,15 +37,6 @@ void* app_login(Message* message)
 
 int main()
 {
-	//const char* UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36";
-	//int dl = strlen(UA);
-
-	//MessageField* field = message_field_create(true);
-	//message_field_param_add(UA, 0, (dl-1), 0,false, &field->Param);
-
-	//field = message_field_release(field);
-
-
 	FunctionBindList* bind = bind_list_create();
 	bind_list_add(bind, "service/videoplayer", video_player, true);
 	bind_list_add(bind, "service/videolist", video_list, false);

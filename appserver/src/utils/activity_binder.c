@@ -258,6 +258,8 @@ bool binder_get_web_resource(FunctionBindList* binders, StringArray* prefix, Str
 
                 if (found2)  
                 {
+                    if(!buffer) return true;
+
                     String amm;
                     string_init(&amm);
                     string_append_s(&amm, abs_path);

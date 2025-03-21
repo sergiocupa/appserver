@@ -151,6 +151,9 @@ extern "C" {
         int                ContentLength;
         MessageFieldList   Fields;
         MessageFieldParam* Param;
+        String*            SecWebsocketKey;
+        String*            SecWebsocketAccept;
+        String*            Upgrade;
         void*              MatchThread;
 
         AppClientInfo*     Client;
@@ -198,6 +201,10 @@ extern "C" {
         int   Length;
         byte* Data;
     };
+
+
+
+    typedef void(*HeaderAppender) (void* args, ResourceBuffer* http);
 
 
 

@@ -449,6 +449,21 @@ void message_get_standard_header(Message* message)
 					}
 				}
 			}
+			else if (string_equals_range_s2leng(&field->Name, 0, 4, "Sec-", 4))
+			{
+				if (string_equals_range_s2leng(&field->Name, 4, 13, "WebSocket-Key", 13))
+				{
+					string_init_copy(&message->SecWebsocketKey, field->Param.Value.Data, field->Param.Value.Length);
+				}
+				else if (string_equals_range_s2leng(&field->Name, 4, 16, "WebSocket-Accept", 16))
+				{
+					string_init_copy(&message->SecWebsocketAccept, field->Param.Value.Data, field->Param.Value.Length);
+				}
+			}
+			else if (string_equals_range_s2leng(&field->Name, 0, 7, "Upgrade", 7))
+			{
+				string_init_copy(&message->Upgrade, field->Param.Value.Data, field->Param.Value.Length);
+	        }
 		}
 		ix++;
 	}

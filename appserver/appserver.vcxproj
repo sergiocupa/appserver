@@ -27,6 +27,7 @@
     <ClInclude Include="src\utils\message_assembler.h" />
     <ClInclude Include="src\utils\message_parser.h" />
     <ClInclude Include="src\utils\program_util.h" />
+    <ClInclude Include="src\utils\websocket_util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appclient.c" />
@@ -36,6 +37,7 @@
     <ClCompile Include="src\utils\activity_binder.c" />
     <ClCompile Include="src\utils\message_assembler.c" />
     <ClCompile Include="src\utils\message_parser.c" />
+    <ClCompile Include="src\utils\websocket_util.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -149,8 +151,10 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\submodules\utility\stringlib\include;$(ProjectDir)\submodules\utility\platformlib\include;$(ProjectDir)\submodules\utility\numericlib\include;$(ProjectDir)\submodules\yason\yason\include;$(ProjectDir)\submodules\utility\filelib\include;$(ProjectDir)\submodules\utility\shalib\include</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -159,7 +163,7 @@
     </Link>
     <Lib>
       <AdditionalLibraryDirectories>$(ProjectDir)\submodules\utility\x64\Debug;$(ProjectDir)\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib;filelib.lib</AdditionalDependencies>
+      <AdditionalDependencies>stringlib.lib;listlib.lib;numericlib.lib;yason.lib;filelib.lib;shalib.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

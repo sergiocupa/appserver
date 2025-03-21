@@ -1,5 +1,6 @@
 #include "message_assembler.h"
 #include "yason.h"
+#include <string.h>
 
 
 const char* message_assembler_append_http_status(HttpStatusCode http_satus)
@@ -51,7 +52,7 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 }
 
 
-void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, MessageField** headers, int header_length, ResourceBuffer* object, ResourceBuffer* http, int cid)
+void message_assembler_prepare(HttpStatusCode http_status, const char* agent, const char* host, HeaderAppender header_appender, void* appender_args, ResourceBuffer* object, ResourceBuffer* http, int cid)
 {
 	const char* es = message_assembler_append_http_status(http_status);
 
@@ -66,16 +67,11 @@ void message_assembler_prepare(HttpStatusCode http_status, const char* agent, co
 	free(buffer);*/
 
 	resource_buffer_append_format(http, "User-Agent: %s\r\n", agent);
-
-
 	resource_buffer_append_string(http, "Access-Control-Allow-Origin: *\r\n");
 
-	int ix = 0;
-	while (ix < header_length)
+	if (header_appender)
 	{
-		MessageField* header = headers[ix];
-		resource_buffer_append_format(http, "%s: %s\r\n", header->Name.Data, header->Param.Value.Data);
-		ix++;
+		header_appender(appender_args,http);
 	}
 
 	if (object && object->Length > 0)
@@ -96,3 +92,6 @@ void message_assembler_prepare(HttpStatusCode http_status, const char* agent, co
 		printf("RESPONSE | Client: %d | Status: %s | Type: | Content Length: 0\n", cid, es);
 	}
 }
+
+
+

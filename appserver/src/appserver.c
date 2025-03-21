@@ -4,6 +4,7 @@
 #include "utils/message_parser.h"
 #include "utils/activity_binder.h"
 #include "yason.h"
+#include "utils/websocket_util.h"
 
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
@@ -105,12 +106,12 @@ void appserver_shutdown()
 }
 
 
-void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, ResourceBuffer* object)
+void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, ResourceBuffer* object, HeaderAppender header_appender, void* appender_args)
 {
     ResourceBuffer http;
     resource_buffer_init(&http);
 
-    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, 0, 0, object, &http, (int)request->Client->Handle);
+    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, header_appender, appender_args, object, &http, (int)request->Client->Handle);
     appclient_send(request->Client, http.Data, http.Length);
 }
 
@@ -131,19 +132,35 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     ResourceBuffer buffer;
     memset(&buffer, 0, sizeof(ResourceBuffer));
     bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, &buffer);
-
     if (found)
     {
-        appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer);
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, 0,0);
     }
     else
     {
-        appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0);
+        appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0, 0,0);
     }
-
     return false;
 }
 
+
+bool WebSocketConnectionReceived(AppServerInfo* server, Message* request)
+{
+    if (request->SecWebsocketKey && request->SecWebsocketKey->Length > 0)
+    {
+        bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, 0);
+        if (found)
+        {
+            appserver_http_response_send(server, request, HTTP_STATUS_SWITCHING_PROTOCOLS, 0,  websocket_handshake_prepare, request->SecWebsocketKey);
+        }
+        else
+        {
+            appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0, 0,0);
+        }
+        return true;
+    }
+    return false;
+}
 
 
 void appserver_received(Message* request)
@@ -151,6 +168,8 @@ void appserver_received(Message* request)
     AppServerInfo* server = request->Client->Server;
 
     ReportRequest(request);
+
+    if(WebSocketConnectionReceived(server, request)) return;
 
     if (request->Cmd == CMD_OPTIONS)
     {
@@ -174,9 +193,9 @@ void appserver_received(Message* request)
         String* json = yason_render((Element*)result, 1);
         ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
         buffer->Type = APPLICATION_JSON;
-        string_utf8_to_bytes(json->Data, (byte**)&buffer->Data, &buffer->Length);
+        buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
 
-        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer);
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0,0);
     }
     else
     {

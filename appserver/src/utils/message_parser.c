@@ -1,4 +1,5 @@
 #include "message_parser.h"
+#include "websocket_util.h"
 #include <process.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,34 @@ const char* message_command_titule(MessageCommand cmd)
 	case CMD_CALLBACK:       return "CALLBACK";
 	case CMD_ACKNOWLEDGMENT: return "ACKNOWLEDGMENT";
 	}
+}
+const MessageCommand message_command_enum(String* cmd)
+{
+	if (string_equals(cmd, "ACTION"))
+	{
+		return CMD_ACTION;
+	}
+	else if(string_equals(cmd, "CALLBACK"))
+	{
+		return CMD_CALLBACK;
+	}
+	else if (string_equals(cmd, "ACKNOWLEDGMENT"))
+	{
+		return CMD_ACKNOWLEDGMENT;
+	}
+	else if (string_equals(cmd, "GET"))
+	{
+		return CMD_GET;
+	}
+	else if (string_equals(cmd, "POST"))
+	{
+		return CMD_POST;
+	}
+	else if (string_equals(cmd, "OPTIONS"))
+	{
+		return CMD_OPTIONS;
+	}
+	return CMD_NONE;
 }
 
 
@@ -156,7 +185,6 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 }
 
 
-
 void message_parser_method_param_populate(String* content, int name_begin, int name_end, int value_begin, int value_end, MessageFieldParam* param)
 {
 	if (name_begin >= 0)
@@ -223,6 +251,7 @@ void message_parser_method_param_rec(String* content, int start, MessageFieldPar
 		}
 	}
 }
+
 
 void message_parser_method_param(Message* message)
 {
@@ -449,6 +478,10 @@ void message_get_standard_header(Message* message)
 					}
 				}
 			}
+			else if (string_equals_range_s2leng(&field->Name, 0, 3, "Cmd", 3))
+			{
+				message->Cmd = message_command_enum(&field->Param.Value);
+		    }
 			else if (string_equals_range_s2leng(&field->Name, 0, 4, "Sec-", 4))
 			{
 				if (string_equals_range_s2leng(&field->Name, 4, 13, "WebSocket-Key", 13))
@@ -491,7 +524,20 @@ void create_on_message_match(MessageParser* parser, Message* msg, AppClientInfo*
 
 void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, int length)
 {
-	string_append(parser->Buffer, data);
+	if (client->IsWebSocketMode)
+	{
+		byte* op = 0; size_t decoded_leng = 0;
+		byte* decoded = websocket_decode_frame(data, length, &op, &decoded_leng);
+
+		if (decoded_leng > 0)
+		{
+			string_append(parser->Buffer, decoded);
+		}
+	}
+	else
+	{
+		string_append(parser->Buffer, data);
+	}
 
 	int pos = 0;
 	while (pos < length && parser->Buffer->Length > 0)

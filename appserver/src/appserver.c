@@ -151,6 +151,7 @@ bool WebSocketConnectionReceived(AppServerInfo* server, Message* request)
         bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, 0);
         if (found)
         {
+            request->Client->IsWebSocketMode = true;
             appserver_http_response_send(server, request, HTTP_STATUS_SWITCHING_PROTOCOLS, 0,  websocket_handshake_prepare, request->SecWebsocketKey);
         }
         else

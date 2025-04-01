@@ -177,6 +177,7 @@ extern "C" {
     struct _AppClientInfo
     {
         bool           IsConnected;
+		bool           IsWebSocketMode;
         String         LocalHost;
         String         RemoteHost;
         void*          Handle;

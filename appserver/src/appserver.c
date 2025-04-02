@@ -1,5 +1,6 @@
 #include "../include/appserver.h"
 #include "appclient.h"
+#include "event_server.h"
 #include "utils/message_assembler.h"
 #include "utils/message_parser.h"
 #include "utils/activity_binder.h"
@@ -65,6 +66,8 @@ int WsaInit()
 }
 
 
+
+
 void appserver_create_default_headers()
 {
     memset(&HTTP_HEADER_ALLOW_HEADERS, 0, sizeof(MessageField));
@@ -112,7 +115,7 @@ void appserver_http_response_send(AppServerInfo* server, Message* request, HttpS
     resource_buffer_init(&http);
 
     message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, header_appender, appender_args, object, &http, (int)request->Client->Handle);
-    appclient_send(request->Client, http.Data, http.Length);
+    appclient_send(request->Client, http.Data, http.Length, false);
 }
 
 void appserver_http_default_options(AppServerInfo* server, Message* request)
@@ -122,7 +125,7 @@ void appserver_http_default_options(AppServerInfo* server, Message* request)
 
     MessageField defauts[2] = {HTTP_HEADER_ALLOW_METHODS, HTTP_HEADER_ALLOW_HEADERS};
     message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Data, request->Client->LocalHost.Data, &defauts, 2, 0, &http, (int)request->Client->Handle);
-    appclient_send(request->Client, http.Data, http.Length);
+    appclient_send(request->Client, http.Data, http.Length, false);
 }
 
 
@@ -164,8 +167,15 @@ bool WebSocketConnectionReceived(AppServerInfo* server, Message* request)
 }
 
 
+
 void appserver_received(Message* request)
 {
+	if (request->Protocol == AOTP)
+	{
+		appserver_received_aotp(request);
+		return;
+	}
+
     AppServerInfo* server = request->Client->Server;
 
     ReportRequest(request);
@@ -189,7 +199,8 @@ void appserver_received(Message* request)
             }
         }
 
-        void* result = bind->Function(request);
+        MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
+        void* result = func(request);
 
         String* json = yason_render((Element*)result, 1);
         ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
@@ -240,6 +251,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     AppServerInfo* info = serverinfo_create();
     info->BindList  = bind_list;
     info->IsRunning = true;
+	info->Events    = event_list_create();
 
     string_append(&info->AgentName, agent_name);
 

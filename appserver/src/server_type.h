@@ -12,6 +12,7 @@ extern "C" {
     #include "platform.h"
     #include "numeric.h"
     
+    #define AOTP_HEADER_SIGN "AOTP[9DAC10BA43E2402694C84B21A4219497]"
 
     #define LIST_CREATE(TYPE, THIS) THIS = list_create(sizeof(TYPE))
     #define LIST_ADD(TYPE, THIS, ITEM) list_add(THIS, ITEM, sizeof(TYPE))
@@ -23,6 +24,8 @@ extern "C" {
     typedef struct _AppServerInfo     AppServerInfo;
     typedef struct _MessageFieldParam MessageFieldParam;
     typedef struct _Message           Message;
+	typedef struct _MessageEvent      MessageEvent;
+    typedef struct _MessageEventList  MessageEventList;
 
 
     typedef enum _HttpStatusCode
@@ -142,6 +145,7 @@ extern "C" {
         MessageProtocol    Protocol;
         String             Version;
         MessageCommand     Cmd;
+        MessageCommand     OriginCmd;
         StringArray        Route;
         String             Host;
         MessageConnection  ConnectionOption;
@@ -150,6 +154,8 @@ extern "C" {
         ContentTypeOption  ContentType;
         int                ContentLength;
         MessageFieldList   Fields;
+        String*            EventUID;
+        String*            OriginEventUID;
         MessageFieldParam* Param;
         String*            SecWebsocketKey;
         String*            SecWebsocketAccept;
@@ -161,14 +167,33 @@ extern "C" {
     };
 
 
-    typedef void* (*MessageMatchCallback) (Message*);
+    struct _MessageEventList
+    {
+		int MaxCount;
+		int Count;
+		MessageEvent** Items;
+    };
+
+    struct _MessageEvent
+    {
+        String UID;
+        String OriginUID;
+        bool WaitForCallback;
+        MessageCommand LastCommand;
+        MessageCommand CurrentStep;
+        AppClientInfo* Client;
+    };
+
+
+    typedef void* (*MessageMatchReceiverCalback) (Message*);
+    typedef void  (*MessageMatchEmitterCalback) (Message*, MessageMatchReceiverCalback callback);
 
     typedef struct _MessageParser
     {
-        int                  Position;
-        Message*             Partial;
-        String*              Buffer;
-        MessageMatchCallback MessageMatch;
+        int                         Position;
+        Message*                    Partial;
+        String*                     Buffer;
+        MessageMatchReceiverCalback MessageMatch;
     }
     MessageParser;
 
@@ -213,10 +238,12 @@ extern "C" {
 
     typedef struct _FunctionBind
     {
-        bool                 IsWebApplication;
-        StringArray          Route;
-        String               AbsPathWebContent;
-        MessageMatchCallback Function;
+        bool        IsWebApplication;
+        bool        WithCallback;
+		bool        IsEventEmitter;
+        StringArray Route;
+        String      AbsPathWebContent;
+        void*       Function;
     }
     FunctionBind;
 
@@ -250,6 +277,7 @@ extern "C" {
         void*                     AcceptThread;
         AppClientList*            Clients;
         FunctionBindList*         BindList;
+        MessageEventList*         Events;
     };
 
 
@@ -267,7 +295,11 @@ extern "C" {
     AppClientList* appclient_list_release(AppClientList* list);
     AppClientList* appclient_list_create();
 
-    void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function, bool is_web_application);
+
+
+    MessageMatchEmitterCalback bind_list_add_emitter(FunctionBindList* list, const char* route);
+    void bind_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
+    void bind_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
     FunctionBindList* bind_list_release(FunctionBindList* list);
     FunctionBindList* bind_list_create();
 
@@ -278,14 +310,20 @@ extern "C" {
     void serverinfo_release(AppServerInfo* server);
     AppServerInfo* serverinfo_create();
 
+
     void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest);
     void resource_buffer_release(ResourceBuffer* source, bool only_data);
-
     void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length);
     void resource_buffer_init(ResourceBuffer* source);
     void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, ...);
     void resource_buffer_append_string(ResourceBuffer* buffer, const char* data);
 
+
+    void event_list_init(MessageEventList* list);
+    MessageEventList* event_list_create();
+    void event_list_add(MessageEventList* list, MessageEvent* item);
+    MessageEventList* event_list_release(MessageEventList* list, bool only_data);
+    void event_list_remove(MessageEventList* list, MessageEvent* item);
 
 
 #ifdef __cplusplus

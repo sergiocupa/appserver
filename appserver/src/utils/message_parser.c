@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-const char* AOTP_HEADER_SIGN = "AOTP[9DAC10BA43E2402694C84B21A4219497]";
+
 
 
 typedef struct _ParseMatch
@@ -625,13 +625,13 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 }
 
 
-MessageParser* message_parser_create(MessageMatchCallback call)
+MessageParser* message_parser_create(MessageMatchReceiverCalback receiver)
 {
 	MessageParser* parser = (MessageParser*)malloc(sizeof(MessageParser));
 	memset(parser, 0, sizeof(MessageParser));
 
 	parser->Buffer        = string_new();
-	parser->MessageMatch  = call;
+	parser->MessageMatch  = receiver;
 
 	return parser;
 }

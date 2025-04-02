@@ -34,6 +34,9 @@ void* app_login(Message* message)
 }
 
 
+MessageMatchEmitterCalback Notificar;
+
+
 
 int main()
 {
@@ -43,10 +46,13 @@ int main()
 	int leee = strlen(utf8_str);
 
 	FunctionBindList* bind = bind_list_create();
-	bind_list_add(bind, "service/videoplayer", video_player, true);
-	bind_list_add(bind, "service/videolist", video_list, false);
-	bind_list_add(bind, "index", app_root, true);
-	bind_list_add(bind, "service/login", app_login, true);
+	bind_list_add_web_resource(bind, "service/videoplayer", video_player);
+	bind_list_add_receiver(bind, "service/videolist", video_list, false);
+	bind_list_add_web_resource(bind, "index", app_root);
+	bind_list_add_receiver(bind, "service/login", app_login, false);
+
+	Notificar = bind_list_add_emitter(bind, "service/notificar");
+
 
 	AppServerInfo* server = appserver_create("video-service", 1234, "app", bind);
 

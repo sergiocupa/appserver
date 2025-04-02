@@ -1,5 +1,6 @@
 #include "appclient.h"
 #include "utils/message_parser.h"
+#include "utils/websocket_util.h"
 
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
@@ -14,11 +15,26 @@
 #define BUFFER_SIZE 4096  
 
 
-void appclient_send(AppClientInfo* cli, char* content, int length)
+void appclient_send(AppClientInfo* cli, byte* content, int length, bool is_websocket)
 {
-    if (send(cli->Handle, content, length, 0) < 0)
+    if (length <= 0) return;
+
+	if (is_websocket)
+	{
+        size_t wlength = 0;
+        byte* webs = websocket_encode_text(content, &wlength);
+        
+        if (send(cli->Handle, webs, wlength, 0) < 0)
+        {
+            perror("Erro ao enviar mensagem");
+        }
+	}
+    else
     {
-        perror("Erro ao enviar mensagem");
+        if (send(cli->Handle, content, length, 0) < 0)
+        {
+            perror("Erro ao enviar mensagem");
+        }
     }
 }
 
@@ -52,7 +68,7 @@ void appclient_received(void* ptr)
 }
 
 
-AppClientInfo* appclient_create(void* ptr, AppServerInfo* server, MessageMatchCallback receiver)
+AppClientInfo* appclient_create(void* ptr, AppServerInfo* server, MessageMatchReceiverCalback receiver)
 {
     AppClientInfo* client = (AppClientInfo*)calloc(1, sizeof(AppClientInfo));
 

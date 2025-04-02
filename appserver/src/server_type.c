@@ -1,3 +1,4 @@
+#include "event_server.h"
 #include "server_type.h"
 #include <stdlib.h>
 #include <string.h>
@@ -191,10 +192,12 @@ AppClientList* appclient_list_create()
 
 
 
-FunctionBind* bind_create(const char* route, MessageMatchCallback function, bool is_web_application)
+FunctionBind* bind_create(const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter)
 {
     FunctionBind* ar = (FunctionBind*)calloc(1,sizeof(FunctionBind));
     ar->IsWebApplication = is_web_application;
+    ar->WithCallback     = with_callback;
+    ar->IsEventEmitter   = is_event_emitter;
 
     string_array_init(&ar->Route);
     string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
@@ -213,7 +216,7 @@ FunctionBind* bind_release(FunctionBind* _this)
     return 0;
 }
 
-void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallback function, bool is_web_application)
+void bind_list_add(FunctionBindList* list, const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter)
 {
     if (list)
     {
@@ -223,10 +226,30 @@ void bind_list_add(FunctionBindList* list, const char* route, MessageMatchCallba
             list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
         }
 
-        list->Items[list->Count] = bind_create(route, function, is_web_application);
+        list->Items[list->Count] = bind_create(route, function, is_web_application, with_callback, is_event_emitter);
         list->Count++;
     }
 }
+
+void bind_list_add_receiver(FunctionBindList* list, const char* route, void* function, bool with_callback)
+{
+    bind_list_add(list, route, function, false, with_callback, false);
+}
+
+void bind_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function)
+{
+    bind_list_add(list, route, function, true, false, false);
+}
+
+MessageMatchEmitterCalback bind_list_add_emitter(FunctionBindList* list, const char* route)
+{
+    MessageMatchEmitterCalback mk = event_sender;
+    bind_list_add(list, route, mk, false,  true, true);
+    return mk;
+}
+
+
+
 
 FunctionBindList* bind_list_release(FunctionBindList* list)
 {
@@ -252,6 +275,9 @@ FunctionBindList* bind_list_create()
     ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
     return ar;
 }
+
+
+
 
 
 
@@ -309,6 +335,7 @@ AppServerInfo* serverinfo_create()
 
     return server;
 }
+
 
 
 
@@ -399,13 +426,93 @@ void resource_buffer_release(ResourceBuffer* source, bool only_data)
 {
     if (source)
     {
-        if (!only_data)
+        if (only_data)
         {
             free(source->Data);
+            return;
         }
 
         free(source);
     }
+}
+
+
+
+
+
+
+void event_list_init(MessageEventList* list)
+{
+    list->Count = 0;
+    list->MaxCount = 100;
+    list->Items = (void**)malloc(list->MaxCount * sizeof(void*));
+}
+
+MessageEventList* event_list_create()
+{
+    MessageEventList* list = (MessageEventList*)malloc(sizeof(MessageEventList));
+    event_list_init(list);
+    return list;
+}
+
+void event_list_add(MessageEventList* list, MessageEvent* item)
+{
+    if (list)
+    {
+        if (list->Count >= list->MaxCount)
+        {
+            list->MaxCount = ((list->Count + sizeof(MessageEvent)) + list->MaxCount) * 2;
+            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+        }
+
+        list->Items[list->Count] = item;
+        list->Count++;
+    }
+}
+
+void event_list_remove(MessageEventList* list, MessageEvent* item)
+{
+    if (list == NULL || list->Count == 0) return;
+
+    int index = -1;
+    for (int i = 0; i < list->Count; i++) 
+    {
+        if (list->Items[i] == item)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if (index != -1) // item encontrado
+    {
+        for (int i = index; i < list->Count - 1; i++) 
+        {
+            list->Items[i] = list->Items[i +1];
+        }
+        list->Count--;
+    }
+}
+
+
+MessageEventList* event_list_release(MessageEventList* list, bool only_data)
+{
+    if (list)
+    {
+        if (only_data)
+        {
+            int ix = 0;
+            while (ix < list->Count)
+            {
+                free(list->Items[ix]);
+                ix++;
+            }
+            free(list->Items);
+            return list;
+        }
+        free(list);
+    }
+    return 0;
 }
 
 

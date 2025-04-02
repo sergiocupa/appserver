@@ -39,6 +39,9 @@
     <ClInclude Include="src\utils\websocket_util.h">
       <Filter>src\utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\event_server.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appserver.c">
@@ -64,6 +67,9 @@
     </ClCompile>
     <ClCompile Include="src\utils\websocket_util.c">
       <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\event_server.c">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

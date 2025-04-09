@@ -11,6 +11,9 @@ extern "C" {
     void appserver_received_aotp(Message* request);
 
 
+    void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client);
+
+
 #ifdef __cplusplus
 }
 #endif

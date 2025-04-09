@@ -231,26 +231,6 @@ void bind_list_add(FunctionBindList* list, const char* route, void* function, bo
     }
 }
 
-void bind_list_add_receiver(FunctionBindList* list, const char* route, void* function, bool with_callback)
-{
-    bind_list_add(list, route, function, false, with_callback, false);
-}
-
-void bind_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function)
-{
-    bind_list_add(list, route, function, true, false, false);
-}
-
-MessageMatchEmitterCalback bind_list_add_emitter(FunctionBindList* list, const char* route)
-{
-    MessageMatchEmitterCalback mk = event_sender;
-    bind_list_add(list, route, mk, false,  true, true);
-    return mk;
-}
-
-
-
-
 FunctionBindList* bind_list_release(FunctionBindList* list)
 {
     if (list)

@@ -21,9 +21,6 @@
     <ClInclude Include="src\server_type.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\client_message.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\utils\activity_binder.h">
       <Filter>src\utils</Filter>
     </ClInclude>
@@ -42,15 +39,15 @@
     <ClInclude Include="src\event_server.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils\callback_binder.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\appserver.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\appclient.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\client_message.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\server_type.c">
@@ -70,6 +67,9 @@
     </ClCompile>
     <ClCompile Include="src\event_server.c">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\callback_binder.c">
+      <Filter>src\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

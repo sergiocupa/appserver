@@ -253,6 +253,22 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->IsRunning = true;
 	info->Events    = event_list_create();
 
+    // Passar referencia do servidor
+    if (info->BindList)
+    {
+        int ix = 0;
+		while (ix < info->BindList->Count)
+		{
+			FunctionBind* bind = info->BindList->Items[ix];
+
+            bind->Function
+			
+           // bind. assembler_method_bind_(void* sender, void* client)
+
+			ix++;
+		}
+    }
+
     string_append(&info->AgentName, agent_name);
 
     struct sockaddr_in server, client;

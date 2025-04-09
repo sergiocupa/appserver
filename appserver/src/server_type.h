@@ -26,6 +26,7 @@ extern "C" {
     typedef struct _Message           Message;
 	typedef struct _MessageEvent      MessageEvent;
     typedef struct _MessageEventList  MessageEventList;
+    typedef struct _ThunkArgs         ThunkArgs;
 
 
     typedef enum _HttpStatusCode
@@ -181,12 +182,14 @@ extern "C" {
         bool WaitForCallback;
         MessageCommand LastCommand;
         MessageCommand CurrentStep;
+		MessageMatchReceiverCalback Callback;
         AppClientInfo* Client;
     };
 
 
     typedef void* (*MessageMatchReceiverCalback) (Message*);
-    typedef void  (*MessageMatchEmitterCalback) (Message*, MessageMatchReceiverCalback callback);
+    typedef void  (*MessageMatchEmitterCalback)  (Message*, MessageMatchReceiverCalback callback);
+    typedef void  (*MessageSenderCalback) (ResourceBuffer* object, MessageMatchReceiverCalback callback, ThunkArgs* bind);
 
     typedef struct _MessageParser
     {
@@ -196,6 +199,21 @@ extern "C" {
         MessageMatchReceiverCalback MessageMatch;
     }
     MessageParser;
+
+    
+
+
+    struct _ThunkArgs
+    {
+        MessageSenderCalback Sender;
+        AppClientInfo*       Client;
+    };
+
+
+    struct MethodBindInfo
+    {
+
+    };
 
 
 
@@ -302,6 +320,8 @@ extern "C" {
     void bind_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
     FunctionBindList* bind_list_release(FunctionBindList* list);
     FunctionBindList* bind_list_create();
+    void bind_list_add(FunctionBindList* list, const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter);
+
 
 
     void serverinfo_list_init(AppServerList* list);

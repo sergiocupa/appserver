@@ -5,11 +5,43 @@
 #include "yason.h"
 
 
+
+
+
 void event_sender(ResourceBuffer* object, MessageMatchReceiverCalback callback)
 {
     // Enviar ACTION 
+
+    // Criar instance para lista de eventos
+    // Ao chegar resposta, chamar CALBACK, registrado no EVENT
     
-    ...
+
+
+}
+
+void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client)
+{
+    AppServerInfo* server = client->Server;
+
+    int ix = 0;
+	while (ix < server->Clients->Count)
+	{
+		AppClientInfo* c = server->Clients->Items[ix];
+
+        MessageEvent* item = calloc(1, sizeof(MessageEvent));
+        item->Client = c;
+		item->Callback = callback;
+       // item->UID = "";
+
+
+        event_list_add(server->Events, item);
+
+
+        appclient_send(c, object->Data, object->Length, c->IsWebSocketMode);
+		ix++;
+	}
+
+
 
 }
 

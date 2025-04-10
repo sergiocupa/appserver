@@ -21,6 +21,11 @@
   <ItemGroup>
     <ClCompile Include="appservertester.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\appserver\appserver.vcxproj">
+      <Project>{9a8943e1-d7e9-49fc-9e9c-ae719d47d450}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

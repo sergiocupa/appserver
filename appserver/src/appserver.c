@@ -1,6 +1,7 @@
 #include "../include/appserver.h"
 #include "appclient.h"
 #include "event_server.h"
+#include "utils/callback_binder.h"
 #include "utils/message_assembler.h"
 #include "utils/message_parser.h"
 #include "utils/activity_binder.h"
@@ -128,7 +129,6 @@ void appserver_http_default_options(AppServerInfo* server, Message* request)
     appclient_send(request->Client, http.Data, http.Length, false);
 }
 
-
 bool appserver_web_process(AppServerInfo* server, Message* request)
 {
     // busca no bind, para ver se pelo menos um em parte da rota, somente para direcionar pasta com conteudo
@@ -145,7 +145,6 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     }
     return false;
 }
-
 
 bool WebSocketConnectionReceived(AppServerInfo* server, Message* request)
 {
@@ -199,7 +198,7 @@ void appserver_received(Message* request)
             }
         }
 
-        MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
+       /* MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
         void* result = func(request);
 
         String* json = yason_render((Element*)result, 1);
@@ -207,7 +206,7 @@ void appserver_received(Message* request)
         buffer->Type = APPLICATION_JSON;
         buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
 
-        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0,0);
+        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0,0);*/
     }
     else
     {
@@ -253,6 +252,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->IsRunning = true;
 	info->Events    = event_list_create();
 
+    // TO-DO: somente para teste. depois que gerenciador de sseao pronto, nao precisa este loop de atribuição de client
     // Passar referencia do servidor
     if (info->BindList)
     {
@@ -261,7 +261,9 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 		{
 			FunctionBind* bind = info->BindList->Items[ix];
 
-            bind->Function
+
+
+           // bind->Function
 			
            // bind. assembler_method_bind_(void* sender, void* client)
 
@@ -316,4 +318,19 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 
     printf("Server instantiated '%s' | Port: %d | Prefix: '%s'\n", agent_name, port, prefix);
     return info;
+}
+
+
+
+void app_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback)
+{
+    binder_list_add_receiver(list, route, function, with_callback);
+}
+void app_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function)
+{
+    binder_list_add_web_resource(list, route, function);
+}
+MessageEmitterCalback app_add_emitter(FunctionBindList* list, const char* route)
+{
+    return binder_list_add_emitter(list, route);
 }

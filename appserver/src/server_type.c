@@ -191,18 +191,12 @@ AppClientList* appclient_list_create()
 
 
 
-
-FunctionBind* bind_create(const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter)
+//FunctionBind* bind_create(const char* route, bool is_web_application, bool with_callback, bool is_event_emitter)
+FunctionBind* bind_create(const char* route)
 {
     FunctionBind* ar = (FunctionBind*)calloc(1,sizeof(FunctionBind));
-    ar->IsWebApplication = is_web_application;
-    ar->WithCallback     = with_callback;
-    ar->IsEventEmitter   = is_event_emitter;
-
     string_array_init(&ar->Route);
     string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
-
-    ar->Function = function;
     return ar;
 }
 
@@ -216,7 +210,9 @@ FunctionBind* bind_release(FunctionBind* _this)
     return 0;
 }
 
-void bind_list_add(FunctionBindList* list, const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter)
+
+//void bind_list_add(FunctionBindList* list, const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter)
+void bind_list_add(FunctionBindList* list, FunctionBind* bind)
 {
     if (list)
     {
@@ -226,7 +222,7 @@ void bind_list_add(FunctionBindList* list, const char* route, void* function, bo
             list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
         }
 
-        list->Items[list->Count] = bind_create(route, function, is_web_application, with_callback, is_event_emitter);
+        list->Items[list->Count] = bind;
         list->Count++;
     }
 }

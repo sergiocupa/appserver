@@ -8,15 +8,9 @@ extern "C" {
     #include "../server_type.h"
 
 
-
-
-
-
-    MessageSenderCalback* call_binder();
-
-
-
-
+    void binder_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
+    void binder_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
+    MessageEmitterCalback binder_list_add_emitter(FunctionBindList* list, const char* route);
 
 
 #ifdef __cplusplus

@@ -155,6 +155,7 @@ extern "C" {
         ContentTypeOption  ContentType;
         int                ContentLength;
         MessageFieldList   Fields;
+        String*            SessionUID;
         String*            EventUID;
         String*            OriginEventUID;
         MessageFieldParam* Param;
@@ -167,6 +168,12 @@ extern "C" {
         void*              Object;
     };
 
+
+
+
+    typedef void* (*MessageMatchReceiverCalback) (ResourceBuffer* result);
+    typedef void  (*MessageEmitterCalback)  (ResourceBuffer* object, MessageMatchReceiverCalback callback);
+    typedef void  (*MessageSenderCalback) (ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client);
 
     struct _MessageEventList
     {
@@ -186,23 +193,6 @@ extern "C" {
         AppClientInfo* Client;
     };
 
-
-    typedef void* (*MessageMatchReceiverCalback) (Message*);
-    typedef void  (*MessageMatchEmitterCalback)  (Message*, MessageMatchReceiverCalback callback);
-    typedef void  (*MessageSenderCalback) (ResourceBuffer* object, MessageMatchReceiverCalback callback, ThunkArgs* bind);
-
-    typedef struct _MessageParser
-    {
-        int                         Position;
-        Message*                    Partial;
-        String*                     Buffer;
-        MessageMatchReceiverCalback MessageMatch;
-    }
-    MessageParser;
-
-    
-
-
     struct _ThunkArgs
     {
         MessageSenderCalback Sender;
@@ -210,10 +200,17 @@ extern "C" {
     };
 
 
-    struct MethodBindInfo
-    {
 
-    };
+
+    typedef struct _MessageParser
+    {
+        int                         Position;
+        Message* Partial;
+        String* Buffer;
+        MessageMatchReceiverCalback MessageMatch;
+    }
+    MessageParser;
+
 
 
 
@@ -261,7 +258,8 @@ extern "C" {
 		bool        IsEventEmitter;
         StringArray Route;
         String      AbsPathWebContent;
-        void*       Function;
+        ThunkArgs   Thung;
+        //void*       Function;
     }
     FunctionBind;
 
@@ -315,12 +313,13 @@ extern "C" {
 
 
 
-    MessageMatchEmitterCalback bind_list_add_emitter(FunctionBindList* list, const char* route);
+    FunctionBind* bind_create(const char* route);
     void bind_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
     void bind_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
     FunctionBindList* bind_list_release(FunctionBindList* list);
     FunctionBindList* bind_list_create();
-    void bind_list_add(FunctionBindList* list, const char* route, void* function, bool is_web_application, bool with_callback, bool is_event_emitter);
+    void bind_list_add(FunctionBindList* list, FunctionBind* bind);
+    FunctionBind* bind_create(const char* route);
 
 
 

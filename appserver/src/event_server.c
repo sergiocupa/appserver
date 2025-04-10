@@ -86,10 +86,10 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
     FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
     if (bind)
     {
-        MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
-        void* result = func(request);
+        //MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
+        //void* result = func(request);
 
-        if (bind->WithCallback)
+       /* if (bind->WithCallback)
         {
             String* json = yason_render((Element*)result, 1);
             ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
@@ -97,7 +97,7 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
             buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
 
             aotp_prepare_send(CMD_CALLBACK, request, &buffer, 1);
-        }
+        }*/
     }
 }
 
@@ -115,6 +115,16 @@ void appserver_received_aotp(Message* request)
 
         string_append_s(request->OriginEventUID, request->EventUID);
         aotp_prepare_send(CMD_ACKNOWLEDGMENT, request, 0, 0);
+        return;
+    }
+
+    if (!request->SessionUID)
+    {
+        // TO-DO:
+        // Testar se tem SESSION, se nao tem, requisitar sessao para o client
+        //   Ao receber SESSION, assionar ThunkArgs e atribuir o client para ele
+        //      Para encontrar ThunkArgs, buscar pela rota o BINDER para poder associar o ThunkArgs
+        return;
     }
 
     if (request->Cmd == CMD_ACKNOWLEDGMENT)
@@ -133,7 +143,7 @@ void appserver_received_aotp(Message* request)
     {
         appserver_aotp_received_event(request, false);
     }
-    else if (request->Cmd == CMD_ACTION)
+    else if (request->Cmd == CMD_CALLBACK)
     {
         appserver_aotp_received_event(request, true);
     }

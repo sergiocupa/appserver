@@ -198,15 +198,43 @@ void appserver_received(Message* request)
             }
         }
 
-       /* MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
-        void* result = func(request);
+        MessageMatchReceiverCalback func = bind->CallbackFunc;
+        Element* result = func(request);
 
-        String* json = yason_render((Element*)result, 1);
+        HttpStatusCode code = HTTP_STATUS_OK;
+
         ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-        buffer->Type = APPLICATION_JSON;
-        buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
+        if (result)
+        {
+            String* json = yason_render(result, 1);
+            buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
+            buffer->Type = APPLICATION_JSON;
+        }
+        else if(request->ResponseContent)
+        {
+            if (request->ResponseStatus != 0)
+            {
+                code = request->ResponseStatus;
+            }
 
-        appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0,0);*/
+            buffer->Type = TEXT_PLAIN;
+            buffer->Data = string_utf8_to_bytes(request->ResponseContent->Data, &buffer->Length);
+        }
+        else
+        {
+            if (request->ResponseStatus != 0)
+            {
+                code = request->ResponseStatus;
+            }
+            else
+            {
+                buffer->Data = string_utf8_to_bytes("Controller method did not return a result", &buffer->Length);
+                buffer->Type = TEXT_PLAIN;
+                code         = HTTP_STATUS_INTERNAL_ERROR;
+            }
+        }
+
+        appserver_http_response_send(server, request, code, buffer, 0,0);
     }
     else
     {
@@ -252,7 +280,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->IsRunning = true;
 	info->Events    = event_list_create();
 
-    // TO-DO: somente para teste. depois que gerenciador de sseao pronto, nao precisa este loop de atribuição de client
+    // TO-DO: somente para teste. depois que gerenciador de sesseao pronto, nao precisa este loop de atribuição de client
     // Passar referencia do servidor
     if (info->BindList)
     {
@@ -261,7 +289,9 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 		{
 			FunctionBind* bind = info->BindList->Items[ix];
 
-
+            // TO-DO: somente para teste, para nao gerar erro, depois tem que remover.
+            bind->Thung.Client = (AppClientInfo*)calloc(1, sizeof(AppClientInfo));
+            bind->Thung.Client->Server = info;
 
            // bind->Function
 			

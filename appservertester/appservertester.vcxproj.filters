@@ -3,4 +3,112 @@
   <ItemGroup>
     <ClCompile Include="appservertester.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="web">
+      <UniqueIdentifier>{b6b0305a-b390-4b79-9c5c-41d0ee6611b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\webapprouter">
+      <UniqueIdentifier>{b808172a-61ae-4c65-a95a-fb769c8e3428}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\storage">
+      <UniqueIdentifier>{c776a9cb-579c-4b97-83f3-950e7aa247f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components">
+      <UniqueIdentifier>{a24e6318-05b6-4db8-a32a-f8ce376e0780}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui">
+      <UniqueIdentifier>{47dfe1d0-59e2-4122-a420-2a6e90e1572a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\protocol">
+      <UniqueIdentifier>{d78e5421-e82a-409f-a188-f6426363f45b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\util">
+      <UniqueIdentifier>{f571537e-7d94-4f4f-82d0-450c64e930c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\param">
+      <UniqueIdentifier>{3986adfb-3a9e-48c7-a68e-7263bc3d82ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui\authentication">
+      <UniqueIdentifier>{4d4a0bdc-6e75-4d8d-8a0d-c82f96daecca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui\player">
+      <UniqueIdentifier>{22b06959-9064-465a-9398-504fc37b11e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui\waiting">
+      <UniqueIdentifier>{273198b2-ac49-4069-8d5a-c3db79e67254}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui\player\resources">
+      <UniqueIdentifier>{c3650cde-2f50-4a65-9d2a-c831332c8d3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="web\components\ui\player\resources\images">
+      <UniqueIdentifier>{4f8c0cde-cce6-4ecd-8da4-59857c4f86df}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="web\webapprouter\WebRouter.js">
+      <Filter>web\webapprouter</Filter>
+    </None>
+    <None Include="web\VideoViewer.html">
+      <Filter>web</Filter>
+    </None>
+    <None Include="web\VideoViewer.js">
+      <Filter>web</Filter>
+    </None>
+    <None Include="web\VideoViewer.css">
+      <Filter>web</Filter>
+    </None>
+    <None Include="web\storage\AuthorizationStore.js">
+      <Filter>web\storage</Filter>
+    </None>
+    <None Include="web\storage\GlobalData.js">
+      <Filter>web\storage</Filter>
+    </None>
+    <None Include="web\components\ui\authentication\login-box.css">
+      <Filter>web\components\ui\authentication</Filter>
+    </None>
+    <None Include="web\components\ui\authentication\login-box.html">
+      <Filter>web\components\ui\authentication</Filter>
+    </None>
+    <None Include="web\components\ui\authentication\login-box.js">
+      <Filter>web\components\ui\authentication</Filter>
+    </None>
+    <None Include="web\components\ui\player\video-player.css">
+      <Filter>web\components\ui\player</Filter>
+    </None>
+    <None Include="web\components\ui\player\video-player.html">
+      <Filter>web\components\ui\player</Filter>
+    </None>
+    <None Include="web\components\ui\player\video-player.js">
+      <Filter>web\components\ui\player</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\back.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\forward.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\open-file.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\pause.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\play.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\waiting\waiting-box.css">
+      <Filter>web\components\ui\waiting</Filter>
+    </None>
+    <None Include="web\components\ui\waiting\waiting-box.html">
+      <Filter>web\components\ui\waiting</Filter>
+    </None>
+    <None Include="web\components\ui\waiting\waiting-box.js">
+      <Filter>web\components\ui\waiting</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="web\Open in browser in offline mode.txt">
+      <Filter>web</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

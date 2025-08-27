@@ -167,7 +167,8 @@ static MessageEmitterCalback create_trampoline(ThunkArgs* args)
 void binder_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback)
 {
     FunctionBind* bind = bind_create(route);
-    bind->WithCallback     = with_callback;
+    bind->WithCallback = with_callback;
+	bind->CallbackFunc = function;
 
     bind_list_add(list, bind);
 }
@@ -176,6 +177,7 @@ void binder_list_add_web_resource(FunctionBindList* list, const char* route, Mes
 {
     FunctionBind* bind = bind_create(route);
     bind->IsWebApplication = true;
+	bind->CallbackFunc = function;
 
     bind_list_add(list, bind);
 }

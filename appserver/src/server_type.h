@@ -11,6 +11,7 @@ extern "C" {
     #include "stringlib.h"
     #include "platform.h"
     #include "numeric.h"
+    #include "../submodules/yason/yason/src/yason_element.h"
     
     #define AOTP_HEADER_SIGN "AOTP[9DAC10BA43E2402694C84B21A4219497]"
 
@@ -147,6 +148,7 @@ extern "C" {
         String             Version;
         MessageCommand     Cmd;
         MessageCommand     OriginCmd;
+        int                ResponseStatus;
         StringArray        Route;
         String             Host;
         MessageConnection  ConnectionOption;
@@ -166,12 +168,14 @@ extern "C" {
 
         AppClientInfo*     Client;
         void*              Object;
+
+        String*            ResponseContent;
     };
 
 
 
 
-    typedef void* (*MessageMatchReceiverCalback) (ResourceBuffer* result);
+    typedef Element* (*MessageMatchReceiverCalback) (ResourceBuffer* result);
     typedef void  (*MessageEmitterCalback)  (ResourceBuffer* object, MessageMatchReceiverCalback callback);
     typedef void  (*MessageSenderCalback) (ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client);
 
@@ -259,7 +263,7 @@ extern "C" {
         StringArray Route;
         String      AbsPathWebContent;
         ThunkArgs   Thung;
-        //void*       Function;
+		MessageMatchReceiverCalback CallbackFunc;
     }
     FunctionBind;
 

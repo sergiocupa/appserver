@@ -3,9 +3,29 @@
 
 void* app_login(Message* message)
 {
+    Element* obj = (Element*)message->Object;
 
+    if (obj)
+    {
+        Element* user = yason_find_element(obj,"UserName");
+        Element* pass = yason_find_element(obj,"Password");
+
+        if (user && pass)
+        {
+			if (string_equals(&user->Value, "admin") && string_equals(&pass->Value, "admin"))
+			{
+                message->ResponseContent = string_new();
+                string_append(message->ResponseContent, "0123456789...");
+			}
+            else
+            {
+                message->ResponseStatus = HTTP_STATUS_UNAUTHORIZED;
+            }
+        }
+    }
     return 0;
 }
+
 void* app_root(Message* message)
 {
 
@@ -39,7 +59,7 @@ int main()
 
     FunctionBindList* bind = bind_list_create();
     app_add_receiver(bind, "service/videoplayer", video_player, true);
-    app_add_web_resource(bind, "service/videolist", video_list, false);
+    app_add_web_resource(bind, "service/videolist", video_list);
     app_add_receiver(bind, "index", app_root, true);
     app_add_receiver(bind, "service/login", app_login, true);
     Notification = app_add_emitter(bind, "service/notification");

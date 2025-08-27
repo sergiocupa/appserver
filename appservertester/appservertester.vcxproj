@@ -26,6 +26,31 @@
       <Project>{9a8943e1-d7e9-49fc-9e9c-ae719d47d450}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="web\components\ui\authentication\login-box.css" />
+    <None Include="web\components\ui\authentication\login-box.html" />
+    <None Include="web\components\ui\authentication\login-box.js" />
+    <None Include="web\components\ui\player\resources\images\back.svg" />
+    <None Include="web\components\ui\player\resources\images\forward.svg" />
+    <None Include="web\components\ui\player\resources\images\open-file.svg" />
+    <None Include="web\components\ui\player\resources\images\pause.svg" />
+    <None Include="web\components\ui\player\resources\images\play.svg" />
+    <None Include="web\components\ui\player\video-player.css" />
+    <None Include="web\components\ui\player\video-player.html" />
+    <None Include="web\components\ui\player\video-player.js" />
+    <None Include="web\components\ui\waiting\waiting-box.css" />
+    <None Include="web\components\ui\waiting\waiting-box.html" />
+    <None Include="web\components\ui\waiting\waiting-box.js" />
+    <None Include="web\storage\AuthorizationStore.js" />
+    <None Include="web\storage\GlobalData.js" />
+    <None Include="web\VideoViewer.css" />
+    <None Include="web\VideoViewer.html" />
+    <None Include="web\VideoViewer.js" />
+    <None Include="web\webapprouter\WebRouter.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="web\Open in browser in offline mode.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -136,6 +161,9 @@
       <AdditionalDependencies>yason.lib;platformlib.lib;filelib.lib</AdditionalDependencies>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --user-data-dir="C:\temp\chrome-teste" "file:///$(ProjectDir)/web/VideoViewer.html"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

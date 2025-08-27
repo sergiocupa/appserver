@@ -86,10 +86,10 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
     FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
     if (bind)
     {
-        //MessageMatchReceiverCalback func = (MessageMatchReceiverCalback)bind->Function;
-        //void* result = func(request);
+        MessageMatchReceiverCalback func = bind->CallbackFunc;
+        void* result = func(request);
 
-       /* if (bind->WithCallback)
+        if (bind->WithCallback)
         {
             String* json = yason_render((Element*)result, 1);
             ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
@@ -97,7 +97,7 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
             buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
 
             aotp_prepare_send(CMD_CALLBACK, request, &buffer, 1);
-        }*/
+        }
     }
 }
 

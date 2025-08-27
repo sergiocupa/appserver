@@ -11,7 +11,7 @@ Features to be implemented:
 - [X] Download resources and HTML pages for presentation in browser.
 - [X] Browser tests.
 - [X] Handshake for websocket protocol.
-- [ ] Server-side multiplexing.
+- [X] Server-side multiplexing.
 - [ ] Client-side multiplexing, with Javascript.
 - [ ] Define header and format for data transport.
 - [ ] Create session scope control.

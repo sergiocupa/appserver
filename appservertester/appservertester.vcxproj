@@ -27,9 +27,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="web\components\param\AuthorizationStore.js" />
+    <None Include="web\components\param\GlobalData.js" />
+    <None Include="web\components\protocol\WebRouter.js" />
     <None Include="web\components\ui\authentication\login-box.css" />
     <None Include="web\components\ui\authentication\login-box.html" />
     <None Include="web\components\ui\authentication\login-box.js" />
+    <None Include="web\components\ui\authentication\logoff-box.html" />
     <None Include="web\components\ui\player\resources\images\back.svg" />
     <None Include="web\components\ui\player\resources\images\forward.svg" />
     <None Include="web\components\ui\player\resources\images\open-file.svg" />
@@ -41,12 +45,9 @@
     <None Include="web\components\ui\waiting\waiting-box.css" />
     <None Include="web\components\ui\waiting\waiting-box.html" />
     <None Include="web\components\ui\waiting\waiting-box.js" />
-    <None Include="web\storage\AuthorizationStore.js" />
-    <None Include="web\storage\GlobalData.js" />
     <None Include="web\VideoViewer.css" />
     <None Include="web\VideoViewer.html" />
     <None Include="web\VideoViewer.js" />
-    <None Include="web\webapprouter\WebRouter.js" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="web\Open in browser in offline mode.txt" />

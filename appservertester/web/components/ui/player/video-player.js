@@ -40,12 +40,37 @@ export class VideoPlayer extends HTMLElement
         this.back_step.addEventListener('click', () => this.on_back_step());
         this.forward_step.addEventListener('click', () => this.on_forward_step());
         this.source_button.addEventListener('click', () => this.on_open_file());
+
+        window.addEventListener('keydown', (e) =>
+        {
+            if (e.code === 'Space')
+            {
+                e.preventDefault();
+                this.on_play();
+            }
+        });
+
+        video.addEventListener('play',  () => update_player_control(PlayerControlOptions.PLAY));
+        video.addEventListener('pause', () => update_player_control(PlayerControlOptions.PAUSE));
+        video.addEventListener('ended', () => update_player_control(PlayerControlOptions.STOP));
+        //...
     }
 
 
     on_play()
     {
-
+        if (video.paused)
+        {
+            video.play().then(() => update_player_control(PlayerControlOptions.PLAY)).catch(err =>
+            {
+                console.warn('Falha ao reproduzir:', err);
+            });
+        }
+        else
+        {
+            video.pause();
+            update_player_control(PlayerControlOptions.PAUSE);
+        }
     }
 
     on_stop()
@@ -101,11 +126,17 @@ export class VideoPlayer extends HTMLElement
     {
         if (option == PlayerControlOptions.STOP || option == PlayerControlOptions.NONE)
         {
-
+            playIcon.src = 'resources/images/play.svg';
+            playIcon.alt = 'Play';
+            label.textContent = 'Play';
+            playBtn.setAttribute('aria-pressed', 'false');
         }
         else if (option == PlayerControlOptions.PLAY)
         {
-
+            playIcon.src = 'resources/images/pause.svg';
+            playIcon.alt = 'Pause';
+            label.textContent = 'Pause';
+            playBtn.setAttribute('aria-pressed', 'true');
         }
     }
 

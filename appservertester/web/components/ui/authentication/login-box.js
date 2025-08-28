@@ -1,44 +1,46 @@
-import { GetWebApiBaseAddress, SetWebApiBaseAddress } from '../../storage/GlobalData.js';
-import { WaitingBox } from '../waiting/waiting-box.js';
+import { GetWebApiBaseAddress, SetWebApiBaseAddress } from '../../param/GlobalData.js';
+import { AuthorizationStore } from '../../param/AuthorizationStore.js';
+//import { WaitingBox } from '../waiting/waiting-box.js';
+
+
+let Authorization = new AuthorizationStore();
 
 export class LoginBox extends HTMLElement
 {
-    Authorization = new AuthorizationStore();
     UserText      = null;
     PasswordText  = null;
 
     constructor()
     {
         super();
-
-        UserText     = this.shadowRoot.querySelector('#username');
-        PasswordText = this.shadowRoot.querySelector('#password');
-
         this.attachShadow({ mode: 'open' });
-
-        auto_authorize();
     }
 
     async connectedCallback()
     {
-        // Carrega HTML e CSS externos
-        const html = await fetch('login-box.html').then(r => r.text());
-        const css  = await fetch('login-box.css').then(r => r.text());
+        const htmlURL = new URL('./login-box.html', import.meta.url);
+        const cssURL  = new URL('./login-box.css', import.meta.url);
+        const html    = await fetch(htmlURL).then(r => r.text());
+        const css     = await fetch(cssURL).then(r => r.text());
 
-        // Injeta no Shadow DOM
-        this.shadowRoot.innerHTML = '<style>${css}</style>${html}';
+        this.shadowRoot.innerHTML = `<style>${css}</style>${html}`;
+
+        this.UserText     = this.shadowRoot.querySelector('#username');
+        this.PasswordText = this.shadowRoot.querySelector('#password');
 
         // Registra eventos
-        this.shadowRoot.querySelector('#login-button').addEventListener('click', () => this.login());
-        this.shadowRoot.querySelector('#logoff-button').addEventListener('click', () => this.logoff());
+        this.shadowRoot.querySelector('#login-button').addEventListener('click',  () => this.login());
+        //this.shadowRoot.querySelector('#logoff-button').addEventListener('click', () => this.logoff());
+
+        this.auto_authorize();
     }
 
 
     async login()
     {
-        if (isStringNotEmpty(UserText.value) && isStringNotEmpty(PasswordText.value))
+        if (isStringNotEmpty(this.UserText.value) && isStringNotEmpty(this.PasswordText.value))
         {
-            authorize(UserText.value, PasswordText.value, true);
+            this.authorize(this.UserText.value, this.PasswordText.value, true);
         }
         else
         {
@@ -52,14 +54,14 @@ export class LoginBox extends HTMLElement
        Authorization.reset();
        Authorization.save();
 
-       show();
+       this.show();
     }
 
 
     async authorize(nome, senha, is_message)
     {
         const local = GetWebApiBaseAddress();
-        const url = local + "/api/service/login";
+        const url   = local + "/api/service/login";
 
         try
         {
@@ -69,7 +71,7 @@ export class LoginBox extends HTMLElement
             {
                 const data = await response.text();
 
-                if (isStringNotEmpty(data))
+                if (this.isStringNotEmpty(data))
                 {
                     Authorization.UserName = nome;
                     Authorization.Password = senha;
@@ -77,20 +79,23 @@ export class LoginBox extends HTMLElement
                     Authorization.IsKeepConnected = true;
                     Authorization.save();
 
-                    hide();
+                    this.hide();
                 }
                 else
                 {
                     Authorization.reset();
                     Authorization.save();
 
-                    if (is_message == true) {
+                    if (is_message == true)
+                    {
                         alert("Usuário ou senha inválido " + uid);
                     }
-                    show();
+
+                    this.show();
                 }
             }
-            else {
+            else
+            {
                 alert("Login retornou: " + response.statusText);
             }
         }
@@ -106,30 +111,95 @@ export class LoginBox extends HTMLElement
     {
         Authorization.load();
 
-        if (isStringNotEmpty(Authorization.UserName) && isStringNotEmpty(Authorization.Password))
+        if (this.isStringNotEmpty(Authorization.UserName) && this.isStringNotEmpty(Authorization.Password))
         {
-            authorize(Authorization.UserName, Authorization.Password, false);
+            this.authorize(Authorization.UserName, Authorization.Password, false);
         }
     }
 
 
     async show()
     {
-        this.shadowRoot.querySelector('modalOverlay').style.display = 'block';
-        this.shadowRoot.querySelector('login-box').style.display    = 'block';
-        //this.shadowRoot.querySelector('blogoff').style.visibility = 'hidden';
+        debugger;
+        const aa = this.shadowRoot.querySelector('#modalOverlay');
+        const bb = this.shadowRoot.querySelector('#login-box');
+        const cc = this.shadowRoot.querySelector('#logoff-box');
+        aa.style.display = 'block';
+        bb.style.display = 'block';
+        cc.style.display = 'hidden';
     }
 
     async hide()
     {
-        this.shadowRoot.querySelector('modalOverlay').style.display   = 'none';
-        this.shadowRoot.querySelector('login-box').style.display      = 'none';
-        //  this.shadowRoot.querySelector('blogoff').style.visibility = 'visible';
+        debugger;
+        const aa = this.shadowRoot.querySelector('#modalOverlay');
+        const bb = this.shadowRoot.querySelector('#login-box');
+        const cc = this.shadowRoot.querySelector('logoff-box');
+        //const cc = document.getElementById('logoff-box');
+        aa.style.display = 'none';
+        bb.style.display = 'none';
+        cc.style.display = 'visible';
     }
 
     isStringNotEmpty(str) { return str !== null && str !== undefined && str.trim().length > 0; }
 
 }
 
+
+export class LogoffBox extends HTMLElement
+{
+    constructor()
+    {
+        super();
+        this.attachShadow({ mode: 'open' });
+    }
+
+    async connectedCallback()
+    {
+        const htmlURL = new URL('./logoff-box.html', import.meta.url);
+        const cssURL  = new URL('./login-box.css', import.meta.url);
+        const html    = await fetch(htmlURL).then(r => r.text());
+        const css     = await fetch(cssURL).then(r => r.text());
+
+        this.shadowRoot.innerHTML = `<style>${css}</style>${html}`;
+
+        this.shadowRoot.querySelector('#logoff-box').addEventListener('click', () => this.logoff());
+    }
+
+    async logoff()
+    {
+        Authorization.reset();
+        Authorization.save();
+
+        this.show();
+    }
+
+    async show()
+    {
+        debugger;
+        const aa = this.shadowRoot.querySelector('#modalOverlay');
+        const bb = this.shadowRoot.querySelector('#login-box');
+        //const cc = this.shadowRoot.querySelector('#logoff-box');
+        const cc = document.getElementById('logoff-box');
+
+        aa.style.display = 'block';
+        bb.style.display = 'block';
+        cc.style.display = 'hidden';
+    }
+
+    async hide()
+    {
+        debugger;
+        const aa = this.shadowRoot.querySelector('#modalOverlay');
+        const bb = this.shadowRoot.querySelector('#login-box');
+        const cc = this.shadowRoot.querySelector('#logoff-box');
+        aa.style.display = 'none';
+        bb.style.display = 'none';
+        cc.style.display = 'visible';
+    }
+}
+
+
 customElements.define('login-box', LoginBox);
+customElements.define('logoff-box', LogoffBox);
 

@@ -1,5 +1,5 @@
 
-export const PlayerControlOptions = Object.freeze({ NONE: '', STOP: 'STOP', PLAY: 'PLAY', PAUSE: 'PAUSE', FORWARD: "FORWARD", BACK: "BACK", FORWARD_STEP = "FORWARD-STEP", BACK_STEP: "BACK-STEP"  });
+export const PlayerControlOptions = Object.freeze({ NONE: '', STOP: 'STOP', PLAY: 'PLAY', PAUSE: 'PAUSE', FORWARD: "FORWARD", BACK: "BACK", FORWARD_STEP: "FORWARD-STEP", BACK_STEP: "BACK-STEP"  });
 
 export class VideoPlayer extends HTMLElement
 {
@@ -16,23 +16,40 @@ export class VideoPlayer extends HTMLElement
 
     async connectedCallback()
     {
-        const html = await fetch('video-player.html').then(r => r.text());
-        const css  = await fetch('video-player.css').then(r => r.text());
+        const html_url = new URL('./video-player.html', import.meta.url);
+        const css_url  = new URL('./video-player.css', import.meta.url);
+        const html     = await fetch(html_url).then(r => r.text());
+        const css      = await fetch(css_url).then(r => r.text());
 
         this.shadowRoot.innerHTML = `<style>${css}</style>${html}`;
 
-        this.video         = this.shadowRoot.querySelector('player');
-        this.stop          = this.shadowRoot.querySelector('stop');
-        this.play          = this.shadowRoot.querySelector('play');
-        this.back          = this.shadowRoot.querySelector('back');
-        this.forward       = this.shadowRoot.querySelector('forward');
-        this.back_step     = this.shadowRoot.querySelector('back-step');
-        this.forward_step  = this.shadowRoot.querySelector('forward-step');
-        this.source_field  = this.shadowRoot.querySelector('player-source');
-        this.source_button = this.shadowRoot.querySelector('player-open-file');
-        
-        this.video.addEventListener('ended', () => this.onVideoEnded());
+        this.video                 = this.shadowRoot.querySelector('#player');
+        this.source_field          = this.shadowRoot.querySelector('#player-source');
+        this.source_button         = this.shadowRoot.querySelector('#player-open-file');
+        this.stop                  = this.shadowRoot.querySelector('#stop');
+        this.back                  = this.shadowRoot.querySelector('#back');
+        this.back_step             = this.shadowRoot.querySelector('#back-step');
+        this.play                  = this.shadowRoot.querySelector('#play');
+        this.forward_step          = this.shadowRoot.querySelector('#forward-step');
+        this.forward               = this.shadowRoot.querySelector('#forward');
 
+        this.source_field_img      = this.shadowRoot.querySelector('#player-source-img');
+        this.stop_img              = this.shadowRoot.querySelector('#stop-img');
+        this.back_img              = this.shadowRoot.querySelector('#back-img');
+        this.back_step_img         = this.shadowRoot.querySelector('#back-step-img');
+        this.play_img              = this.shadowRoot.querySelector('#play-img');
+        this.forward_step_img      = this.shadowRoot.querySelector('#forward-step-img');
+        this.forward_img           = this.shadowRoot.querySelector('#forward-img');
+        this.source_field_img.src  = new URL('./resources/images/open-file.svg', import.meta.url);
+        this.stop_img.src          = new URL('./resources/images/play.svg', import.meta.url);
+        this.back_img.src          = new URL('./resources/images/back.svg', import.meta.url);
+        this.back_step_img.src     = new URL('./resources/images/back.svg', import.meta.url);
+        this.play_img.src          = new URL('./resources/images/play.svg', import.meta.url);
+        this.forward_step_img.src  = new URL('./resources/images/forward.svg', import.meta.url);
+        this.forward_img.src       = new URL('./resources/images/forward.svg', import.meta.url);
+
+
+        this.video.addEventListener('ended', () => this.on_video_ended());
         this.play.addEventListener('click', () => this.on_play());
         this.stop.addEventListener('click', () => this.on_stop());
         this.back.addEventListener('click', () => this.on_back());
@@ -50,9 +67,9 @@ export class VideoPlayer extends HTMLElement
             }
         });
 
-        video.addEventListener('play',  () => update_player_control(PlayerControlOptions.PLAY));
-        video.addEventListener('pause', () => update_player_control(PlayerControlOptions.PAUSE));
-        video.addEventListener('ended', () => update_player_control(PlayerControlOptions.STOP));
+        this.video.addEventListener('play',  () => this.update_player_control(PlayerControlOptions.PLAY));
+        this.video.addEventListener('pause', () => this.update_player_control(PlayerControlOptions.PAUSE));
+        this.video.addEventListener('ended', () => this.update_player_control(PlayerControlOptions.STOP));
         //...
     }
 

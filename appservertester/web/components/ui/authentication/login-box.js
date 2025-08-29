@@ -16,6 +16,13 @@ export class LoginBox extends HTMLElement
         this.attachShadow({ mode: 'open' });
     }
 
+
+    static get observedAttributes() { return ['logoff-id']; }
+    attributeChangedCallback(name, oldValue, newValue) { if (name === 'logoff-id') { this._logoffId = newValue; } }
+    get logoffId() { return this._logoffId; }
+    set logoffId(value) { this.setAttribute('logoff-id', value); }
+
+
     async connectedCallback()
     {
         const htmlURL = new URL('./login-box.html', import.meta.url);
@@ -38,7 +45,7 @@ export class LoginBox extends HTMLElement
 
     async login()
     {
-        if (isStringNotEmpty(this.UserText.value) && isStringNotEmpty(this.PasswordText.value))
+        if (this.isStringNotEmpty(this.UserText.value) && this.isStringNotEmpty(this.PasswordText.value))
         {
             this.authorize(this.UserText.value, this.PasswordText.value, true);
         }
@@ -120,10 +127,15 @@ export class LoginBox extends HTMLElement
 
     async show()
     {
-        debugger;
         const aa = this.shadowRoot.querySelector('#modalOverlay');
         const bb = this.shadowRoot.querySelector('#login-box');
-        const cc = this.shadowRoot.querySelector('#logoff-box');
+        let   cc = document.getElementById(this.logoffId);
+
+        if (!cc)
+        {
+            cc = document.querySelector("logoff-box");
+        }
+
         aa.style.display = 'block';
         bb.style.display = 'block';
         cc.style.display = 'hidden';
@@ -131,11 +143,15 @@ export class LoginBox extends HTMLElement
 
     async hide()
     {
-        debugger;
         const aa = this.shadowRoot.querySelector('#modalOverlay');
         const bb = this.shadowRoot.querySelector('#login-box');
-        const cc = this.shadowRoot.querySelector('logoff-box');
-        //const cc = document.getElementById('logoff-box');
+        let   cc = document.getElementById(this.logoffId);
+
+        if (!cc)
+        {
+            cc = document.querySelector("logoff-box");
+        }
+
         aa.style.display = 'none';
         bb.style.display = 'none';
         cc.style.display = 'visible';
@@ -148,11 +164,20 @@ export class LoginBox extends HTMLElement
 
 export class LogoffBox extends HTMLElement
 {
+    _loginId = '';
+
     constructor()
     {
         super();
         this.attachShadow({ mode: 'open' });
     }
+
+
+    static get observedAttributes() { return ['login-id']; }
+    attributeChangedCallback(name, oldValue, newValue) { if (name === 'login-id') { this._loginId = newValue; } }
+    get loginId() { return this._loginId; }
+    set loginId(value) { this.setAttribute('login-id', value); }
+
 
     async connectedCallback()
     {
@@ -171,31 +196,29 @@ export class LogoffBox extends HTMLElement
         Authorization.reset();
         Authorization.save();
 
-        this.show();
+        this.hide();
     }
 
     async show()
     {
-        debugger;
-        const aa = this.shadowRoot.querySelector('#modalOverlay');
-        const bb = this.shadowRoot.querySelector('#login-box');
-        //const cc = this.shadowRoot.querySelector('#logoff-box');
-        const cc = document.getElementById('logoff-box');
+        let cc = document.getElementById(this.loginId);
+        if (!cc)
+        {
+            cc = document.querySelector("login-box");
+        }
 
-        aa.style.display = 'block';
-        bb.style.display = 'block';
-        cc.style.display = 'hidden';
+        cc.hide();
     }
 
     async hide()
     {
-        debugger;
-        const aa = this.shadowRoot.querySelector('#modalOverlay');
-        const bb = this.shadowRoot.querySelector('#login-box');
-        const cc = this.shadowRoot.querySelector('#logoff-box');
-        aa.style.display = 'none';
-        bb.style.display = 'none';
-        cc.style.display = 'visible';
+        let cc = document.getElementById(this.loginId);
+        if (!cc)
+        {
+            cc = document.querySelector("login-box");
+        }
+
+        cc.show();
     }
 }
 

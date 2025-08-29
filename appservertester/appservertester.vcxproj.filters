@@ -90,9 +90,6 @@
     <None Include="web\components\ui\waiting\waiting-box.js">
       <Filter>web\components\ui\waiting</Filter>
     </None>
-    <None Include="web\components\protocol\WebRouter.js">
-      <Filter>web\components\protocol</Filter>
-    </None>
     <None Include="web\components\param\AuthorizationStore.js">
       <Filter>web\components\param</Filter>
     </None>

@@ -29,7 +29,6 @@
   <ItemGroup>
     <None Include="web\components\param\AuthorizationStore.js" />
     <None Include="web\components\param\GlobalData.js" />
-    <None Include="web\components\protocol\WebRouter.js" />
     <None Include="web\components\ui\authentication\login-box.css" />
     <None Include="web\components\ui\authentication\login-box.html" />
     <None Include="web\components\ui\authentication\login-box.js" />

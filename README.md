@@ -12,7 +12,7 @@ Features to be implemented:
 - [X] Browser tests.
 - [X] Handshake for websocket protocol.
 - [X] Server-side multiplexing.
-- [ ] Client-side multiplexing, with Javascript.
+- [ ] Client-side multiplexing, for Javascript.
 - [ ] Define header and format for data transport.
 - [ ] Create session scope control.
 - [ ] Websocket tests.

@@ -29,15 +29,19 @@
   <ItemGroup>
     <None Include="web\components\param\AuthorizationStore.js" />
     <None Include="web\components\param\GlobalData.js" />
+    <None Include="web\components\protocol\WebRouter2.js" />
     <None Include="web\components\ui\authentication\login-box.css" />
     <None Include="web\components\ui\authentication\login-box.html" />
     <None Include="web\components\ui\authentication\login-box.js" />
     <None Include="web\components\ui\authentication\logoff-box.html" />
+    <None Include="web\components\ui\player\resources\images\back-step.svg" />
     <None Include="web\components\ui\player\resources\images\back.svg" />
+    <None Include="web\components\ui\player\resources\images\forward-step.svg" />
     <None Include="web\components\ui\player\resources\images\forward.svg" />
     <None Include="web\components\ui\player\resources\images\open-file.svg" />
     <None Include="web\components\ui\player\resources\images\pause.svg" />
     <None Include="web\components\ui\player\resources\images\play.svg" />
+    <None Include="web\components\ui\player\resources\images\stop.svg" />
     <None Include="web\components\ui\player\video-player.css" />
     <None Include="web\components\ui\player\video-player.html" />
     <None Include="web\components\ui\player\video-player.js" />

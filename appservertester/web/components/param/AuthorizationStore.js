@@ -1,4 +1,4 @@
-]//  MIT License – Modified for Mandatory Attribution
+//  MIT License – Modified for Mandatory Attribution
 //
 //  Copyright(c) 2025 Sergio Paludo
 //

@@ -55,11 +55,11 @@ export class VideoPlayer extends HTMLElement
         this.forward_step_img      = this.shadowRoot.querySelector('#forward-step-img');
         this.forward_img           = this.shadowRoot.querySelector('#forward-img');
         this.source_field_img.src  = new URL('./resources/images/open-file.svg', import.meta.url);
-        this.stop_img.src          = new URL('./resources/images/play.svg', import.meta.url);
+        this.stop_img.src          = new URL('./resources/images/stop.svg', import.meta.url);
         this.back_img.src          = new URL('./resources/images/back.svg', import.meta.url);
-        this.back_step_img.src     = new URL('./resources/images/back.svg', import.meta.url);
+        this.back_step_img.src     = new URL('./resources/images/back-step.svg', import.meta.url);
         this.play_img.src          = new URL('./resources/images/play.svg', import.meta.url);
-        this.forward_step_img.src  = new URL('./resources/images/forward.svg', import.meta.url);
+        this.forward_step_img.src  = new URL('./resources/images/forward-step.svg', import.meta.url);
         this.forward_img.src       = new URL('./resources/images/forward.svg', import.meta.url);
 
 
@@ -90,17 +90,20 @@ export class VideoPlayer extends HTMLElement
 
     on_play()
     {
-        if (video.paused)
+        if (this.video.paused)
         {
-            video.play().then(() => update_player_control(PlayerControlOptions.PLAY)).catch(err =>
+            this.video.src = this.VIDEO_URL_DEMO; 
+            this.video.load();
+
+            this.video.play().then(() => update_player_control(PlayerControlOptions.PLAY)).catch(err =>
             {
                 console.warn('Falha ao reproduzir:', err);
             });
         }
         else
         {
-            video.pause();
-            update_player_control(PlayerControlOptions.PAUSE);
+            this.video.pause();
+            this.update_player_control(PlayerControlOptions.PAUSE);
         }
     }
 
@@ -157,17 +160,13 @@ export class VideoPlayer extends HTMLElement
     {
         if (option == PlayerControlOptions.STOP || option == PlayerControlOptions.NONE)
         {
-            playIcon.src = 'resources/images/play.svg';
-            playIcon.alt = 'Play';
-            label.textContent = 'Play';
-            playBtn.setAttribute('aria-pressed', 'false');
+            this.play_img.src = new URL('./resources/images/play.svg', import.meta.url);
+            this.play_img.alt = 'Play';
         }
         else if (option == PlayerControlOptions.PLAY)
         {
-            playIcon.src = 'resources/images/pause.svg';
-            playIcon.alt = 'Pause';
-            label.textContent = 'Pause';
-            playBtn.setAttribute('aria-pressed', 'true');
+            this.play_img.src = new URL('./resources/images/pause.svg', import.meta.url);
+            this.play_img.alt = 'Pause';
         }
     }
 

@@ -66,10 +66,10 @@
     <None Include="web\components\ui\player\video-player.js">
       <Filter>web\components\ui\player</Filter>
     </None>
-    <None Include="web\components\ui\player\resources\images\back.svg">
+    <None Include="web\components\ui\player\resources\images\back-step.svg">
       <Filter>web\components\ui\player\resources\images</Filter>
     </None>
-    <None Include="web\components\ui\player\resources\images\forward.svg">
+    <None Include="web\components\ui\player\resources\images\forward-step.svg">
       <Filter>web\components\ui\player\resources\images</Filter>
     </None>
     <None Include="web\components\ui\player\resources\images\open-file.svg">
@@ -98,6 +98,18 @@
     </None>
     <None Include="web\components\ui\authentication\logoff-box.html">
       <Filter>web\components\ui\authentication</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\back.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\forward.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\ui\player\resources\images\stop.svg">
+      <Filter>web\components\ui\player\resources\images</Filter>
+    </None>
+    <None Include="web\components\protocol\WebRouter2.js">
+      <Filter>web\components\protocol</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

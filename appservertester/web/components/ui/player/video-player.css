@@ -92,6 +92,20 @@ video {
     top: 10px;
 }
 
+.input_default {
+    background-color: #1c1f24; /* Fundo escuro, similar aos botões */
+    color: #f0f0f0; /* Texto claro */
+    border: 1px solid #2c2f35; /* Borda sutil */
+    border-radius: 12px; /* Bordas arredondadas */
+    padding: 8px 14px; /* Altura e espaçamento interno */
+    font-size: 14px; /* Ajuste de tipografia */
+    /*text-align: center; */  /* Centraliza texto horizontalmente */
+    line-height: 1.5; /* Mantém o texto verticalmente central */
+    outline: none; /* Remove borda azul padrão no focus */
+    width: 180px; /* Ajuste opcional */
+    transition: all 0.3s ease; /* Animação suave para hover/focus */
+}
+
 .btn:hover {
     background: var(--btn-hover);
     border-color: rgba(255,255,255,0.14);

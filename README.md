@@ -12,7 +12,7 @@ Features to be implemented:
 - [X] Browser tests.
 - [X] Handshake for websocket protocol.
 - [X] Server-side multiplexing.
-- [X] Define header and format for data transport.
+- [X] Define header and format for data transport. In the current version, websockets will be used for browsers. For apps, UDP will be used. The protocol incorporates all stream flow control features, as well as correction methods with FEC. For future versions, I will evaluate the use of the QUIC protocol.
 - [ ] Client-side multiplexing, for Javascript.
 - [ ] Create session scope control.
 - [ ] Websocket tests.

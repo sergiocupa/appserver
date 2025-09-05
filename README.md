@@ -13,7 +13,7 @@ Features to be implemented:
 - [X] Handshake for websocket protocol.
 - [X] Server-side multiplexing.
 - [X] Define header and format for data transport. The current version uses WebSocket for browser use, and UDP for apps. The protocol incorporates: stream-level multiplexing; application-level multiplexing; stream flow control (timeline); FEC correction methods; and stream-synchronized objects. For future versions, I will evaluate the use of the QUIC protocol.
-- [ ] Client-side multiplexing, for Javascript.
+- [ ] Implementation of the protocol component in Javascript.
 - [ ] Create session scope control.
 - [ ] Websocket tests.
 - [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser.

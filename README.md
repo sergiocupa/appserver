@@ -12,8 +12,8 @@ Features to be implemented:
 - [X] Browser tests.
 - [X] Handshake for websocket protocol.
 - [X] Server-side multiplexing.
+- [X] Define header and format for data transport.
 - [ ] Client-side multiplexing, for Javascript.
-- [ ] Define header and format for data transport.
 - [ ] Create session scope control.
 - [ ] Websocket tests.
 - [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser.

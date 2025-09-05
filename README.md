@@ -16,7 +16,7 @@ Features to be implemented:
 - [ ] Implementation of the protocol component in Javascript.
 - [ ] Create session scope control.
 - [ ] Protocol tests.
-- [ ] Study and subsequent implementation of an H.264 video fragmenter. Fragments to be dispatched using a routed websocket connection for presentation in browser.
+- [ ] Study and subsequent implementation of an H.264 and H.265 video fragmenter. Fragments to be dispatched with a connection using the above transport protocol.
 - [ ] Javascript to manage the arrival buffer of video parts on the client side.
 - [ ] Testing the video stream with browser.
 - [ ] LINUX platform.

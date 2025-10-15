@@ -161,7 +161,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     return false;
 }
 
-bool WebSocketConnectionReceived(AppServerInfo* server, Message* request)
+bool websocket_handshake_received(AppServerInfo* server, Message* request)
 {
     if (request->SecWebsocketKey && request->SecWebsocketKey->Length > 0)
     {
@@ -194,7 +194,7 @@ void appserver_received(Message* request)
 
     ReportRequest(request);
 
-    if(WebSocketConnectionReceived(server, request)) return;
+    if(websocket_handshake_received(server, request)) return;
 
     if (request->Cmd == CMD_OPTIONS)
     {

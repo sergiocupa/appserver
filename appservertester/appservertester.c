@@ -14,6 +14,7 @@
 
 
 #include "appserver.h"
+#include <dashstream.h>
 
 
 void* app_login(Message* message)
@@ -53,8 +54,18 @@ void* video_list(Message* message)
     return 0;
 }
 
-void* video_player(Message* message)
+void* video_select_stream(Message* message)
 {
+    // documentar modo WebAPI, como criar session de Objetos
+
+    // Criar gerenciador de stream
+	//   Repassar metodo que envia dados do stream. Tem que ser tipo MessageEmitterCalback
+    
+
+    // Cria sessao de stream
+	//    Retorna metadados da sessao. Se client retornar ACK, inicia stream
+	//    Apos ACK, iniciar envio de dados do stream, se encontrar fonte de video por exemplo, fragmentar e enviar
+	//    Na instancia da sessao, controla fluxo, buffer, sequenciamento de pacotes. Se client requerar pacote, entao reenviar
 
     return 0;
 }
@@ -71,20 +82,37 @@ void Notification_Result(ResourceBuffer* object)
 
 int main()
 {
+    FrameIndexList* frames = index_frames_full("e:/small.mp4");
 
-    FunctionBindList* bind = bind_list_create();
-    app_add_receiver(bind, "service/videoplayer", video_player, true);
-    app_add_web_resource(bind, "service/videolist", video_list);
-    app_add_receiver(bind, "index", app_root, true);
-    app_add_receiver(bind, "service/login", app_login, true);
-    Notification = app_add_emitter(bind, "service/notification");
+    printf("Frame count %d\r\n", frames->Count);
 
-    AppServerInfo* server = appserver_create("video-service", 1234, "api", bind);
+    int i = 0;
+    while (i < frames->Count)
+    {
+        FrameIndex* f = frames->Frames[i];
+
+        //if (f->NalType == 1 || f->NalType == 5)
+       // {
+            printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
+        //}
+        i++;
+    }
 
 
-    int data = 12344;
 
-    Notification(&data, Notification_Result);
+    //FunctionBindList* bind = bind_list_create();
+    ////app_add_receiver(bind, "service/videoplayer", video_player, true);
+    //app_add_web_resource(bind, "service/videolist", video_list);
+    //app_add_receiver(bind, "index", app_root, true);
+    //app_add_receiver(bind, "service/login", app_login, true);
+    //Notification = app_add_emitter(bind, "service/notification");
+
+    //AppServerInfo* server = appserver_create("video-service", 1234, "api", bind);
+
+
+    //int data = 12344;
+
+    //Notification(&data, Notification_Result);
 
 
 

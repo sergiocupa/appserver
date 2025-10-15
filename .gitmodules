@@ -4,3 +4,9 @@
 [submodule "appserver/submodules/yason"]
 	path = appserver/submodules/yason
 	url = https://github.com/sergiocupa/yason.git
+[submodule "streammanager/submodules/utility"]
+	path = streammanager/submodules/utility
+	url = https://github.com/sergiocupa/utility.git
+[submodule "streammanager/submodules/yason"]
+	path = streammanager/submodules/yason
+	url = https://github.com/sergiocupa/yason.git

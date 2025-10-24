@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{cab2cbcd-208a-49a8-a775-adfc6b73c1f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{93bb9e78-80ad-4e7a-b0ed-508fb53eb7df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps">
+      <UniqueIdentifier>{89e48e30-3728-4f89-bcec-e60169dfdc08}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\MediaFragmenter.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MediaFragmenterType.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mp4Util.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MediaSourceSim.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\openh264\include\codec_api.h">
+      <Filter>deps</Filter>
+    </ClInclude>
+    <ClInclude Include="deps\sdl2\include\SDL2\SDL.h">
+      <Filter>deps</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\MediaFragmenter.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MediaFragmenterType.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mp4Util.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MediaSourceSim.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

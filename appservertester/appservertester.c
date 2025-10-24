@@ -14,7 +14,8 @@
 
 
 #include "appserver.h"
-#include <dashstream.h>
+#include "MediaFragmenter.h"
+//#include <dashstream.h>
 
 
 void* app_login(Message* message)
@@ -82,21 +83,52 @@ void Notification_Result(ResourceBuffer* object)
 
 int main()
 {
-    FrameIndexList* frames = index_frames_full("e:/small.mp4");
+    FrameIndexList* frames = mmp4_index_frames("e:/small.mp4");
 
-    printf("Frame count %d\r\n", frames->Count);
+    VideoInitData vid;
+    MediaBuffer* init = mmp4_read_init_segment(&vid);
 
-    int i = 0;
-    while (i < frames->Count)
+    MediaSourceSession* session = media_sim_create(vid.width, vid.height);
+
+    media_sim_init_segment(session, init);
+
+    FILE* f = fopen("e:/small.mp4", "rb");
+    int ix = 0;
+    while (ix < frames->Count)
     {
-        FrameIndex* f = frames->Frames[i];
+        FrameIndex* frame = frames->Frames[ix];
 
-        //if (f->NalType == 1 || f->NalType == 5)
-       // {
-            printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
-        //}
-        i++;
+        MediaBuffer* mb = mmp4_read_frame(frame, f);
+
+        media_sim_feed(session, mb);
+
+        mbuffer_release(mb);
+        ix++;
     }
+
+    fclose(f);
+    media_sim_release(session);
+
+
+
+
+
+
+    //FrameIndexList* frames = index_frames_full("e:/small.mp4");
+
+    //printf("Frame count %d\r\n", frames->Count);
+
+    //int i = 0;
+    //while (i < frames->Count)
+    //{
+    //    FrameIndex* f = frames->Frames[i];
+
+    //    //if (f->NalType == 1 || f->NalType == 5)
+    //    //{
+    //        printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
+    //    //}
+    //    i++;
+    //}
 
 
 

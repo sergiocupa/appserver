@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "appservertester", "appserve
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "streammanager", "streammanager\streammanager.vcxproj", "{DB6F33B7-05B9-4B5C-B0BB-B073111D4289}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dashstream", "dashstream\dashstream.vcxproj", "{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MediaFragmenter", "MediaFragmenter\MediaFragmenter.vcxproj", "{7ED3299C-00E2-42AF-9507-0CB87663DD37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,16 +43,19 @@ Global
 		{DB6F33B7-05B9-4B5C-B0BB-B073111D4289}.Release|x64.Build.0 = Release|x64
 		{DB6F33B7-05B9-4B5C-B0BB-B073111D4289}.Release|x86.ActiveCfg = Release|Win32
 		{DB6F33B7-05B9-4B5C-B0BB-B073111D4289}.Release|x86.Build.0 = Release|Win32
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Debug|x64.ActiveCfg = Debug|x64
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Debug|x64.Build.0 = Debug|x64
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Debug|x86.ActiveCfg = Debug|Win32
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Debug|x86.Build.0 = Debug|Win32
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Release|x64.ActiveCfg = Release|x64
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Release|x64.Build.0 = Release|x64
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Release|x86.ActiveCfg = Release|Win32
-		{66DB4AAC-BF59-47FA-89E5-6A2CE15B9626}.Release|x86.Build.0 = Release|Win32
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Debug|x64.ActiveCfg = Debug|x64
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Debug|x64.Build.0 = Debug|x64
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Debug|x86.ActiveCfg = Debug|Win32
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Debug|x86.Build.0 = Debug|Win32
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Release|x64.ActiveCfg = Release|x64
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Release|x64.Build.0 = Release|x64
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Release|x86.ActiveCfg = Release|Win32
+		{7ED3299C-00E2-42AF-9507-0CB87663DD37}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0DE27CD5-3CD4-4A61-B1E8-11BA4CA8EBE8}
 	EndGlobalSection
 EndGlobal

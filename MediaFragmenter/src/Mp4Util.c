@@ -1,6 +1,9 @@
 #include "../include/MediaFragmenter.h"
 #include "Mp4Util.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
 
 
 const uint8_t FTYP_BOX[] = 
@@ -440,36 +443,154 @@ static MediaBuffer* build_moov_box(const VideoInitData* v) // uint32_t timescale
 }
 
 
-// Indexador de frames
-static int mmp4_codec_version_file(FILE* f)
+static void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen)
 {
-    uint8_t buf[8];
-    while (fread(buf, 1, 5, f) == 5)
+    if (!haystack || !needle || needlelen == 0 || haystacklen < needlelen) return NULL;
+
+    const unsigned char* h = (const unsigned char*)haystack;
+    const unsigned char* n = (const unsigned char*)needle;
+    size_t i;
+    for (i = 0; i <= haystacklen - needlelen; i++)
     {
-        if (buf[0] == 0x00 && buf[1] == 0x00 && buf[2] == 0x00 && buf[3] == 0x01)
+        if (memcmp(h + i, n, needlelen) == 0)
+            return (void*)(h + i);
+    }
+    return NULL;
+}
+
+static uint32_t read32(FILE* f)
+{
+    uint8_t b[4];
+    if (fread(b, 1, 4, f) != 4)
+        return 0;
+    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
+static uint64_t read64(FILE* f)
+{
+    uint8_t b[8];
+    if (fread(b, 1, 8, f) != 8)
+        return 0;
+    uint64_t val = 0;
+    for (int i = 0; i < 8; i++)
+        val = (val << 8) | b[i];
+    return val;
+}
+
+static int find_codec_in_box(FILE* f, uint64_t end, int is_video_track)
+{
+    uint8_t name[5] = { 0 };
+
+    while ((uint64_t)ftell(f) < end)
+    {
+        long box_start = ftell(f);
+        uint32_t size = read32(f);
+        if (fread(name, 1, 4, f) != 4)
+            break;
+
+        uint64_t box_size = size;
+        uint64_t header_size = 8;
+        if (size == 1)
         {
-            int nal = buf[4];
-            int type264 = NAL_TYPE(nal);
-            int type265 = NAL_TYPE_HEVC(nal);
-            if (type264 == 7 || type264 == 8)
-            {
-                return 264;
-            }
-            if (type265 == 32 || type265 == 33 || type265 == 34)
-            {
-                return 265;
-            }
+            box_size = read64(f);
+            header_size = 16;
         }
+        else if (size == 0)
+        {
+            fseek(f, 0, SEEK_END);
+            box_size = ftell(f) - box_start;
+            fseek(f, box_start + 8, SEEK_SET);
+        }
+
+        if ((size == 1 && box_size < 16) || (size != 1 && size != 0 && box_size < 8))
+            break;
+
+        uint64_t next = box_start + box_size;
+
+        // Detecta codecs diretamente se for avcC/hvcC
+        if (!memcmp(name, "avcC", 4)) return 264;
+        if (!memcmp(name, "hvcC", 4)) return 265;
+
+        // Parsing para hdlr: atualiza flag se for vídeo
+        if (!memcmp(name, "hdlr", 4)) {
+            fseek(f, 8, SEEK_CUR);  // Pula version/flags + pre_defined
+            uint8_t handler_type[5] = { 0 };
+            if (fread(handler_type, 1, 4, f) == 4) {
+                if (!memcmp(handler_type, "vide", 4)) {
+                    is_video_track = 1;
+                }
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // Parsing para stsd: lê entradas e verifica fourcc se for vídeo
+        if (!memcmp(name, "stsd", 4)) {
+            uint8_t header[8];
+            if (fread(header, 1, 8, f) != 8) break;
+            // entry_count dos últimos 4 bytes
+            uint32_t entry_count = (header[4] << 24) | (header[5] << 16) | (header[6] << 8) | header[7];
+            for (uint32_t i = 0; i < entry_count; i++) {
+                uint32_t entry_size = read32(f);
+                if (entry_size < 8) break;
+                uint8_t entry_name[5] = { 0 };
+                if (fread(entry_name, 1, 4, f) != 4) break;
+
+                // Verifica fourcc se track de vídeo
+                if (is_video_track) {
+                    if (!memcmp(entry_name, "avc1", 4) || !memcmp(entry_name, "avc3", 4)) return 264;
+                    if (!memcmp(entry_name, "hev1", 4) || !memcmp(entry_name, "hvc1", 4) || !memcmp(entry_name, "dvhe", 4)) return 265;
+                }
+
+                // Pula resto da entrada
+                if (fseek(f, entry_size - 8, SEEK_CUR) != 0) break;
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // Recursa para containers, passando o is_video_track atualizado
+        if (!memcmp(name, "moov", 4) || !memcmp(name, "trak", 4) ||
+            !memcmp(name, "mdia", 4) || !memcmp(name, "minf", 4) ||
+            !memcmp(name, "stbl", 4) || !memcmp(name, "moof", 4))
+        {
+            int found = find_codec_in_box(f, next, is_video_track);
+            if (found) return found;
+        }
+        fseek(f, next, SEEK_SET);
     }
     return 0;
 }
+
+static int codec_version_file(FILE* f)
+{
+    uint8_t buf[8];
+    if (fread(buf, 1, 8, f) != 8) return 0;
+    rewind(f);
+    // ---- MP4 / MOV ----
+    if (memcmp(buf + 4, "ftyp", 4) == 0)
+    {
+        fseek(f, 0, SEEK_END);
+        uint64_t end = ftell(f);
+        rewind(f);
+        return find_codec_in_box(f, end, 0);  // Inicia com flag 0
+    }
+    // ---- MKV ----
+    fseek(f, 0, SEEK_SET);
+    char data[16384];
+    size_t len = fread(data, 1, sizeof(data), f);
+    if (memmem(data, len, "V_MPEG4/ISO/AVC", 15)) return 264;
+    if (memmem(data, len, "V_MPEGH/ISO/HEVC", 16)) return 265;
+    return 0;
+}
+
 
 int mmp4_codec_version(const char* path)
 {
     FILE* f = fopen(path, "rb");
     if (!f) return -1;
 
-    int hdot = mmp4_codec_version_file(f);
+    int hdot = codec_version_file(f);
 
     fclose(f);
     return hdot;
@@ -501,8 +622,8 @@ FrameIndexList* mmp4_index_frames(const char* path)
     }
 
     FrameIndexList* list = mframe_list_new();
-    list->Codec = mmp4_codec_version_file(f);
-    list->Fps = 30.0; // valor padrão estimado, pode ser extraído do moov posteriormente
+    list->Codec = codec_version_file(f);
+    list->Fps   = 30.0; // valor padrão estimado, pode ser extraído do moov posteriormente
 
     uint8_t b;
     uint8_t prev_bytes[3] = { 0 };

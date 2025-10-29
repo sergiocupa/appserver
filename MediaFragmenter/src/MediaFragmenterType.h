@@ -19,16 +19,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    #include "../deps/openh264/include/codec_api.h"
-    #include "../deps/sdl2/include/SDL2/SDL.h"
+    #include "codec_api.h"
+    #define SDL_MAIN_HANDLED
+    #include "SDL2/SDL.h"
     #include <stdint.h>
     #include <stdio.h>
 
     #define HDOT_H264 264
     #define HDOT_H265 265
 
-    #define NAL_TYPE(nal) ((nal) & 0x1F)     // Para H.264
+    #define NAL_TYPE(nal) ((nal) & 0x1F)             // Para H.264
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
+
+
+    typedef struct
+    {
+        int Codec;
+        int ProfileIdc;
+        int LevelIdc;
+        long Offset;
+    }
+    CodecInfo;
 
 
     typedef struct 
@@ -40,6 +51,7 @@ extern "C" {
 
     typedef struct 
     {
+        int a;
         SDL_Window* win;
         SDL_Renderer* ren;
         SDL_Texture* tex;

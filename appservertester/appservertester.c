@@ -18,6 +18,7 @@
 //#include <dashstream.h>
 
 
+
 void* app_login(Message* message)
 {
     Element* obj = (Element*)message->Object;
@@ -80,12 +81,33 @@ void Notification_Result(ResourceBuffer* object)
 }
 
 
+static void ListarDecodificavel(FrameIndexList* frames)
+{
+    int i = 0;
+    while (i < frames->Count)
+    {
+        FrameIndex* f = frames->Frames[i];
 
+        //if (f->NalType == 1 || f->NalType == 5)
+        //{
+            printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
+        //}
+        i++;
+    }
+}
+
+//int main(int argc, char* argv[])
 int main()
 {
-    FrameIndexList* frames = mmp4_index_frames("e:/small.mp4");
+    // sample-5s.mp4
+    // e:/small.mp4
+    FrameIndexList* frames = mmp4_index_frames("e:/sample-5s.mp4"); 
+    //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/Big_Buck_Bunn_H265.mp4");
+    //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/sample_960x540.mkv");
 
-    VideoInitData vid;
+    //ListarDecodificavel(frames);
+
+    /*VideoInitData vid;
     MediaBuffer* init = mmp4_read_init_segment(&vid);
 
     MediaSourceSession* session = media_sim_create(vid.width, vid.height);
@@ -107,7 +129,7 @@ int main()
     }
 
     fclose(f);
-    media_sim_release(session);
+    media_sim_release(session);*/
 
 
 

@@ -1,6 +1,8 @@
 #include "../include/MediaFragmenter.h"
 #include "MediaSourceSim.h"
 #include "MediaFragmenterType.h"
+#include "SDL2/SDL.h"
+#include "codec_api.h"
 
 
 static VideoOutput* video_output_create(int w, int h)

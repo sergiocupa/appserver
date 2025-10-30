@@ -18,9 +18,6 @@
     <ClInclude Include="src\MediaFragmenterType.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mp4Util.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\MediaSourceSim.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -38,7 +35,7 @@
     <ClCompile Include="src\MediaFragmenterType.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mp4Util.c">
+    <ClCompile Include="src\ContainerCodecUtil.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\MediaSourceSim.c">

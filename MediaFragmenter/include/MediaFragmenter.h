@@ -23,10 +23,12 @@ extern "C" {
     #include "../src/MediaFragmenterType.h"
 
 
-	int mmp4_codec_version(const char* path);
-	MediaBuffer* mmp4_read_init_segment(const VideoInitData* vid);
-	MediaBuffer* mmp4_read_frame(const FrameIndex* frame, FILE* src);
-	FrameIndexList* mmp4_index_frames(const char* path);
+	int concod_codec_version(const char* path);
+	MediaBuffer* concod_read_init_segment(const VideoInitData* vid);
+	MediaBuffer* concod_read_frame(const FrameIndex* frame, FILE* src);
+	FrameIndexList* concod_index_frames(const char* path);
+	void concod_display_frame_index(FrameIndexList* frames);
+	uint_fast8_t* concod_convert_avcc_to_annexb(FrameIndex* frame, size_t* annexb_size);
 
 
 	MediaSourceSession* media_sim_create(int width, int height);

@@ -81,21 +81,6 @@ void Notification_Result(ResourceBuffer* object)
 }
 
 
-static void ListarDecodificavel(FrameIndexList* frames)
-{
-    int i = 0;
-    while (i < frames->Count)
-    {
-        FrameIndex* f = frames->Frames[i];
-
-        //if (f->NalType == 1 || f->NalType == 5)
-        //{
-            printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
-        //}
-        i++;
-    }
-}
-
 //int main(int argc, char* argv[])
 int main()
 {
@@ -105,7 +90,7 @@ int main()
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/Big_Buck_Bunn_H265.mp4");
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/sample_960x540.mkv");
 
-    //ListarDecodificavel(frames);
+    mmp4_display_frame_index(frames);
 
     /*VideoInitData vid;
     MediaBuffer* init = mmp4_read_init_segment(&vid);

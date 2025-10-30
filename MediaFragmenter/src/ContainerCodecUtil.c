@@ -1,5 +1,4 @@
 #include "../include/MediaFragmenter.h"
-#include "Mp4Util.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -15,22 +14,36 @@ const uint8_t FTYP_BOX[] =
         'i','s','o','6','m','p','4','1'//  'i','s','o','6','a','v','c','1'      // compatible brands
 };
 
+// Estruturas para stsz e stco (simples arrays para tamanhos e offsets)
+// Estruturas para tables
+typedef struct {
+    uint32_t* sizes;
+    uint32_t count;
+} StszData;
 
-//// Fragmentador 
-//static uint8_t* mp4_write_ftyp(FILE* f)
-//{
-//    // 24 bytes
-//    uint8_t ftyp_box[] = {
-//        0x00,0x00,0x00,0x18,                 // size
-//        'f','t','y','p',                     // type
-//        'i','s','o','6',                     // major brand
-//        0x00,0x00,0x00,0x01,                 // minor version
-//        'i','s','o','6','m','p','4','1'//  'i','s','o','6','a','v','c','1'      // compatible brands
-//    };
-//
-//    return ftyp_box;
-//    fwrite(ftyp_box, 1, sizeof(ftyp_box), f);
-//}
+typedef struct {
+    uint64_t* offsets;
+    uint32_t count;
+    int is_co64;  // 1 se co64 (64-bit)
+} StcoData;
+
+typedef struct {
+    struct StscEntry {
+        uint32_t first_chunk;
+        uint32_t samples_per_chunk;
+        uint32_t sample_desc_id;
+    } *entries;
+    uint32_t count;
+} StscData;
+
+typedef struct {
+    struct SttsEntry {
+        uint32_t count;
+        uint32_t delta;
+    } *entries;
+    uint32_t count;
+} SttsData;
+
 
 // ----------------- cria avcC (H.264) payload -----------------
 static MediaBuffer* build_avcC(const VideoInitData* v)
@@ -585,7 +598,7 @@ static int codec_version_file(FILE* f)
 }
 
 
-int mmp4_codec_version(const char* path)
+int concod_codec_version(const char* path)
 {
     FILE* f = fopen(path, "rb");
     if (!f) return -1;
@@ -597,97 +610,284 @@ int mmp4_codec_version(const char* path)
 }
 
 
-static int is_decodable_h264(int nalType) { return (nalType == 1 || nalType == 5); }
-
-static int is_decodable_h265(int nalType) { return ((nalType >= 0 && nalType <= 21) && !(nalType >= 32 && nalType <= 34)); }
-
-static char guess_frame_type_h264(int nalType) { return (nalType == 5) ? 'I' : 'P'; }
-
-static char guess_frame_type_h265(int nalType) 
+static uint32_t read_u32(FILE* f) 
 {
-    if (nalType >= 19 && nalType <= 21) return 'I';
-    if (nalType >= 1 && nalType <= 9) return 'P';
-    return 'B';
+    uint8_t b[4];
+    fread(b, 1, 4, f);
+    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
+static uint8_t read8(FILE* f) 
+{
+    uint8_t b;
+    if (fread(&b, 1, 1, f) != 1) return 0;
+    return b;
 }
 
 
+// Função para parsear tables de vídeo (agora void, preenche structs se video track)
+static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszData* stsz, StcoData* stco, StscData* stsc, SttsData* stts, uint32_t* timescale, int* codec) {
+    uint8_t name[5] = { 0 };
+
+    while ((uint64_t)ftell(f) < end) {
+        long box_start = ftell(f);
+        uint32_t size = read32(f);
+        if (fread(name, 1, 4, f) != 4) break;
+
+        uint64_t box_size = size;
+        uint64_t header_size = 8;
+        if (size == 1) {
+            box_size = read64(f);
+            header_size = 16;
+        }
+        else if (size == 0) {
+            fseek(f, 0, SEEK_END);
+            box_size = ftell(f) - box_start;
+            fseek(f, box_start + 8, SEEK_SET);
+        }
+
+        if ((size == 1 && box_size < 16) || (size != 1 && size != 0 && box_size < 8)) break;
+
+        uint64_t next = box_start + box_size;
+
+        // hdlr para confirmar vídeo
+        if (!memcmp(name, "hdlr", 4)) {
+            fseek(f, 8, SEEK_CUR);  // version/flags + pre_defined
+            uint8_t handler[5] = { 0 };
+            if (fread(handler, 1, 4, f) == 4) {
+                if (!memcmp(handler, "vide", 4)) is_video = 1;
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // mdhd para timescale
+        if (!memcmp(name, "mdhd", 4) && is_video) {
+            fseek(f, 12, SEEK_CUR);  // version/flags + datas
+            *timescale = read32(f);
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // stsd para codec (focado em H.264)
+        if (!memcmp(name, "stsd", 4) && is_video) {
+            uint8_t header[8];
+            if (fread(header, 1, 8, f) != 8) break;
+            uint32_t entry_count = (header[4] << 24) | (header[5] << 16) | (header[6] << 8) | header[7];
+            for (uint32_t i = 0; i < entry_count; i++) {
+                uint32_t entry_size = read32(f);
+                uint8_t entry_name[5] = { 0 };
+                if (fread(entry_name, 1, 4, f) != 4) break;
+                if (!memcmp(entry_name, "avc1", 4) || !memcmp(entry_name, "avc3", 4)) *codec = 264;
+                fseek(f, entry_size - 8, SEEK_CUR);
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // stts para deltas de tempo
+        if (!memcmp(name, "stts", 4) && is_video) {
+            fseek(f, 4, SEEK_CUR);  // version/flags
+            stts->count = read32(f);
+            stts->entries = malloc(stts->count * sizeof(struct SttsEntry));
+            for (uint32_t i = 0; i < stts->count; i++) {
+                stts->entries[i].count = read32(f);
+                stts->entries[i].delta = read32(f);
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // stsc para mapeamento sample-to-chunk
+        if (!memcmp(name, "stsc", 4) && is_video) {
+            fseek(f, 4, SEEK_CUR);  // version/flags
+            stsc->count = read32(f);
+            stsc->entries = malloc(stsc->count * sizeof(struct StscEntry));
+            for (uint32_t i = 0; i < stsc->count; i++) {
+                stsc->entries[i].first_chunk = read32(f);
+                stsc->entries[i].samples_per_chunk = read32(f);
+                stsc->entries[i].sample_desc_id = read32(f);
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // stsz para tamanhos de samples
+        if (!memcmp(name, "stsz", 4) && is_video) {
+            fseek(f, 4, SEEK_CUR);  // version/flags
+            uint32_t sample_size = read32(f);
+            stsz->count = read32(f);
+            stsz->sizes = malloc(stsz->count * sizeof(uint32_t));
+            if (sample_size == 0) {  // Variáveis
+                for (uint32_t i = 0; i < stsz->count; i++) {
+                    stsz->sizes[i] = read32(f);
+                }
+            }
+            else {  // Fixo
+                for (uint32_t i = 0; i < stsz->count; i++) {
+                    stsz->sizes[i] = sample_size;
+                }
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // stco ou co64 para offsets de chunks
+        if ((!memcmp(name, "stco", 4) || !memcmp(name, "co64", 4)) && is_video) {
+            stco->is_co64 = !memcmp(name, "co64", 4);
+            fseek(f, 4, SEEK_CUR);  // version/flags
+            stco->count = read32(f);
+            stco->offsets = malloc(stco->count * sizeof(uint64_t));
+            for (uint32_t i = 0; i < stco->count; i++) {
+                stco->offsets[i] = stco->is_co64 ? read64(f) : (uint64_t)read32(f);
+            }
+            fseek(f, next, SEEK_SET);
+            continue;
+        }
+
+        // Recursa para containers, propagando is_video
+        if (!memcmp(name, "moov", 4) || !memcmp(name, "trak", 4) ||
+            !memcmp(name, "mdia", 4) || !memcmp(name, "minf", 4) ||
+            !memcmp(name, "stbl", 4) || !memcmp(name, "moof", 4) || !memcmp(name, "edts", 4)) {
+            parse_video_track_tables(f, next, is_video, stsz, stco, stsc, stts, timescale, codec);
+        }
+        fseek(f, next, SEEK_SET);
+    }
+}
 
 
-FrameIndexList* mmp4_index_frames(const char* path)
+// Função principal (focada em H.264)
+FrameIndexList* concod_index_frames(const char* path)
 {
     FILE* f = fopen(path, "rb");
-    if (!f) {
+    if (!f) 
+    {
         perror("Erro ao abrir arquivo");
         return NULL;
     }
 
-    FrameIndexList* list = mframe_list_new();
-    list->Codec = codec_version_file(f);
-    list->Fps   = 30.0; // valor padrão estimado, pode ser extraído do moov posteriormente
-
-    uint8_t b;
-    uint8_t prev_bytes[3] = { 0 };
-    uint64_t offset = 0;
-    uint64_t start = 0;
-    uint64_t size = 0;
-    int prev_nalType = -1;
-    double frame_time = 1.0 / list->Fps;
-    double pts = 0.0;
-
-    while (fread(&b, 1, 1, f) == 1) 
+    int codec = codec_version_file(f);
+    if (codec != 264) 
     {
-        if (prev_bytes[0] == 0x00 && prev_bytes[1] == 0x00 && b == 0x01) 
+        printf("Codec não é H.264.\n");
+        fclose(f);
+        return NULL;
+    }
+
+    // Parse tables
+    StszData stsz = { 0 };
+    StcoData stco = { 0 };
+    StscData stsc = { 0 };
+    SttsData stts = { 0 };
+    uint32_t timescale = 0;
+    rewind(f);
+    fseek(f, 0, SEEK_END);
+    uint64_t file_end = ftell(f);
+    rewind(f);
+    parse_video_track_tables(f, file_end, 0, &stsz, &stco, &stsc, &stts, &timescale, &codec);
+    if (stsz.count == 0 || codec == 0) 
+    {
+        printf("Falha ao parsear tables de vídeo.\n");
+        fclose(f);
+        return NULL;
+    }
+
+    // Calcula FPS de stts e timescale
+    double total_ticks = 0.0;
+    uint32_t total_samples = 0;
+    for (uint32_t i = 0; i < stts.count; i++) {
+        total_samples += stts.entries[i].count;
+        total_ticks += (double)stts.entries[i].count * stts.entries[i].delta;
+    }
+    double duration_sec = total_ticks / timescale;
+    double fps = (duration_sec > 0) ? (double)total_samples / duration_sec : 30.0;
+
+    // Cria lista ordenada
+    FrameIndexList* list = mframe_list_new(stsz.count);
+    list->Codec = codec;
+    list->Fps = fps;
+
+    // Calcula offsets absolutos para cada sample usando stsc
+    uint64_t* sample_offsets = malloc(stsz.count * sizeof(uint64_t));
+    uint32_t sample_idx = 0;
+    uint32_t chunk_idx = 0;
+    uint32_t spc = stsc.count > 0 ? stsc.entries[0].samples_per_chunk : 1;
+    uint32_t entry_idx = 0;
+    for (uint32_t i = 0; i < stsz.count; i++) 
+    {
+        if (sample_idx >= spc) 
         {
-            // Achou novo start code
-            if (size > 0 && prev_nalType >= 0)
+            chunk_idx++;
+            sample_idx = 0;
+            if (entry_idx + 1 < stsc.count && chunk_idx + 1 == stsc.entries[entry_idx + 1].first_chunk)
             {
-                int decodable = (list->Codec == 264) ? is_decodable_h264(prev_nalType) : is_decodable_h265(prev_nalType);
-
-                if (decodable) 
-                {
-                    char ftype = (list->Codec == 264) ? guess_frame_type_h264(prev_nalType) : guess_frame_type_h265(prev_nalType);
-                    mframe_list_add(list, start, size, prev_nalType, ftype, pts);
-                    pts += frame_time;
-                }
+                entry_idx++;
             }
-
-            start = offset - 2;
-            uint8_t nal_header;
-            fread(&nal_header, 1, 1, f);
-            offset += 4;
-
-            prev_nalType = (list->Codec == 264) ? (nal_header & 0x1F) : ((nal_header >> 1) & 0x3F);
-
-            size = 4;
+            spc = stsc.entries[entry_idx].samples_per_chunk;
         }
-        else {
-            size++;
+        if (chunk_idx >= stco.count) break;
+        uint64_t chunk_offset = stco.offsets[chunk_idx];
+        uint64_t local_offset = 0;
+        for (uint32_t j = 0; j < sample_idx; j++) {
+            local_offset += stsz.sizes[i - (sample_idx - j)];
         }
-
-        prev_bytes[0] = prev_bytes[1];
-        prev_bytes[1] = b;
-        offset++;
+        sample_offsets[i] = chunk_offset + local_offset;
+        sample_idx++;
     }
 
-    // último frame
-    if (size > 0 && prev_nalType >= 0) 
+    // Para cada sample (frame)
+    for (uint32_t i = 0; i < stsz.count; i++) 
     {
-        int decodable = (list->Codec == 264) ? is_decodable_h264(prev_nalType) : is_decodable_h265(prev_nalType);
+        uint64_t offset = sample_offsets[i];
+        uint32_t size = stsz.sizes[i];
+        FrameIndex* frame = mframe_new(offset);
+        frame->Size = size;
 
-        if (decodable) 
+        // Parse NALs dentro do sample (formato AVCC: length-prefixed, focado em H.264)
+        fseek(f, offset, SEEK_SET);
+        uint64_t pos = 0;
+        while (pos < size) 
         {
-            char ftype = (list->Codec == 264) ? guess_frame_type_h264(prev_nalType) : guess_frame_type_h265(prev_nalType);
-            mframe_list_add(list, start, size, prev_nalType, ftype, pts);
+            uint32_t nal_len = read32(f);
+            if (nal_len == 0 || pos + nal_len + 4 > size) break;
+            uint8_t nal_header = read8(f);
+            uint8_t nal_type = nal_header & 0x1F;  // Para H.264
+            mnalu_list_add(&frame->Nals, offset + pos, nal_len + 1, nal_type);  // +1 para header
+            fseek(f, nal_len - 1, SEEK_CUR);  // Pula resto (header lido)
+            pos += nal_len + 4;
         }
+
+        mframe_list_add(list, frame);
     }
 
+    // Libera recursos
+    free(sample_offsets);
+    free(stsz.sizes);
+    free(stco.offsets);
+    free(stsc.entries);
+    free(stts.entries);
     fclose(f);
     return list;
 }
 
 
+void concod_display_frame_index(FrameIndexList* frames)
+{
+    for (int i = 0; i < frames->Count; i++)
+    {
+        FrameIndex* f = frames->Frames[i];
+        printf("Frame %d | Offset %llu | Size %llu\n", i, f->Offset, f->Size);
+        for (int j = 0; j < f->Nals.Count; j++)
+        {
+            NALUIndex* ni = f->Nals.Items[j];
+            printf("  NAL %d | Offset %llu | Size %llu | Type %d\n", j, ni->Offset, ni->Size, ni->Type);
+        }
+    }
+}
+
+
 // ----------------- public function: escreve init_segment para file -----------------
-MediaBuffer* mmp4_read_init_segment(const VideoInitData* vid)
+MediaBuffer* concod_read_init_segment(const VideoInitData* vid)
 {
     MediaBuffer* moov   = build_moov_box(vid);
     MediaBuffer* output = mbuffer_create(moov->Length + sizeof(FTYP_BOX));
@@ -698,10 +898,8 @@ MediaBuffer* mmp4_read_init_segment(const VideoInitData* vid)
 }
 
 
-
-
 // saida como buffer...
-MediaBuffer* mmp4_read_frame(const FrameIndex* frame, FILE* src)
+MediaBuffer* concod_read_frame(const FrameIndex* frame, FILE* src)
 {
     MediaBuffer* output = mbuffer_create(frame->Size + 50);
 
@@ -716,6 +914,32 @@ MediaBuffer* mmp4_read_frame(const FrameIndex* frame, FILE* src)
     mbuffer_append_by_file(output, src, frame->Offset, frame->Size);
 
     return output;
+}
+
+
+uint_fast8_t* concod_convert_avcc_to_annexb(FrameIndex* frame, size_t* annexb_size)
+{
+    size_t total_size = frame->Size + frame->Nals.Count * 4;  // Margem para start codes
+    uint_fast8_t* annexb = malloc(total_size);
+    if (!annexb) return NULL;
+
+    size_t pos = 0;
+    for (int j = 0; j < frame->Nals.Count; j++) 
+    {
+        NALUIndex* nal = frame->Nals.Items[j];
+        // Adiciona start code 00 00 00 01
+        annexb[pos++] = 0;
+        annexb[pos++] = 0;
+        annexb[pos++] = 0;
+        annexb[pos++] = 1;
+        // Copia NAL data (header + payload, nal->Size inclui header)
+        // Note: Se nal->Size = nal_len + 1, ajuste para nal_len
+        // Para ler do arquivo se necessário: fseek(f, nal->Offset + 4, SEEK_SET); fread(annexb + pos, 1, nal->Size - 1, f);
+        // Mas como lista tem parseado, assume data já acessível; se não, leia do arquivo
+        pos += nal->Size;  // Placeholder; substitua por cópia real se NAL data não estiver em memória
+    }
+    *annexb_size = pos;
+    return annexb;
 }
 
 

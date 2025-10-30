@@ -58,14 +58,27 @@ extern "C" {
     } 
     VideoOutput;
 
-
     typedef struct
     {
         uint64_t Offset;
-        uint64_t Size;
-        int      NalType;
-        char     FrameType;   // 'I', 'P', 'B'
-        double   PTS;       // timestamp relativo
+        uint32_t Size;
+        uint8_t  Type;
+    } 
+    NALUIndex;
+
+    typedef struct
+    {
+        uint32_t    Max;
+        uint32_t    Count;
+        NALUIndex** Items;
+    }
+    NALUIndexList;
+
+    typedef struct
+    {
+        uint64_t      Offset;
+        uint64_t      Size;
+        NALUIndexList Nals;
     }
     FrameIndex;
 
@@ -114,9 +127,11 @@ extern "C" {
 
 
     void mbuffer_append_by_file(MediaBuffer* buffer, FILE* src, uint64_t file_offset, uint64_t size);
-    FrameIndexList* mframe_list_new();
-    FrameIndex* mframe_new();
-    void mframe_list_add(FrameIndexList* list, uint64_t offset, uint64_t size, int nal_type, char ftype, double pts);
+    void mnalu_list_add(NALUIndexList* nalus, uint64_t offset, uint32_t size, uint8_t type);
+    FrameIndexList* mframe_list_new(uint64_t initial_count);
+    FrameIndex* mframe_new(uint64_t off_set);
+    void mframe_release(FrameIndex** frame);
+    void mframe_list_add(FrameIndexList* list, FrameIndex* frame);
     void mframe_list_release(FrameIndexList** list);
     void mbuffer_resize(MediaBuffer* buffer, int length);
     void mbuffer_init(MediaBuffer* buffer);

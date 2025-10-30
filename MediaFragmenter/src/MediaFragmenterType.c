@@ -28,36 +28,80 @@ void mbuffer_resize(MediaBuffer* buffer, int length)
 }
 
 
-FrameIndexList* mframe_list_new()
+void mnalu_list_init(NALUIndexList* nalus, int initial_count)
+{
+    nalus->Max   = initial_count;
+    nalus->Count = 0;
+    nalus->Items = (NALUIndex**)malloc(nalus->Max * sizeof(NALUIndex*));
+}
+
+void mnalu_list_add(NALUIndexList* nalus, uint64_t offset, uint32_t size, uint8_t type)
+{
+    int sz = nalus->Count + 1;
+    if (sz >= nalus->Max)
+    {
+        nalus->Max   *= 2;
+        nalus->Items  = (NALUIndex**)realloc((NALUIndex**)nalus->Items, nalus->Max * sizeof(NALUIndex*));
+    }
+
+    nalus->Items[nalus->Count]         = (NALUIndex*)malloc(sizeof(NALUIndex));
+    nalus->Items[nalus->Count]->Offset = offset;
+    nalus->Items[nalus->Count]->Size   = size;
+    nalus->Items[nalus->Count]->Type   = type;
+    nalus->Count++;
+}
+
+void mnalu_list_release(NALUIndexList* nalus)
+{
+    int ix = 0;
+    while (ix < nalus->Count)
+    {
+        free(nalus->Items[ix]);
+        ix++;
+    }
+    free(nalus->Items);
+}
+
+
+
+FrameIndex* mframe_new(uint64_t off_set)
+{
+    FrameIndex* db = (FrameIndex*)malloc(sizeof(FrameIndex));
+    db->Offset = off_set;
+    db->Size   = 0;
+    mnalu_list_init(&db->Nals,64);
+    return db;
+}
+void mframe_release(FrameIndex** frame)
+{
+    if (*frame)
+    {
+        mnalu_list_release(&(*frame)->Nals);
+        free(*frame);
+        *frame = 0;
+    }
+}
+
+
+
+FrameIndexList* mframe_list_new(uint64_t initial_count)
 {
     FrameIndexList* db = (FrameIndexList*)malloc(sizeof(FrameIndexList));
-    db->Max    = 100;
+    db->Max    = initial_count;
     db->Count  = 0;
     db->Frames = (FrameIndex**)malloc(db->Max * sizeof(FrameIndexList*));
     return db;
 }
 
-FrameIndex* mframe_new()
+void mframe_list_add(FrameIndexList* list, FrameIndex* frame)
 {
-    FrameIndex* db = (FrameIndex*)malloc(sizeof(FrameIndex));
-    db->Offset = 0;
-    db->Size = 0;
-    return db;
-}
-
-void mframe_list_add(FrameIndexList* list, uint64_t offset, uint64_t size, int nal_type, char ftype, double pts)
-{
-    if (list->Count >= list->Max)
+    int sz = list->Count + 1;
+    if (sz >= list->Max)
     {
-        list->Max    = ((list->Count + sizeof(FrameIndex)) + list->Max) * 2;
+        list->Max    = (sz + list->Max) * 2;
         list->Frames = (FrameIndex**)realloc((FrameIndex**)list->Frames, list->Max * sizeof(FrameIndex*));
     }
-    list->Frames[list->Count]            = (FrameIndex*)malloc(sizeof(FrameIndex));
-    list->Frames[list->Count]->Offset    = offset;
-    list->Frames[list->Count]->Size      = size;
-    list->Frames[list->Count]->NalType   = nal_type;
-    list->Frames[list->Count]->FrameType = ftype;
-    list->Frames[list->Count]->PTS       = pts;
+    list->Frames[list->Count] = frame;
     list->Count++;
 }
 
@@ -68,7 +112,7 @@ void mframe_list_release(FrameIndexList** list)
         int ix = 0;
         while (ix < (*list)->Count)
         {
-            free((*list)->Frames[ix]);
+            mframe_release(&(*list)->Frames[ix]);
             ix++;
         }
         free((*list)->Frames);
@@ -76,6 +120,7 @@ void mframe_list_release(FrameIndexList** list)
         *list = 0;
     }
 }
+
 
 
 void mbuffer_append_by_file(MediaBuffer* buffer, FILE* src, uint64_t file_offset, uint64_t size)

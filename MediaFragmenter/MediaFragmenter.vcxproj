@@ -24,13 +24,12 @@
     <ClInclude Include="include\MediaFragmenter.h" />
     <ClInclude Include="src\MediaFragmenterType.h" />
     <ClInclude Include="src\MediaSourceSim.h" />
-    <ClInclude Include="src\Mp4Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c" />
     <ClCompile Include="src\MediaFragmenterType.c" />
     <ClCompile Include="src\MediaSourceSim.c" />
-    <ClCompile Include="src\Mp4Util.c" />
+    <ClCompile Include="src\ContainerCodecUtil.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

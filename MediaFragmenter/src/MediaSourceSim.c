@@ -38,14 +38,14 @@ static void video_output_destroy(VideoOutput* v)
     free(v);
 }
 
-static H264Decoder* h264_decoder_create()
+static ISVCDecoder h264_decoder_create()
 {
-    H264Decoder* d = (H264Decoder*)calloc(1, sizeof(H264Decoder));
-    if (!d) return NULL;
+    ISVCDecoder* decoder = NULL;
 
-    int rv = WelsCreateDecoder(&d->dec);
-    if (rv != 0 || !d->dec) {
-        free(d);
+    int rv = WelsCreateDecoder(&decoder);
+    if (rv != 0 || !decoder)
+    {
+        free(decoder);
         return NULL;
     }
 
@@ -54,16 +54,18 @@ static H264Decoder* h264_decoder_create()
     param.uiTargetDqLayer = 0xFF;      // Todas as camadas
     param.eEcActiveIdc = ERROR_CON_DISABLE;
     param.bParseOnly = false;
+    param.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
 
-    rv = d->dec->Initialize(d->dec, &param);
-    if (rv != 0) {
-        d->dec->Uninitialize(d->dec);
-        WelsDestroyDecoder(d->dec);
-        free(d);
+    int rsv = (*decoder)->Initialize(decoder,&param);
+    if (rsv != 0) 
+    {
+        (*decoder)->Uninitialize(decoder);
+        WelsDestroyDecoder(decoder);
+        free(decoder);
         return NULL;
     }
 
-    return d;
+    return decoder;
 }
 
 static void h264_decoder_feed(H264Decoder* d, unsigned char* data, int len, VideoOutput* out)

@@ -1,36 +1,8 @@
-Microsoft (R) COFF/PE Dumper Version 14.44.35217.0
-Copyright (C) Microsoft Corporation.  All rights reserved.
-
-
-Dump of file openh264-2.5.1-win64.dll
-
-File Type: DLL
-
-  Section contains the following exports for openh264.dll
-
-    00000000 characteristics
-    FFFFFFFF time date stamp
-        0.00 version
-           1 ordinal base
-           6 number of functions
-           6 number of names
-
-    ordinal hint RVA      name
-
-          1    0 000922F0 WelsCreateDecoder
-          2    1 00054190 WelsCreateSVCEncoder
-          3    2 00092340 WelsDestroyDecoder
-          4    3 000541E0 WelsDestroySVCEncoder
-          5    4 00054200 WelsGetCodecVersion
-          6    5 00054210 WelsGetCodecVersionEx
-
-  Summary
-
-        3000 .data
-        7000 .pdata
-       26000 .rdata
-        1000 .reloc
-        1000 .rodata
-        1000 .rsrc
-       BC000 .text
-        1000 _RDATA
+LIBRARY openh264.dll
+EXPORTS
+    WelsCreateDecoder
+    WelsCreateSVCEncoder
+    WelsDestroyDecoder
+    WelsDestroySVCEncoder
+    WelsGetCodecVersion
+    WelsGetCodecVersionEx

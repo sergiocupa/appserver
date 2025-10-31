@@ -121,7 +121,7 @@ extern "C" {
     typedef struct _MediaSourceSession
     {
         VideoOutput* Output;
-        H264Decoder* Decoder;
+        ISVCDecoder  Decoder;
     }
     MediaSourceSession;
 

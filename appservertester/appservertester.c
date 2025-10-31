@@ -81,16 +81,68 @@ void Notification_Result(ResourceBuffer* object)
 }
 
 
+
+void render_video_from_list(const char* path, FrameIndexList* list) 
+{
+    FILE* file = fopen(path, "rb");
+    if (!file) {
+        perror("Erro ao abrir arquivo");
+        return;
+    }
+
+    // Cria sessão (janela e decoder)
+    MediaSourceSession* session = media_sim_create(1920, 1080);  // Ajuste width/height de stsd ou hardcoded
+
+    // Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
+
+    //// Loop por frames
+    //for (uint32_t i = 0; i < list->Count; i++) 
+    //{
+    //    FrameIndex* frame = list->Frames[i];
+    //    unsigned char* buffer = malloc(frame->Size);
+    //    fseek(file, frame->Offset, SEEK_SET);
+    //    if (fread(buffer, 1, frame->Size, file) != frame->Size)
+    //    {
+    //        free(buffer);
+    //        continue;
+    //    }
+
+    //    // Converter para Annex B
+    //    size_t annexb_size;
+    //    unsigned char* annexb = concod_convert_avcc_to_annexb(frame, &annexb_size);
+    //    if (annexb) 
+    //    {
+    //        MediaBuffer mb = { .Data = annexb, .Length = annexb_size };
+    //        media_sim_feed(session, &mb);
+    //        free(annexb);
+    //    }
+
+    //    free(buffer);
+    //    // Delay para FPS
+    //    Sleep(1000 / list->Fps);  // Em ms, ajuste para Windows Sleep
+    //}
+
+    // Fecha sessão
+    // media_sim_destroy(session);
+    fclose(file);
+}
+
+
+
+
 //int main(int argc, char* argv[])
 int main()
 {
     // sample-5s.mp4
     // e:/small.mp4
-    FrameIndexList* frames = mmp4_index_frames("e:/sample-5s.mp4"); 
+    FrameIndexList* frames = concod_index_frames("e:/sample-5s.mp4"); 
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/Big_Buck_Bunn_H265.mp4");
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/sample_960x540.mkv");
 
-    mmp4_display_frame_index(frames);
+    render_video_from_list("e:/sample-5s.mp4", frames);
+
+
+    //concod_display_frame_index(frames);
 
     /*VideoInitData vid;
     MediaBuffer* init = mmp4_read_init_segment(&vid);

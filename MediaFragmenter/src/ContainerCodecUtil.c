@@ -917,7 +917,7 @@ MediaBuffer* concod_read_frame(const FrameIndex* frame, FILE* src)
 }
 
 
-uint_fast8_t* concod_convert_avcc_to_annexb(FrameIndex* frame, size_t* annexb_size)
+uint_fast8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* annexb_size)
 {
     size_t total_size = frame->Size + frame->Nals.Count * 4;  // Margem para start codes
     uint_fast8_t* annexb = malloc(total_size);
@@ -932,11 +932,30 @@ uint_fast8_t* concod_convert_avcc_to_annexb(FrameIndex* frame, size_t* annexb_si
         annexb[pos++] = 0;
         annexb[pos++] = 0;
         annexb[pos++] = 1;
-        // Copia NAL data (header + payload, nal->Size inclui header)
-        // Note: Se nal->Size = nal_len + 1, ajuste para nal_len
-        // Para ler do arquivo se necessário: fseek(f, nal->Offset + 4, SEEK_SET); fread(annexb + pos, 1, nal->Size - 1, f);
-        // Mas como lista tem parseado, assume data já acessível; se não, leia do arquivo
-        pos += nal->Size;  // Placeholder; substitua por cópia real se NAL data não estiver em memória
+
+        if (fseek(f, nal->Offset + 4, SEEK_SET) != 0) 
+        {
+            free(annexb);
+            return NULL;
+        }
+
+        size_t nal_data_size = nal->Size - 1; /* Tamanho sem o header já considerado? Ajuste se nal->Size = nal_len */
+        if (fread(annexb + pos, 1, nal_data_size, f) != nal_data_size) 
+        {
+            free(annexb);
+            return NULL;
+        }
+
+        pos += nal_data_size;
+
+        //// Nao esta alimentando annexb com NAL
+        //...
+
+        //// Copia NAL data (header + payload, nal->Size inclui header)
+        //// Note: Se nal->Size = nal_len + 1, ajuste para nal_len
+        //// Para ler do arquivo se necessário: fseek(f, nal->Offset + 4, SEEK_SET); fread(annexb + pos, 1, nal->Size - 1, f);
+        //// Mas como lista tem parseado, assume data já acessível; se não, leia do arquivo
+        //pos += nal->Size;  // Placeholder; substitua por cópia real se NAL data não estiver em memória
     }
     *annexb_size = pos;
     return annexb;

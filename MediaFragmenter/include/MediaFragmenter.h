@@ -23,18 +23,23 @@ extern "C" {
     #include "../src/MediaFragmenterType.h"
 
 
+	int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h);
+	int rgb_to_yuv(uint8_t* rgb_pixels, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v, int* stride_y, int* stride_u, int* stride_v);
+
+
 	int concod_codec_version(const char* path);
 	MediaBuffer* concod_read_init_segment(const VideoInitData* vid);
 	MediaBuffer* concod_read_frame(const FrameIndex* frame, FILE* src);
 	FrameIndexList* concod_index_frames(const char* path);
 	void concod_display_frame_index(FrameIndexList* frames);
-	uint_fast8_t* concod_convert_avcc_to_annexb(FrameIndex* frame, size_t* annexb_size);
+	uint_fast8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* annexb_size);
 
 
 	MediaSourceSession* media_sim_create(int width, int height);
 	void media_sim_init_segment(MediaSourceSession* source, MediaBuffer* data);
 	void media_sim_feed(MediaSourceSession* source, MediaBuffer* data);
 	void media_sim_release(MediaSourceSession** source);
+	void medias_waiting(VideoOutput* v);
 
 
 #ifdef __cplusplus

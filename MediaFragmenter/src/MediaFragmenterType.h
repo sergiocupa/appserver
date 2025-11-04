@@ -22,6 +22,8 @@ extern "C" {
     #include "codec_api.h"
     #define SDL_MAIN_HANDLED
     #include "SDL2/SDL.h"
+    #include "codec_api.h"
+    #include <wtypes.h>
     #include <stdint.h>
     #include <stdio.h>
 
@@ -30,6 +32,18 @@ extern "C" {
 
     #define NAL_TYPE(nal) ((nal) & 0x1F)             // Para H.264
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
+
+
+    typedef struct {
+        uint32_t file_size;
+        uint32_t reserved;
+        uint32_t data_offset;
+        uint32_t header_size;
+        int32_t width;
+        int32_t height;
+        uint16_t planes;
+        uint16_t bpp;
+    } BmpHeader;
 
 
     typedef struct
@@ -42,19 +56,31 @@ extern "C" {
     CodecInfo;
 
 
-    typedef struct 
+    /*typedef struct 
     {
         ISVCDecoder dec;
     } 
-    H264Decoder;
+    H264Decoder;*/
 
+
+    typedef void (*KeyDownEvent)(SDL_KeyCode key);
+    typedef void (*QuitEvent)();
+    typedef void (*WaitEvent)();
 
     typedef struct 
     {
-        int a;
-        SDL_Window* win;
+        int           Width;
+        int           Height;
+        int           a;
+        SDL_Window*   win;
         SDL_Renderer* ren;
-        SDL_Texture* tex;
+        SDL_Texture*  tex;
+        void*         EventThread;
+        int           Running;
+        KeyDownEvent  KeyDown;
+        QuitEvent     Quit;
+        HANDLE        Wait;
+        HANDLE        WaitShow;
     } 
     VideoOutput;
 
@@ -122,6 +148,8 @@ extern "C" {
     {
         VideoOutput* Output;
         ISVCDecoder  Decoder;
+
+
     }
     MediaSourceSession;
 

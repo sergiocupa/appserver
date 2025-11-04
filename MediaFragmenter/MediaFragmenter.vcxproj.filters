@@ -41,5 +41,8 @@
     <ClCompile Include="src\MediaSourceSim.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImageTools.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

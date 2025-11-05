@@ -78,94 +78,6 @@ int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h)
 }
 
 
-
-
-int __rgb_to_yuv(uint8_t* rgb, int w, int h,
-    uint8_t** y, uint8_t** u, uint8_t** v,
-    int* stride_y, int* stride_u, int* stride_v)
-{
-    if (!rgb || !y || !u || !v || w <= 0 || h <= 0)
-        return -1;
-
-    int strideY = w;
-    int strideU = (w + 1) / 2;
-    int strideV = (w + 1) / 2;
-    int h_uv = (h + 1) / 2;
-
-    *y = (uint8_t*)malloc(strideY * h);
-    *u = (uint8_t*)malloc(strideU * h_uv);
-    *v = (uint8_t*)malloc(strideV * h_uv);
-
-    if (!*y || !*u || !*v) {
-        free(*y); free(*u); free(*v);
-        return -2;
-    }
-
-    *stride_y = strideY;
-    *stride_u = strideU;
-    *stride_v = strideV;
-
-    // Converter RGB → YUV (ITU-R BT.601)
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            int idx = (j * w + i) * 3;
-            uint8_t r = rgb[idx + 0];
-            uint8_t g = rgb[idx + 1];
-            uint8_t b = rgb[idx + 2];
-
-            int Y = (66 * r + 129 * g + 25 * b + 128) >> 8;
-            int U = (-38 * r - 74 * g + 112 * b + 128) >> 8;
-            int V = (112 * r - 94 * g - 18 * b + 128) >> 8;
-
-            Y = Y + 16;
-            U = U + 128;
-            V = V + 128;
-
-            if (Y < 0) Y = 0; else if (Y > 255) Y = 255;
-            if (U < 0) U = 0; else if (U > 255) U = 255;
-            if (V < 0) V = 0; else if (V > 255) V = 255;
-
-            (*y)[j * strideY + i] = (uint8_t)Y;
-        }
-    }
-
-    // Subamostrar U e V corretamente (média 2x2)
-    for (int j = 0; j < h_uv; j++) {
-        for (int i = 0; i < strideU; i++) {
-            int sumU = 0, sumV = 0, count = 0;
-
-            for (int dy = 0; dy < 2; dy++) {
-                for (int dx = 0; dx < 2; dx++) {
-                    int x = i * 2 + dx;
-                    int y = j * 2 + dy;
-                    if (x < w && y < h) {
-                        int idx = (y * w + x) * 3;
-                        uint8_t r = rgb[idx + 0];
-                        uint8_t g = rgb[idx + 1];
-                        uint8_t b = rgb[idx + 2];
-
-                        int U = (-38 * r - 74 * g + 112 * b + 128) >> 8;
-                        int V = (112 * r - 94 * g - 18 * b + 128) >> 8;
-                        U += 128; V += 128;
-
-                        sumU += U;
-                        sumV += V;
-                        count++;
-                    }
-                }
-            }
-
-            (*u)[j * strideU + i] = (uint8_t)(sumU / count);
-            (*v)[j * strideV + i] = (uint8_t)(sumV / count);
-        }
-    }
-
-    return 0;
-}
-
-
-
-// esta gerando pequenas sombras em borda de branco para azul. 
 int rgb_to_yuv(uint8_t* rgb, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v, int* stride_y, int* stride_u, int* stride_v)
 {
     if (!rgb || w <= 0 || h <= 0 || !y || !u || !v)
@@ -173,11 +85,11 @@ int rgb_to_yuv(uint8_t* rgb, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v
 
     // Strides (1 byte por pixel em cada plano)
     *stride_y = w;
-    *stride_u = w / 2;
-    *stride_v = w / 2;
+    *stride_u = (w + 1) / 2;  // Teto para larguras ímpares
+    *stride_v = (w + 1) / 2;
 
     int y_size = w * h;
-    int uv_size = (w / 2) * (h / 2);
+    int uv_size = (*stride_u) * ((h + 1) / 2);  // Teto para alturas ímpares
 
     // Aloca planos
     *y = (uint8_t*)malloc(y_size);
@@ -186,42 +98,58 @@ int rgb_to_yuv(uint8_t* rgb, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v
     if (!*y || !*u || !*v)
         return -1;
 
-    memset(*y, 0, y_size);
-    memset(*u, 0, uv_size);
-    memset(*v, 0, uv_size);
-
-    // Conversão RGB → YUV (BT.601)
-    for (int j = 0; j < h; j++)
+    // Conversão RGB → YUV (BT.601) com subamostragem média no croma
+    for (int j = 0; j < h; j += 2)
     {
-        for (int i = 0; i < w; i++)
+        for (int i = 0; i < w; i += 2)
         {
-            int idx_rgb = (j * w + i) * 3;
+            float sum_U = 0.0f;
+            float sum_V = 0.0f;
+            int count = 0;
 
-            uint8_t r = rgb[idx_rgb + 0];
-            uint8_t g = rgb[idx_rgb + 1];
-            uint8_t b = rgb[idx_rgb + 2];
-
-            // Cálculo YUV (BT.601)
-            float Yf = 0.299f * r + 0.587f * g + 0.114f * b;
-            float Uf = -0.168736f * r - 0.331264f * g + 0.5f * b + 128.0f;
-            float Vf = 0.5f * r - 0.418688f * g - 0.081312f * b + 128.0f;
-
-            (*y)[j * (*stride_y) + i] = (uint8_t)(
-                Yf < 0 ? 0 : (Yf > 255 ? 255 : Yf)
-                );
-
-            // Subamostragem 4:2:0 — U e V a cada bloco 2x2
-            if ((j % 2 == 0) && (i % 2 == 0))
+            // Processa o bloco 2x2 (ou menos nos limites)
+            for (int dj = 0; dj < 2; dj++)
             {
+                int jj = j + dj;
+                if (jj >= h) continue;
+
+                for (int di = 0; di < 2; di++)
+                {
+                    int ii = i + di;
+                    if (ii >= w) continue;
+
+                    int idx_rgb = (jj * w + ii) * 3;
+                    uint8_t r = rgb[idx_rgb + 0];
+                    uint8_t g = rgb[idx_rgb + 1];
+                    uint8_t b = rgb[idx_rgb + 2];
+
+                    // Calcula Y (resolução completa)
+                    float Yf = 0.299f * r + 0.587f * g + 0.114f * b;
+                    int Y_clamped = (int)(Yf + 0.5f);  // Arredonda para o mais próximo
+                    (*y)[jj * (*stride_y) + ii] = (uint8_t)(Y_clamped < 0 ? 0 : (Y_clamped > 255 ? 255 : Y_clamped));
+
+                    // Acumula U e V para média
+                    float Uf = -0.168736f * r - 0.331264f * g + 0.5f * b + 128.0f;
+                    float Vf = 0.5f * r - 0.418688f * g - 0.081312f * b + 128.0f;
+                    sum_U += Uf;
+                    sum_V += Vf;
+                    count++;
+                }
+            }
+
+            // Média e armazena U/V se o bloco tiver pixels
+            if (count > 0)
+            {
+                float avg_U = sum_U / count;
+                float avg_V = sum_V / count;
+                int U_clamped = (int)(avg_U + 0.5f);  // Arredonda para o mais próximo
+                int V_clamped = (int)(avg_V + 0.5f);
                 int uv_index = (j / 2) * (*stride_u) + (i / 2);
-                (*u)[uv_index] = (uint8_t)(Uf < 0 ? 0 : (Uf > 255 ? 255 : Uf)
-                    );
-                (*v)[uv_index] = (uint8_t)(Vf < 0 ? 0 : (Vf > 255 ? 255 : Vf));
+                (*u)[uv_index] = (uint8_t)(U_clamped < 0 ? 0 : (U_clamped > 255 ? 255 : U_clamped));
+                (*v)[uv_index] = (uint8_t)(V_clamped < 0 ? 0 : (V_clamped > 255 ? 255 : V_clamped));
             }
         }
     }
 
-    return 0;
+    return 0;  // Sucesso
 }
-
-

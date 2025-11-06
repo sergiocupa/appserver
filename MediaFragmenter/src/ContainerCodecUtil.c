@@ -610,12 +610,6 @@ int concod_codec_version(const char* path)
 }
 
 
-static uint32_t read_u32(FILE* f) 
-{
-    uint8_t b[4];
-    fread(b, 1, 4, f);
-    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
-}
 
 static uint8_t read8(FILE* f) 
 {
@@ -623,6 +617,273 @@ static uint8_t read8(FILE* f)
     if (fread(&b, 1, 1, f) != 1) return 0;
     return b;
 }
+
+
+
+#include <inttypes.h> // Para uint64_t
+
+// Funções auxiliares para big-endian
+uint32_t read_be32(FILE* f) {
+    uint8_t b[4];
+    if (fread(b, 1, 4, f) < 4) return 0;
+    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
+uint64_t read_be64(FILE* f) {
+    uint8_t b[8];
+    if (fread(b, 1, 8, f) < 8) return 0;
+    return ((uint64_t)b[0] << 56) | ((uint64_t)b[1] << 48) | ((uint64_t)b[2] << 40) |
+        ((uint64_t)b[3] << 32) | ((uint64_t)b[4] << 24) | ((uint64_t)b[5] << 16) |
+        ((uint64_t)b[6] << 8) | b[7];
+}
+
+uint32_t read_be_n(uint8_t* buf, int n) {
+    uint32_t val = 0;
+    for (int j = 0; j < n; j++) {
+        val = (val << 8) | buf[j];
+    }
+    return val;
+}
+
+int concod_load_video_metadata(FILE* f, VideoMetadata* meta) {
+    // Inicialize meta
+    meta->sps = NULL;
+    meta->pps = NULL;
+    meta->sps_len = 0;
+    meta->pps_len = 0;
+
+    int length_size = 0; // Declarado aqui para ser usado em mdat se necessário
+
+    // Reset para início (conforme sua correção)
+    fseek(f, 0, SEEK_SET);
+
+    // Procurar o marcador 'avcC' no arquivo
+    uint8_t buffer[1024];
+    size_t read;
+    long pos = 0;
+    int found = 0;
+    while ((read = fread(buffer, 1, sizeof(buffer), f)) > 0) {
+        for (size_t i = 0; i + 3 < read; i++) {
+            if (buffer[i] == 'a' && buffer[i + 1] == 'v' && buffer[i + 2] == 'c' && buffer[i + 3] == 'C') {
+                found = 1;
+                long type_pos = pos + i;
+                // Volta para ler o tamanho do box (4 bytes antes do type)
+                fseek(f, type_pos - 4, SEEK_SET);
+                uint32_t box_size = read_be32(f);
+                uint64_t avcc_size;
+                if (box_size == 1) { // largesize
+                    avcc_size = read_be64(f);
+                    if (avcc_size < 16) {
+                        fclose(f);
+                        fprintf(stderr, "Box avcC largesize inválido.\n");
+                        return -3;
+                    }
+                    avcc_size -= 16; // Ajuste para conteúdo
+                    fseek(f, type_pos + 4, SEEK_SET); // Após 'avcC'
+                }
+                else if (box_size < 8) {
+                    fclose(f);
+                    fprintf(stderr, "Box avcC inválido (tamanho pequeno).\n");
+                    return -3;
+                }
+                else {
+                    avcc_size = box_size - 8;
+                    fseek(f, type_pos + 4, SEEK_SET); // Após 'avcC'
+                }
+                // Limite razoável para avcC (geralmente < 256 bytes)
+                if (avcc_size > 1024) {
+                    fclose(f);
+                    fprintf(stderr, "Box avcC grande demais (%llu bytes).\n", avcc_size);
+                    return -3;
+                }
+                uint8_t* config = (uint8_t*)malloc(avcc_size);
+                size_t config_read = fread(config, 1, avcc_size, f);
+                if (config_read != avcc_size) {
+                    free(config);
+                    fclose(f);
+                    fprintf(stderr, "Falha ao ler conteúdo de avcC.\n");
+                    return -3;
+                }
+
+                // Leitura básica do avcC content
+                if (config_read <= 8) {
+                    free(config);
+                    fclose(f);
+                    fprintf(stderr, "avcC inválido ou curto demais.\n");
+                    return -3;
+                }
+                length_size = (config[4] & 0x03) + 1; // Extrai lengthSizeMinusOne aqui
+                int offset = 5; // Após version (1), profile, compat, level, reserved+lengthSizeMinusOne
+                int sps_count = config[offset++] & 0x1F;
+                if (sps_count > 0) {
+                    if (offset + 2 > config_read) {
+                        free(config);
+                        fclose(f);
+                        fprintf(stderr, "Dados insuficientes para sps_len.\n");
+                        return -4;
+                    }
+                    int sps_len = (config[offset] << 8) | config[offset + 1];
+                    offset += 2;
+                    if (sps_len > 512 || offset + sps_len > config_read) { // Limite razoável + check overflow
+                        free(config);
+                        fclose(f);
+                        fprintf(stderr, "SPS len inválido (%d) ou excede dados (%zu).\n", sps_len, config_read);
+                        return -5;
+                    }
+                    meta->sps = (uint8_t*)malloc(sps_len);
+                    memcpy(meta->sps, &config[offset], sps_len);
+                    meta->sps_len = sps_len;
+                    offset += sps_len;
+                }
+                if (offset >= config_read) {
+                    free(config);
+                    fclose(f);
+                    fprintf(stderr, "Dados insuficientes para pps_count.\n");
+                    return -4;
+                }
+                int pps_count = config[offset++];
+                if (pps_count > 0) {
+                    if (offset + 2 > config_read) {
+                        free(config);
+                        fclose(f);
+                        fprintf(stderr, "Dados insuficientes para pps_len.\n");
+                        return -4;
+                    }
+                    int pps_len = (config[offset] << 8) | config[offset + 1];
+                    offset += 2;
+                    if (pps_len > 512 || offset + pps_len > config_read) {
+                        free(config);
+                        fclose(f);
+                        fprintf(stderr, "PPS len inválido (%d) ou excede dados (%zu).\n", pps_len, config_read);
+                        return -5;
+                    }
+                    meta->pps = (uint8_t*)malloc(pps_len);
+                    memcpy(meta->pps, &config[offset], pps_len);
+                    meta->pps_len = pps_len;
+                }
+                free(config);
+                break; // Sai do loop de busca
+            }
+        }
+        if (found) break;
+        pos += read - 3;
+        fseek(f, pos, SEEK_SET); // Overlap
+    }
+    if (!found) {
+        fclose(f);
+        fprintf(stderr, "Marcador 'avcC' não encontrado.\n");
+        return -2;
+    }
+
+    // Complemento: Se não encontrou SPS/PPS no avcC, procure no mdat (in-band)
+    if (meta->sps == NULL || meta->pps == NULL) {
+        if (length_size == 0) {
+            fclose(f);
+            fprintf(stderr, "length_size não definido (avcC inválido).\n");
+            return -6;
+        }
+        // Reset para buscar 'mdat' do início
+        fseek(f, 0, SEEK_SET);
+        pos = 0;
+        found = 0;
+        while ((read = fread(buffer, 1, sizeof(buffer), f)) > 0) {
+            for (size_t i = 0; i + 3 < read; i++) {
+                if (buffer[i] == 'm' && buffer[i + 1] == 'd' && buffer[i + 2] == 'a' && buffer[i + 3] == 't') {
+                    found = 1;
+                    long type_pos = pos + i;
+                    fseek(f, type_pos - 4, SEEK_SET);
+                    uint32_t box_size = read_be32(f);
+                    uint64_t mdat_size;
+                    if (box_size == 1) { // largesize
+                        mdat_size = read_be64(f) - 16;
+                    }
+                    else if (box_size == 0) { // Até EOF
+                        long current = ftell(f);
+                        fseek(f, 0, SEEK_END);
+                        long end = ftell(f);
+                        fseek(f, current, SEEK_SET);
+                        mdat_size = end - (type_pos + 4);
+                    }
+                    else {
+                        mdat_size = box_size - 8;
+                    }
+                    if (mdat_size < 0) {
+                        fclose(f);
+                        fprintf(stderr, "Box mdat tamanho inválido.\n");
+                        return -4;
+                    }
+                    long data_pos = type_pos + 4; // Após 'mdat'
+                    fseek(f, data_pos, SEEK_SET);
+
+                    // Parse NAL units no mdat até encontrar SPS e PPS (limite aumentado para 10MB)
+                    uint8_t nal_len_buf[4];
+                    uint64_t parsed_bytes = 0;
+                    int found_sps = (meta->sps != NULL);
+                    int found_pps = (meta->pps != NULL);
+                    while (parsed_bytes < 1024 * 1024 * 10 && !feof(f) && !(found_sps && found_pps)) {
+                        if (fread(nal_len_buf, 1, length_size, f) < (size_t)length_size) {
+                            fprintf(stderr, "Falha ao ler nal_len (EOF prematuro).\n");
+                            break;
+                        }
+                        uint32_t nal_len = read_be_n(nal_len_buf, length_size);
+                        if (nal_len == 0 || nal_len > 1024 * 1024) {
+                            fprintf(stderr, "nal_len inválido (%u).\n", nal_len);
+                            break;
+                        }
+                        uint8_t* nal = (uint8_t*)malloc(nal_len);
+                        if (fread(nal, 1, nal_len, f) < nal_len) {
+                            free(nal);
+                            fprintf(stderr, "Falha ao ler NAL data.\n");
+                            break;
+                        }
+                        parsed_bytes += length_size + nal_len;
+                        if (parsed_bytes > mdat_size) {
+                            free(nal);
+                            fprintf(stderr, "Excedeu mdat_size (%llu > %llu).\n", parsed_bytes, mdat_size);
+                            break;
+                        }
+                        uint8_t nal_type = nal[0] & 0x1F;
+                        if (nal_type == 7 && !found_sps) { // SPS
+                            meta->sps = nal;
+                            meta->sps_len = nal_len;
+                            found_sps = 1;
+                            fprintf(stderr, "SPS encontrado no mdat (len=%d).\n", nal_len); // Depuração
+                        }
+                        else if (nal_type == 8 && !found_pps) { // PPS
+                            meta->pps = nal;
+                            meta->pps_len = nal_len;
+                            found_pps = 1;
+                            fprintf(stderr, "PPS encontrado no mdat (len=%d).\n", nal_len); // Depuração
+                        }
+                        else {
+                            free(nal);
+                            fprintf(stderr, "NAL type %d ignorado.\n", nal_type); // Depuração para ver se parseia
+                        }
+                    }
+                    if (!found_sps || !found_pps) {
+                        fclose(f);
+                        fprintf(stderr, "SPS/PPS não encontrados no mdat após %llu bytes.\n", parsed_bytes);
+                        return -5;
+                    }
+                    break; // Sai do loop de busca mdat
+                }
+            }
+            if (found) break;
+            pos += read - 3;
+            fseek(f, pos, SEEK_SET); // Overlap
+        }
+        if (!found) {
+            fclose(f);
+            fprintf(stderr, "Marcador 'mdat' não encontrado.\n");
+            return -4;
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
+
+
 
 
 // Função para parsear tables de vídeo (agora void, preenche structs se video track)
@@ -756,8 +1017,144 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 }
 
 
-// Função principal (focada em H.264)
 FrameIndexList* concod_index_frames(const char* path)
+{
+    FILE* f = fopen(path, "rb");
+    if (!f)
+    {
+        perror("Erro ao abrir arquivo");
+        return NULL;
+    }
+    int codec = codec_version_file(f);
+    if (codec != 264)
+    {
+        printf("Codec não é H.264.\n");
+        fclose(f);
+        return NULL;
+    }
+    // Adicionado: Extrai metadata cedo para obter length_size do avcC
+    //   Fazer uma funcao só para esta info
+    //   Por fim validar tamanho do frame, com tamanho total dos NALs.
+    ...
+    VideoMetadata meta = { 0 };
+    if (concod_load_video_metadata(f, &meta) != 0) {
+        printf("Falha ao carregar metadata para length_size.\n");
+        fclose(f);
+        return NULL;
+    }
+
+    // Nao pega length_size, mas de onde vem isso? O Grok assumiu que tem este dado. Perguntar como obter este dado
+    int length_size = meta.length_size;  // Adicionado: Usa length_size extraído (geralmente 4, mas dinâmico)
+    if (length_size < 1 || length_size > 4) {
+        printf("length_size inválido: %d\n", length_size);
+        fclose(f);
+        return NULL;
+    }
+    // Libera SPS/PPS se não necessários aqui (metadata será recarregada depois)
+    if (meta.sps) free(meta.sps);
+    if (meta.pps) free(meta.pps);
+
+    // Parse tables
+    StszData stsz = { 0 };
+    StcoData stco = { 0 };
+    StscData stsc = { 0 };
+    SttsData stts = { 0 };
+    uint32_t timescale = 0;
+    rewind(f);
+    fseek(f, 0, SEEK_END);
+    uint64_t file_end = ftell(f);
+    rewind(f);
+    parse_video_track_tables(f, file_end, 0, &stsz, &stco, &stsc, &stts, &timescale, &codec);
+    if (stsz.count == 0 || codec == 0)
+    {
+        printf("Falha ao parsear tables de vídeo.\n");
+        fclose(f);
+        return NULL;
+    }
+    // Calcula FPS de stts e timescale
+    double total_ticks = 0.0;
+    uint32_t total_samples = 0;
+    for (uint32_t i = 0; i < stts.count; i++) {
+        total_samples += stts.entries[i].count;
+        total_ticks += (double)stts.entries[i].count * stts.entries[i].delta;
+    }
+    double duration_sec = total_ticks / timescale;
+    double fps = (duration_sec > 0) ? (double)total_samples / duration_sec : 30.0;
+    // Cria lista ordenada
+    FrameIndexList* list = mframe_list_new(stsz.count);
+    // Calcula offsets absolutos para cada sample usando stsc
+    uint64_t* sample_offsets = malloc(stsz.count * sizeof(uint64_t));
+    uint32_t sample_idx = 0;
+    uint32_t chunk_idx = 0;
+    uint32_t spc = stsc.count > 0 ? stsc.entries[0].samples_per_chunk : 1;
+    uint32_t entry_idx = 0;
+    for (uint32_t i = 0; i < stsz.count; i++)
+    {
+        if (sample_idx >= spc)
+        {
+            chunk_idx++;
+            sample_idx = 0;
+            if (entry_idx + 1 < stsc.count && chunk_idx + 1 == stsc.entries[entry_idx + 1].first_chunk)
+            {
+                entry_idx++;
+            }
+            spc = stsc.entries[entry_idx].samples_per_chunk;
+        }
+        if (chunk_idx >= stco.count) break;
+        uint64_t chunk_offset = stco.offsets[chunk_idx];
+        uint64_t local_offset = 0;
+        for (uint32_t j = 0; j < sample_idx; j++) {
+            local_offset += stsz.sizes[i - (sample_idx - j)];
+        }
+        sample_offsets[i] = chunk_offset + local_offset;
+        sample_idx++;
+    }
+    // Para cada sample (frame)
+    for (uint32_t i = 0; i < stsz.count; i++)
+    {
+        uint64_t offset = sample_offsets[i];
+        uint32_t size = stsz.sizes[i];
+        FrameIndex* frame = mframe_new(offset);
+        frame->Size = size;
+        // Parse NALs dentro do sample (formato AVCC: length-prefixed, focado em H.264)
+        fseek(f, offset, SEEK_SET);
+        uint64_t pos = 0;
+        while (pos < size)
+        {
+            // Corrigido: Lê nal_len dinamicamente com base em length_size (em vez de fixo read32)
+            uint8_t nal_len_buf[4] = { 0 };
+            if (fread(nal_len_buf, 1, length_size, f) != (size_t)length_size) break;
+            uint32_t nal_len = read_be_n(nal_len_buf, length_size);
+            if (nal_len == 0 || pos + nal_len + length_size > size) break;  // Corrigido: Usa length_size no check de overflow
+            uint8_t nal_header = read8(f);
+            uint8_t nal_type = nal_header & 0x1F; // Para H.264
+            mnalu_list_add(&frame->Nals, offset + pos, nal_len, nal_type);  // Corrigido: Removido +1 incorreto no nal_len (agora usa nal_len puro como tamanho do NAL)
+            fseek(f, nal_len - 1, SEEK_CUR); // Pula resto (header lido)
+            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size dinâmico (em vez de fixo +4)
+        }
+        // Adicionado: Verificação de depuração para garantir que todo o sample foi parseado
+        if (pos != size) {
+            fprintf(stderr, "Aviso: Sample %u parseado incompleto (pos=%llu, size=%u)\n", i, pos, size);
+        }
+        mframe_list_add(list, frame);
+    }
+    // Libera recursos
+    free(sample_offsets);
+    free(stsz.sizes);
+    free(stco.offsets);
+    free(stsc.entries);
+    free(stts.entries);
+    concod_load_video_metadata(f, &list->Metadata);
+    list->Metadata.Codec = codec;
+    list->Metadata.Fps = fps;
+    fclose(f);
+    return list;
+}
+
+
+
+// Função principal (focada em H.264)
+FrameIndexList* __concod_index_frames(const char* path)
 {
     FILE* f = fopen(path, "rb");
     if (!f) 
@@ -804,8 +1201,6 @@ FrameIndexList* concod_index_frames(const char* path)
 
     // Cria lista ordenada
     FrameIndexList* list = mframe_list_new(stsz.count);
-    list->Codec = codec;
-    list->Fps = fps;
 
     // Calcula offsets absolutos para cada sample usando stsc
     uint64_t* sample_offsets = malloc(stsz.count * sizeof(uint64_t));
@@ -866,6 +1261,11 @@ FrameIndexList* concod_index_frames(const char* path)
     free(stco.offsets);
     free(stsc.entries);
     free(stts.entries);
+
+    concod_load_video_metadata(f, &list->Metadata);
+    list->Metadata.Codec = codec;
+    list->Metadata.Fps = fps;
+
     fclose(f);
     return list;
 }
@@ -917,7 +1317,7 @@ MediaBuffer* concod_read_frame(const FrameIndex* frame, FILE* src)
 }
 
 
-uint_fast8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* annexb_size)
+uint_fast8_t* concod_convert_avcc_to_annexb_01(FILE* f, FrameIndex* frame, size_t* annexb_size)
 {
     size_t total_size = frame->Size + frame->Nals.Count * 4;  // Margem para start codes
     uint_fast8_t* annexb = malloc(total_size);
@@ -947,17 +1347,169 @@ uint_fast8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* 
         }
 
         pos += nal_data_size;
-
-        //// Nao esta alimentando annexb com NAL
-        //...
-
-        //// Copia NAL data (header + payload, nal->Size inclui header)
-        //// Note: Se nal->Size = nal_len + 1, ajuste para nal_len
-        //// Para ler do arquivo se necessário: fseek(f, nal->Offset + 4, SEEK_SET); fread(annexb + pos, 1, nal->Size - 1, f);
-        //// Mas como lista tem parseado, assume data já acessível; se não, leia do arquivo
-        //pos += nal->Size;  // Placeholder; substitua por cópia real se NAL data não estiver em memória
     }
     *annexb_size = pos;
+    return annexb;
+}
+
+
+
+void build_initial_header_from_meta(const  VideoMetadata* meta, uint8_t* header, int* length)
+{
+    if (!meta || !meta->sps || !meta->pps) return -1;
+
+    int pos = 0;
+
+    memcpy(header + pos, "\x00\x00\x00\x01", 4);
+    pos += 4;
+    memcpy(header + pos, meta->sps, meta->sps_len);
+    pos += meta->sps_len;
+
+    memcpy(header + pos, "\x00\x00\x00\x01", 4);
+    pos += 4;
+    memcpy(header + pos, meta->pps, meta->pps_len);
+    pos += meta->pps_len;
+
+    (*length) = pos;
+}
+
+
+int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta)
+{
+    uint8_t* planes[3] = { NULL, NULL, NULL };
+    SBufferInfo info;
+    memset(&info, 0, sizeof(info));
+    uint8_t header[1024];
+    int pos = 0;
+    build_initial_header_from_meta(meta, header, &pos);
+
+    DECODING_STATE state = (*decoder)->DecodeFrame2(decoder, header, pos, planes, &info);
+
+    if (state != dsErrorFree && state != dsFramePending) 
+    {
+        printf("Erro ao enviar cabeçalho SPS/PPS: %d\n", state);
+        return -2;
+    }
+
+    return 0;
+}
+
+
+// Função de conversão AVCC para Annex B
+uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* annexb_size) 
+{
+    if (!frame || frame->Nals.Count == 0) {
+        fprintf(stderr, "Frame inválido ou sem NALs.\n");
+        return NULL;
+    }
+
+    // Aloca buffer suficiente: tamanho total do frame é sum(4 + nal_size), 
+    // que é igual ao sum(4 + nal_size) após substituir lengths por start codes (00 00 00 01)
+    size_t total_size = frame->Size;
+    uint8_t* annexb = (uint8_t*)malloc(total_size);
+    if (!annexb) {
+        fprintf(stderr, "Falha na alocação de memória.\n");
+        return NULL;
+    }
+
+    int im = 0;
+    int ix = 0;
+    while (ix < frame->Nals.Count)
+    {
+        im += frame->Nals.Items[ix]->Size;
+        ix++;
+    }
+
+    size_t pos = 0;
+    for (int j = 0; j < frame->Nals.Count; j++) 
+    {
+        NALUIndex* nal = frame->Nals.Items[j];
+
+        // Adiciona start code Annex B: 00 00 00 01
+        if (pos + 4 > total_size) {
+            free(annexb);
+            fprintf(stderr, "Overflow no buffer Annex B.\n");
+            return NULL;
+        }
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x01;
+
+        // Posiciona no início do NAL unit (após o length field de 4 bytes no AVCC)
+        if (fseek(f, nal->Offset + 4, SEEK_SET) != 0) {
+            free(annexb);
+            fprintf(stderr, "Erro no fseek para NAL offset.\n");
+            return NULL;
+        }
+
+        // Tamanho do NAL data (header + body, que é nal->Size)
+        size_t nal_data_size = nal->Size;
+        if (pos + nal_data_size > total_size) {
+            free(annexb);
+            fprintf(stderr, "NAL size excede buffer alocado.\n");
+            return NULL;
+        }
+
+        // Lê o NAL unit diretamente do arquivo para o buffer
+        if (fread(annexb + pos, 1, nal_data_size, f) != nal_data_size) {
+            free(annexb);
+            fprintf(stderr, "Falha ao ler NAL data do arquivo.\n");
+            return NULL;
+        }
+        pos += nal_data_size;
+    }
+
+    *annexb_size = pos;  // Tamanho real utilizado (deve ser igual a frame->Size)
+    return annexb;
+}
+
+
+uint_fast8_t* __concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, size_t* annexb_size)
+{
+    // Calcula tamanho total: soma dos tamanhos dos NALs + 4 bytes por start code
+    size_t total_size = frame->Size + frame->Nals.Count * 4;
+    uint_fast8_t* annexb = malloc(total_size);
+    if (!annexb) return NULL;
+
+    size_t pos = 0;
+
+    for (int j = 0; j < frame->Nals.Count; j++)
+    {
+        NALUIndex* nal = frame->Nals.Items[j];
+
+        // Adiciona start code 00 00 00 01 (Annex B)
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x00;
+        annexb[pos++] = 0x01;
+
+        // Posiciona no offset do NAL no arquivo
+        // nal->Offset aponta para o length field (4 bytes) do formato AVCC
+        // Pulamos esses 4 bytes para pegar o NAL unit direto
+        if (fseek(f, nal->Offset + 4, SEEK_SET) != 0)
+        {
+            free(annexb);
+            return NULL;
+        }
+
+        // Tamanho do NAL unit (sem o length field de 4 bytes do AVCC)
+        // nal->Size já deve incluir o tamanho total do NAL no formato AVCC
+        size_t nal_data_size = nal->Size - 4;  // Subtrai os 4 bytes do length field
+
+        // Lê o NAL unit do arquivo diretamente para o buffer annexb
+        if (fread(annexb + pos, 1, nal_data_size, f) != nal_data_size)
+        {
+            free(annexb);
+            return NULL;
+        }
+
+        pos += nal_data_size;
+    }
+
+    // Retorna o tamanho real utilizado
+    *annexb_size = pos;
+
     return annexb;
 }
 

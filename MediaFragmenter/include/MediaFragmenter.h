@@ -41,6 +41,9 @@ extern "C" {
 	void media_sim_release(MediaSourceSession** source);
 	void medias_waiting(VideoOutput* v);
 
+	int concod_load_video_metadata(FILE* f, VideoMetadata* meta);
+	int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta);
+
 
 #ifdef __cplusplus
 }

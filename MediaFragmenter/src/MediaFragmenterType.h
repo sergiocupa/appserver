@@ -34,6 +34,21 @@ extern "C" {
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
 
 
+
+    typedef struct
+    {
+        uint8_t* sps;
+        int sps_len;
+        uint8_t* pps;
+        int pps_len;
+        int width;
+        int height;
+        int   Codec;// 264 ou 265
+        double Fps;
+    } 
+    VideoMetadata;
+
+
     typedef struct {
         uint32_t file_size;
         uint32_t reserved;
@@ -110,11 +125,10 @@ extern "C" {
 
     typedef struct
     {
-        int          Codec; // 264 ou 265
-        double       Fps;
-        uint64_t     Max;
-        uint64_t     Count;
-        FrameIndex** Frames;
+        VideoMetadata Metadata;
+        uint64_t      Max;
+        uint64_t      Count;
+        FrameIndex**  Frames;
     }
     FrameIndexList;
 
@@ -147,7 +161,7 @@ extern "C" {
     typedef struct _MediaSourceSession
     {
         VideoOutput* Output;
-        ISVCDecoder  Decoder;
+        ISVCDecoder* Decoder;
 
 
     }

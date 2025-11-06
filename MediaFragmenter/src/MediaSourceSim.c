@@ -74,7 +74,7 @@ static void video_output_destroy(VideoOutput* v)
     free(v);
 }
 
-static ISVCDecoder h264_decoder_create()
+static ISVCDecoder* h264_decoder_create()
 {
     ISVCDecoder* decoder = NULL;
 
@@ -104,9 +104,10 @@ static ISVCDecoder h264_decoder_create()
     return decoder;
 }
 
+
 static void h264_decoder_feed(ISVCDecoder* decoder, unsigned char* data, int len, VideoOutput* out)
 {
-    unsigned char* planes[3];
+    unsigned char* planes[3] = { NULL, NULL, NULL };
     SBufferInfo info;
     memset(&info, 0, sizeof(info));
 

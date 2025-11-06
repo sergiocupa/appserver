@@ -82,88 +82,58 @@ void Notification_Result(ResourceBuffer* object)
 
 
 
-MediaSourceSession* render_video_from_list(const char* path, FrameIndexList* list)
+void render_video(const char* path)
 {
+    FrameIndexList* list = concod_index_frames(path);
+
+
     FILE* file = fopen(path, "rb");
     if (!file) {
         perror("Erro ao abrir arquivo");
         return;
     }
-    list->Fps = 30;
-
-    // Cria sessão (janela e decoder)
-    
+    list->Metadata.Fps = 30;
 
 
-    uint8_t* rgb_pixels = NULL;
-    int w, h;
-    if (load_bmp_manual("e:/dom.bmp", &rgb_pixels, &w, &h) != 0) {
-        return 1;
-    }
+    int w = 1920, h = 1080;
+
 
     MediaSourceSession* session = media_sim_create(w, h);// (1920, 1080);  // Ajuste width/height de stsd ou hardcoded
 
 
-    // Converte para YUV
-    uint8_t* y = NULL, * u = NULL, * v = NULL;
-    int stride_y, stride_u, stride_v;
-    if (rgb_to_yuv(rgb_pixels,w,h, &y, &u, &v, &stride_y, &stride_u, &stride_v) != 0) 
+    //Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
+    concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
+
+
+    // Loop por frames
+    for (uint32_t i = 0; i < list->Count; i++) 
     {
-        printf("Erro na conversão YUV\n");
-        free(rgb_pixels);
-        return 1;
+        FrameIndex* frame = list->Frames[i];
+        unsigned char* buffer = malloc(frame->Size);
+        fseek(file, frame->Offset, SEEK_SET);
+        if (fread(buffer, 1, frame->Size, file) != frame->Size)
+        {
+            free(buffer);
+            continue;
+        }
+
+        // Converter para Annex B
+        size_t annexb_size;
+        unsigned char* annexb = concod_convert_avcc_to_annexb(file, frame, &annexb_size);
+        if (annexb) 
+        {
+            MediaBuffer mb = { .Data = annexb, .Length = annexb_size };
+            media_sim_feed(session, &mb);
+            free(annexb);
+        }
+
+        free(buffer);
+        Sleep(33);
     }
-
-
-    // Estou testando renderizacao de imagem por enquanto.
-    //    Apos resolver problema com conversor rgb_to_yuv, vou voltar a renderizazao de video
-    //    Na funcao rgb_to_yuv descrevi problema
-    ...
-
-    //SDL_UpdateTexture(session->Output->tex, NULL, rgb_pixels, w * 3);  // Atualiza textura com pixels RGB
-    SDL_UpdateYUVTexture(session->Output->tex, NULL, y, stride_y, u, stride_u, v, stride_v);
-    SDL_RenderClear(session->Output->ren);
-    SDL_RenderCopy(session->Output->ren, session->Output->tex, NULL, NULL);
-    SDL_RenderPresent(session->Output->ren);
-
-    //SDL_Delay(10000);
-
-
-    // 
-    ////Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
-
-    //// Loop por frames
-    //for (uint32_t i = 0; i < list->Count; i++) 
-    //{
-    //    FrameIndex* frame = list->Frames[i];
-    //    unsigned char* buffer = malloc(frame->Size);
-    //    fseek(file, frame->Offset, SEEK_SET);
-    //    if (fread(buffer, 1, frame->Size, file) != frame->Size)
-    //    {
-    //        free(buffer);
-    //        continue;
-    //    }
-
-    //    // Converter para Annex B
-    //    size_t annexb_size;
-    //    unsigned char* annexb = concod_convert_avcc_to_annexb(file, frame, &annexb_size);
-    //    if (annexb) 
-    //    {
-    //        MediaBuffer mb = { .Data = annexb, .Length = annexb_size };
-    //        media_sim_feed(session, &mb);
-    //        free(annexb);
-    //    }
-
-    //    free(buffer);
-    //    // Delay para FPS
-    //    Sleep(1000);// / list->Fps);  // Em ms, ajuste para Windows Sleep
-    //}
 
     // Fecha sessão
     // media_sim_destroy(session);
     fclose(file);
-
-    return 0; //session;
 }
 
 
@@ -174,13 +144,13 @@ int main()
 {
     // sample-5s.mp4
     // e:/small.mp4
-    FrameIndexList* frames = concod_index_frames("e:/sample-5s.mp4"); 
+   
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/Big_Buck_Bunn_H265.mp4");
     //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/sample_960x540.mkv");
 
     //concod_display_frame_index(frames);
 
-    MediaSourceSession* session = render_video_from_list("e:/sample-5s.mp4", frames);
+    render_video("e:/sample-5s.mp4");
 
     //medias_waiting(session->Output);
 

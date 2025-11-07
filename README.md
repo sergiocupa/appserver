@@ -1,7 +1,7 @@
 # AppServer
 HTTP, Application and Video Stream server. Can also be used as a WebAPI.
 For use in embedded systems, but can also be used as a micro WebAPI.
-At the moment, 27/08/2025, the implementation is not complete.
+At the moment, 07/11/2025, the implementation is not complete.
 
 Features to be implemented:
 

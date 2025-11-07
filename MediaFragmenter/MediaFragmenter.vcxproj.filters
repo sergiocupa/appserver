@@ -27,6 +27,9 @@
     <ClInclude Include="deps\sdl2\include\SDL2\SDL.h">
       <Filter>deps</Filter>
     </ClInclude>
+    <ClInclude Include="src\FileUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c">
@@ -42,6 +45,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ImageTools.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ContainerMetadataUtil.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileUtil.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

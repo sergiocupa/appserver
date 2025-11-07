@@ -35,16 +35,53 @@ extern "C" {
 
 
 
+
+    // Estruturas para stsz e stco (simples arrays para tamanhos e offsets)
+    // Estruturas para tables
+    typedef struct {
+        uint32_t* sizes;
+        uint32_t count;
+    } StszData;
+
+    typedef struct {
+        uint64_t* offsets;
+        uint32_t count;
+        int is_co64;  // 1 se co64 (64-bit)
+    } StcoData;
+
+    typedef struct {
+        struct StscEntry {
+            uint32_t first_chunk;
+            uint32_t samples_per_chunk;
+            uint32_t sample_desc_id;
+        } *entries;
+        uint32_t count;
+    } StscData;
+
+    typedef struct {
+        struct SttsEntry {
+            uint32_t count;
+            uint32_t delta;
+        } *entries;
+        uint32_t count;
+    } SttsData;
+
+
+
+
+
     typedef struct
     {
         uint8_t* sps;
         int sps_len;
         uint8_t* pps;
         int pps_len;
+
         int width;
         int height;
         int   Codec;// 264 ou 265
         double Fps;
+        int LengthSize;
     } 
     VideoMetadata;
 

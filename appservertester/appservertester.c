@@ -84,7 +84,7 @@ void Notification_Result(ResourceBuffer* object)
 
 void render_video(const char* path)
 {
-    FrameIndexList* list = concod_index_frames(path);
+    //FrameIndexList* list = concod_index_frames(path);
 
 
     FILE* file = fopen(path, "rb");
@@ -92,44 +92,48 @@ void render_video(const char* path)
         perror("Erro ao abrir arquivo");
         return;
     }
-    list->Metadata.Fps = 30;
+
+    VideoMetadata* meta = { 0 };
+    int ret = concod_load_video_metadata(file, &meta);
+
+    //list->Metadata.Fps = 30;
 
 
-    int w = 1920, h = 1080;
+    //int w = 1920, h = 1080;
 
 
-    MediaSourceSession* session = media_sim_create(w, h);// (1920, 1080);  // Ajuste width/height de stsd ou hardcoded
+    //MediaSourceSession* session = media_sim_create(w, h);// (1920, 1080);  // Ajuste width/height de stsd ou hardcoded
 
 
-    //Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
-    concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
+    ////Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
+    //concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
 
 
-    // Loop por frames
-    for (uint32_t i = 0; i < list->Count; i++) 
-    {
-        FrameIndex* frame = list->Frames[i];
-        unsigned char* buffer = malloc(frame->Size);
-        fseek(file, frame->Offset, SEEK_SET);
-        if (fread(buffer, 1, frame->Size, file) != frame->Size)
-        {
-            free(buffer);
-            continue;
-        }
+    //// Loop por frames
+    //for (uint32_t i = 0; i < list->Count; i++) 
+    //{
+    //    FrameIndex* frame = list->Frames[i];
+    //    unsigned char* buffer = malloc(frame->Size);
+    //    fseek(file, frame->Offset, SEEK_SET);
+    //    if (fread(buffer, 1, frame->Size, file) != frame->Size)
+    //    {
+    //        free(buffer);
+    //        continue;
+    //    }
 
-        // Converter para Annex B
-        size_t annexb_size;
-        unsigned char* annexb = concod_convert_avcc_to_annexb(file, frame, &annexb_size);
-        if (annexb) 
-        {
-            MediaBuffer mb = { .Data = annexb, .Length = annexb_size };
-            media_sim_feed(session, &mb);
-            free(annexb);
-        }
+    //    // Converter para Annex B
+    //    size_t annexb_size;
+    //    unsigned char* annexb = concod_convert_avcc_to_annexb(file, frame, &annexb_size);
+    //    if (annexb) 
+    //    {
+    //        MediaBuffer mb = { .Data = annexb, .Length = annexb_size };
+    //        media_sim_feed(session, &mb);
+    //        free(annexb);
+    //    }
 
-        free(buffer);
-        Sleep(33);
-    }
+    //    free(buffer);
+    //    Sleep(33);
+    //}
 
     // Fecha sessão
     // media_sim_destroy(session);

@@ -53,5 +53,8 @@
     <ClCompile Include="src\FileUtil.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mp4Builder.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

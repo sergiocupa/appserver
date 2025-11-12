@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-// Fun��o para parsear tables de v�deo
+// Função para parsear tables de vídeo
 static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszData* stsz, StcoData* stco, StscData* stsc, SttsData* stts, uint32_t* timescale, int* codec)
 {
     uint8_t name[5] = { 0 };
@@ -27,7 +27,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
         }
         else if (size == 0) 
         {
-            box_size = end - box_start;  // CORRIGIDO: usa 'end', n�o file end
+            box_size = end - box_start;  // CORRIGIDO: usa 'end', não file end
         }
 
         if (box_size < header_size) 
@@ -39,7 +39,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
         uint64_t next = box_start + box_size;
         uint64_t payload_start = box_start + header_size;
 
-        // hdlr para confirmar v�deo
+        // hdlr para confirmar vídeo
         if (!memcmp(name, "hdlr", 4))
         {
             fseek(f, payload_start, SEEK_SET);  // CORRIGIDO: vai para payload_start
@@ -123,7 +123,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stts->count = read32(f);
 
             if (stts->count > 0 && stts->count < 1000000) 
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stts->entries = malloc(stts->count * sizeof(struct SttsEntry));
                 if (!stts->entries)
                 {
@@ -134,7 +134,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
                 for (uint32_t i = 0; i < stts->count; i++) 
                 {
-                    if (ftell(f) + 8 > next) {  // CORRIGIDO: verifica��o de bounds
+                    if (ftell(f) + 8 > next) {  // CORRIGIDO: verificação de bounds
                         stts->count = i;
                         break;
                     }
@@ -156,7 +156,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stsc->count = read32(f);
 
             if (stsc->count > 0 && stsc->count < 1000000) 
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stsc->entries = malloc(stsc->count * sizeof(struct StscEntry));
                 if (!stsc->entries)
                 {
@@ -168,7 +168,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                 for (uint32_t i = 0; i < stsc->count; i++) 
                 {
                     if (ftell(f) + 12 > next)
-                    {  // CORRIGIDO: verifica��o de bounds
+                    {  // CORRIGIDO: verificação de bounds
                         stsc->count = i;
                         break;
                     }
@@ -192,7 +192,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stsz->count = read32(f);
 
             if (stsz->count > 0 && stsz->count < 10000000) 
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stsz->sizes = malloc(stsz->count * sizeof(uint32_t));
                 if (!stsz->sizes) 
                 {
@@ -201,11 +201,11 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                     continue;
                 }
 
-                if (sample_size == 0) {  // Tamanhos vari�veis
+                if (sample_size == 0) {  // Tamanhos variáveis
                     for (uint32_t i = 0; i < stsz->count; i++)
                     {
                         if (ftell(f) + 4 > next) 
-                        {  // CORRIGIDO: verifica��o de bounds
+                        {  // CORRIGIDO: verificação de bounds
                             stsz->count = i;
                             break;
                         }
@@ -236,7 +236,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stco->count = read32(f);
 
             if (stco->count > 0 && stco->count < 1000000)
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stco->offsets = malloc(stco->count * sizeof(uint64_t));
                 if (!stco->offsets) 
                 {
@@ -249,7 +249,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                 {
                     int bytes_needed = stco->is_co64 ? 8 : 4;
                     if (ftell(f) + bytes_needed > next)
-                    {  // CORRIGIDO: verifica��o de bounds
+                    {  // CORRIGIDO: verificação de bounds
                         stco->count = i;
                         break;
                     }
@@ -284,7 +284,7 @@ FrameIndexList* concod_get_frames(const char* path)
         return NULL;
     }
     // Adicionado: Extrai metadata cedo para obter length_size do avcC
-    //   Fazer uma funcao s� para esta info
+    //   Fazer uma funcao só para esta info
     //   Por fim validar tamanho do frame, com tamanho total dos NALs.
     
     VideoMetadata meta = { 0 };
@@ -297,14 +297,14 @@ FrameIndexList* concod_get_frames(const char* path)
     fseek(f, 0, SEEK_SET);
 
     // Nao pega length_size, mas de onde vem isso? O Grok assumiu que tem este dado. Perguntar como obter este dado
-    int length_size = meta.LengthSize;  // Adicionado: Usa length_size extra�do (geralmente 4, mas din�mico)
+    int length_size = meta.LengthSize;  // Adicionado: Usa length_size extraído (geralmente 4, mas dinâmico)
     if (length_size < 1 || length_size > 4) 
     {
-        printf("length_size inv�lido: %d\n", length_size);
+        printf("length_size inválido: %d\n", length_size);
         fclose(f);
         return NULL;
     }
-    // Libera SPS/PPS se n�o necess�rios aqui (metadata ser� recarregada depois)
+    // Libera SPS/PPS se não necessários aqui (metadata será recarregada depois)
     if (meta.sps) free(meta.sps);
     if (meta.pps) free(meta.pps);
 
@@ -321,7 +321,7 @@ FrameIndexList* concod_get_frames(const char* path)
     parse_video_track_tables(f, file_end, 0, &stsz, &stco, &stsc, &stts, &timescale, &meta.Codec);
     if (stsz.count == 0 || meta.Codec == 0)
     {
-        printf("Falha ao parsear tables de v�deo.\n");
+        printf("Falha ao parsear tables de vídeo.\n");
         fclose(f);
         return NULL;
     }
@@ -374,7 +374,7 @@ FrameIndexList* concod_get_frames(const char* path)
         uint64_t pos = 0;
         while (pos < size)
         {
-            // Corrigido: L� nal_len dinamicamente com base em length_size (em vez de fixo read32)
+            // Corrigido: Lê nal_len dinamicamente com base em length_size (em vez de fixo read32)
             uint8_t nal_len_buf[4] = { 0 };
             if (fread(nal_len_buf, 1, length_size, f) != (size_t)length_size) break;
             uint32_t nal_len = read_n(nal_len_buf, length_size);
@@ -383,9 +383,9 @@ FrameIndexList* concod_get_frames(const char* path)
             uint8_t nal_type = nal_header & 0x1F; // Para H.264
             mnalu_list_add(&frame->Nals, offset + pos, nal_len, nal_type);  // Corrigido: Removido +1 incorreto no nal_len (agora usa nal_len puro como tamanho do NAL)
             fseek(f, nal_len - 1, SEEK_CUR); // Pula resto (header lido)
-            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size din�mico (em vez de fixo +4)
+            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size dinâmico (em vez de fixo +4)
         }
-        // Adicionado: Verifica��o de depura��o para garantir que todo o sample foi parseado
+        // Adicionado: Verificação de depuração para garantir que todo o sample foi parseado
         if (pos != size)
         {
             fprintf(stderr, "Aviso: Sample %u parseado incompleto (pos=%llu, size=%u)\n", i, pos, size);
@@ -422,21 +422,123 @@ void concod_display_frame_index(FrameIndexList* frames)
 
 
 
-// Constr�i header Annex B com SPS e PPS
+int debug_sps_pps(const VideoMetadata* meta)
+{
+    int ret = 0;
+
+    if (!meta || !meta->sps || !meta->pps) 
+    {
+        fprintf(stderr, "Metadata, SPS ou PPS NULL!\n");
+        ret |= 0b0001;
+        return ret;
+    }
+
+    printf("\n╔═══════════════════════════════════════════════════════════╗\n");
+    printf("║           DEBUG SPS/PPS - DIAGNÓSTICO COMPLETO            ║\n");
+    printf("╚═══════════════════════════════════════════════════════════╝\n\n");
+
+    // ---- Análise do SPS ----
+    printf("SPS (%d bytes):\n", meta->sps_len);
+    printf("   Hex: ");
+    for (int i = 0; i < (meta->sps_len < 24 ? meta->sps_len : 24); i++) 
+    {
+        printf("%02X ", meta->sps[i]);
+        if ((i + 1) % 12 == 0 && i < meta->sps_len - 1) printf("\n        ");
+    }
+    if (meta->sps_len > 24) printf("...");
+    printf("\n\n");
+
+    uint8_t sps_byte0 = meta->sps[0];
+    uint8_t sps_forbidden = (sps_byte0 >> 7) & 0x01;
+    uint8_t sps_ref_idc = (sps_byte0 >> 5) & 0x03;
+    uint8_t sps_type = sps_byte0 & 0x1F;
+
+    printf("   Byte 0 análise: 0x%02X\n", sps_byte0);
+    printf("   ├─ forbidden_zero_bit: %d %s\n", sps_forbidden,
+        sps_forbidden == 0 ? "" : " DEVE SER 0!");
+    printf("   ├─ nal_ref_idc: %d\n", sps_ref_idc);
+    printf("   └─ nal_unit_type: %d ", sps_type);
+
+    if (sps_type == 7) 
+    {
+        printf("SPS (correto)\n");
+    }
+    else 
+    {
+        printf("ERRO! Esperado 7 (SPS)\n");
+        printf("\n     PROBLEMA IDENTIFICADO: SPS não tem NAL type correto!\n");
+        printf("    SOLUÇÃO: O avcC pode estar no formato sem NAL header.\n");
+        printf("              Você precisa adicionar 0x67 no início do SPS.\n");
+        ret |= 0b0010;
+    }
+
+    // ---- Análise do PPS ----
+    printf("\nPPS (%d bytes):\n", meta->pps_len);
+    printf("   Hex: ");
+    for (int i = 0; i < (meta->pps_len < 24 ? meta->pps_len : 24); i++) 
+    {
+        printf("%02X ", meta->pps[i]);
+        if ((i + 1) % 12 == 0 && i < meta->pps_len - 1) printf("\n        ");
+    }
+    if (meta->pps_len > 24) printf("...");
+    printf("\n\n");
+
+    uint8_t pps_byte0 = meta->pps[0];
+    uint8_t pps_forbidden = (pps_byte0 >> 7) & 0x01;
+    uint8_t pps_ref_idc = (pps_byte0 >> 5) & 0x03;
+    uint8_t pps_type = pps_byte0 & 0x1F;
+
+    printf("   Byte 0 análise: 0x%02X\n", pps_byte0);
+    printf("   ├─ forbidden_zero_bit: %d %s\n", pps_forbidden,
+        pps_forbidden == 0 ? "" : " DEVE SER 0!");
+    printf("   ├─ nal_ref_idc: %d\n", pps_ref_idc);
+    printf("   └─ nal_unit_type: %d ", pps_type);
+
+    if (pps_type == 8) 
+    {
+        printf(" PPS (correto)\n");
+    }
+    else 
+    {
+        printf(" ERRO! Esperado 8 (PPS)\n");
+        printf("\n     PROBLEMA IDENTIFICADO: PPS não tem NAL type correto!\n");
+        printf("    SOLUÇÃO: O avcC pode estar no formato sem NAL header.\n");
+        printf("              Você precisa adicionar 0x68 no início do PPS.\n");
+        ret |= 0b0100;
+    }
+
+      printf("\n╔═══════════════════════════════════════════════════════════╗\n");
+    if (sps_type == 7 && pps_type == 8) 
+    {
+        printf("║   RESULTADO: SPS/PPS estão no formato CORRETO             ║\n");
+    }
+    else 
+    {
+        printf("║   RESULTADO: SPS/PPS precisam de correção!                ║\n");
+        ret |= 0b1000;
+    }
+        printf("╚═══════════════════════════════════════════════════════════╝\n\n");
+
+    return ret;
+}
+
+
+
+// Constrói header Annex B com SPS e PPS
 int build_initial_header_from_meta(const VideoMetadata* meta, uint8_t* header, int* length)
 {
     if (!meta || !header || !length) {
-        fprintf(stderr, "Par�metros inv�lidos em build_initial_header_from_meta\n");
+        fprintf(stderr, "Parâmetros inválidos em build_initial_header_from_meta\n");
         return -1;
     }
 
     if (!meta->sps || meta->sps_len <= 0) {
-        fprintf(stderr, "SPS inv�lido: %p, len=%d\n", (void*)meta->sps, meta->sps_len);
+        fprintf(stderr, "SPS inválido: %p, len=%d\n", (void*)meta->sps, meta->sps_len);
         return -1;
     }
 
     if (!meta->pps || meta->pps_len <= 0) {
-        fprintf(stderr, "PPS inv�lido: %p, len=%d\n", (void*)meta->pps, meta->pps_len);
+        fprintf(stderr, "PPS inválido: %p, len=%d\n", (void*)meta->pps, meta->pps_len);
         return -1;
     }
 
@@ -462,7 +564,7 @@ int build_initial_header_from_meta(const VideoMetadata* meta, uint8_t* header, i
 
     *length = pos;
 
-    printf("DEBUG: Header constru�do com %d bytes (SPS=%d, PPS=%d)\n",
+    printf("DEBUG: Header construído com %d bytes (SPS=%d, PPS=%d)\n",
         pos, meta->sps_len, meta->pps_len);
 
     // Debug: Mostra primeiros bytes
@@ -475,8 +577,10 @@ int build_initial_header_from_meta(const VideoMetadata* meta, uint8_t* header, i
     return 0;
 }
 
+
+
 // Envia SPS/PPS para o decodificador
-int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta)
+int concod_send_initial_header_from_meta_03(ISVCDecoder* decoder, const VideoMetadata* meta)
 {
     if (!decoder || !meta) {
         fprintf(stderr, "Decoder ou metadata NULL\n");
@@ -486,7 +590,7 @@ int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetada
     uint8_t header[1024];
     int header_len = 0;
 
-    // Constr�i header com SPS/PPS
+    // Constrói header com SPS/PPS
     if (build_initial_header_from_meta(meta, header, &header_len) != 0) 
     {
         fprintf(stderr, "Falha ao construir header\n");
@@ -494,7 +598,7 @@ int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetada
     }
 
     if (header_len <= 0 || header_len > 1024) {
-        fprintf(stderr, "Tamanho de header inv�lido: %d\n", header_len);
+        fprintf(stderr, "Tamanho de header inválido: %d\n", header_len);
         return -1;
     }
 
@@ -507,27 +611,27 @@ int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetada
     // Envia header para o decodificador
     DECODING_STATE state = (*decoder)->DecodeFrame2(decoder, header, header_len, planes, &info);
 
-    printf("DEBUG: Estado ap�s DecodeFrame2: %d\n", state);
+    printf("DEBUG: Estado após DecodeFrame2: %d\n", state);
 
-    // C�digos de erro OpenH264:
+    // Códigos de erro OpenH264:
     // dsErrorFree = 0: Sucesso
     // dsFramePending = 1: Frame pendente (normal)
-    // dsRefLost = 2: Refer�ncia perdida
+    // dsRefLost = 2: Referência perdida
     // dsBitstreamError = 4: Erro no bitstream
     // dsDepLayerLost = 8: Camada dependente perdida
-    // dsNoParamSets = 16: SPS/PPS n�o encontrados ou inv�lidos
+    // dsNoParamSets = 16: SPS/PPS não encontrados ou inválidos
 
     if (state == 16 || state == dsNoParamSets) {
-        fprintf(stderr, "ERRO 16: SPS/PPS n�o foram aceitos pelo decodificador!\n");
-        fprintf(stderr, "Poss�veis causas:\n");
+        fprintf(stderr, "ERRO 16: SPS/PPS não foram aceitos pelo decodificador!\n");
+        fprintf(stderr, "Possíveis causas:\n");
         fprintf(stderr, "  - SPS/PPS corrompidos\n");
         fprintf(stderr, "  - Formato Annex B incorreto\n");
-        fprintf(stderr, "  - Decodificador n�o inicializado corretamente\n");
+        fprintf(stderr, "  - Decodificador não inicializado corretamente\n");
         return -2;
     }
 
     if (state != dsErrorFree && state != dsFramePending) {
-        fprintf(stderr, "Erro ao enviar cabe�alho SPS/PPS: %d\n", state);
+        fprintf(stderr, "Erro ao enviar cabeçalho SPS/PPS: %d\n", state);
         return -2;
     }
 
@@ -540,21 +644,25 @@ int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetada
 
 
 
-// Fun��o de convers�o AVCC para Annex B com inje��o autom�tica de SPS/PPS para IDR
+
+
+
+
+// Função de conversão AVCC para Annex B com injeção automática de SPS/PPS para IDR
 uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size)
 {
     if (!frame || frame->Nals.Count == 0)
     {
-        fprintf(stderr, "Frame inv�lido ou sem NALs.\n");
+        fprintf(stderr, "Frame inválido ou sem NALs.\n");
         return NULL;
     }
 
     if (!metadata || metadata->LengthSize < 1 || metadata->LengthSize > 4) {
-        fprintf(stderr, "Metadata ou length_size inv�lido.\n");
+        fprintf(stderr, "Metadata ou length_size inválido.\n");
         return NULL;
     }
 
-    // Verifica se frame cont�m IDR (tipo 5 para H.264)
+    // Verifica se frame contém IDR (tipo 5 para H.264)
     int has_idr = 0;
     int has_sps = 0;
     int has_pps = 0;
@@ -566,13 +674,13 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
         if (nal_type == 8) has_pps = 1;      // PPS
     }
 
-    // Se tem IDR mas n�o tem SPS/PPS, precisamos injetar
+    // Se tem IDR mas não tem SPS/PPS, precisamos injetar
     int need_inject_sps = (has_idr && !has_sps && metadata->sps && metadata->sps_len > 0);
     int need_inject_pps = (has_idr && !has_pps && metadata->pps && metadata->pps_len > 0);
 
-    // Calcula tamanho necess�rio para Annex B:
+    // Calcula tamanho necessário para Annex B:
     // Para cada NAL: 4 bytes (start code) + tamanho do NAL
-    // + SPS/PPS se necess�rio
+    // + SPS/PPS se necessário
     size_t total_size = 0;
 
     if (need_inject_sps) {
@@ -588,13 +696,13 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
 
     uint8_t* annexb = (uint8_t*)malloc(total_size);
     if (!annexb) {
-        fprintf(stderr, "Falha na aloca��o de mem�ria (%zu bytes).\n", total_size);
+        fprintf(stderr, "Falha na alocação de memória (%zu bytes).\n", total_size);
         return NULL;
     }
 
     size_t pos = 0;
 
-    // Injeta SPS antes do frame se necess�rio
+    // Injeta SPS antes do frame se necessário
     if (need_inject_sps) {
         annexb[pos++] = 0x00;
         annexb[pos++] = 0x00;
@@ -608,7 +716,7 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
 #endif
     }
 
-    // Injeta PPS antes do frame se necess�rio
+    // Injeta PPS antes do frame se necessário
     if (need_inject_pps) {
         annexb[pos++] = 0x00;
         annexb[pos++] = 0x00;
@@ -640,7 +748,7 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
         annexb[pos++] = 0x00;
         annexb[pos++] = 0x01;
 
-        // nal->Offset j� aponta para o in�cio do NAL (sem o prefixo de tamanho)
+        // nal->Offset já aponta para o início do NAL (sem o prefixo de tamanho)
         if (fseek(f, nal->Offset, SEEK_SET) != 0)
         {
             free(annexb);
@@ -659,7 +767,7 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
             return NULL;
         }
 
-        // L� o NAL unit completo do arquivo
+        // Lê o NAL unit completo do arquivo
         size_t bytes_read = fread(annexb + pos, 1, nal_data_size, f);
         if (bytes_read != nal_data_size)
         {
@@ -678,7 +786,7 @@ uint8_t* concod_convert_avcc_to_annexb(FILE* f, FrameIndex* frame, VideoMetadata
 
     *annexb_size = pos;
 
-    // Verifica��o de integridade
+    // Verificação de integridade
     if (pos != total_size) {
         fprintf(stderr, "AVISO: Tamanho final (%zu) diferente do esperado (%zu).\n", pos, total_size);
     }

@@ -1,4 +1,4 @@
-#include "../include/MediaFragmenter.h"
+﻿#include "../include/MediaFragmenter.h"
 #include "FileUtil.h"
 
 
@@ -239,8 +239,8 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         !memcmp(codec, "hvc1", 4) || !memcmp(codec, "hev1", 4))
                     {
                         // Estrutura VisualSampleEntry:
-                        // 4 bytes: size (j� lido)
-                        // 4 bytes: codec (j� lido)
+                        // 4 bytes: size (já lido)
+                        // 4 bytes: codec (já lido)
                         // 6 bytes: reserved (0)
                         // 2 bytes: data_reference_index
                         // 2 bytes: pre_defined (0)
@@ -249,7 +249,7 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         // 2 bytes: width
                         // 2 bytes: height
 
-                        // Total offset = 8 + 6 + 2 + 2 + 2 + 12 = 32 bytes do in�cio da entry
+                        // Total offset = 8 + 6 + 2 + 2 + 2 + 12 = 32 bytes do início da entry
                         fseek(f, entry_start + 32, SEEK_SET);
 
                         // Verificar se ainda estamos dentro do entry
@@ -261,7 +261,7 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         *width_out = read16(f);
                         *height_out = read16(f);
 
-                        // Validar dimens�es razo�veis
+                        // Validar dimensões razoáveis
                         if (*width_out > 0 && *width_out < 16384 &&
                             *height_out > 0 && *height_out < 16384)
                         {
@@ -308,7 +308,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
         uint64_t box_size = size;
         if (size == 1) {
-            // Size estendido j� foi tratado em read_box_header
+            // Size estendido já foi tratado em read_box_header
             box_size = payload_start - box_start;
         }
         else if (size == 0) {
@@ -350,7 +350,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
             found_timescale = 1;
 
-            // Se j� temos stts, podemos retornar
+            // Se já temos stts, podemos retornar
             if (found_stts && timescale > 0 && total_samples > 0)
             {
                 *timescale_out = timescale;
@@ -373,7 +373,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
             {
                 for (uint32_t i = 0; i < entry_count; i++)
                 {
-                    // Verificar se n�o vamos al�m do box
+                    // Verificar se não vamos além do box
                     if (ftell(f) + 8 > next) break;
 
                     uint32_t sample_count = read32(f);
@@ -386,7 +386,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
             found_stts = 1;
 
-            // Se j� temos timescale, podemos retornar
+            // Se já temos timescale, podemos retornar
             if (found_timescale && timescale > 0 && total_samples > 0 && total_ticks > 0)
             {
                 *timescale_out = timescale;
@@ -399,7 +399,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
         fseek(f, next, SEEK_SET);
     }
 
-    // Verifica��o final
+    // Verificação final
     if (timescale == 0 || total_ticks == 0.0 || total_samples == 0)
         return -1;
 
@@ -475,7 +475,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
 
                 if (!memcmp(codec, "avc1", 4) || !memcmp(codec, "avc3", 4))
                 {
-                    // Pular campos fixos do avc1 at� achar avcC
+                    // Pular campos fixos do avc1 até achar avcC
                     fseek(f, entry_start + 8 + 78, SEEK_SET);
 
                     // Procurar avcC dentro do avc1
@@ -515,7 +515,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
 
                             if (sps_count > 0)
                             {
-                                // CORRIGIDO: L� o tamanho e armazena em *sps_len
+                                // CORRIGIDO: Lê o tamanho e armazena em *sps_len
                                 *sps_len = (conf[off] << 8) | conf[off + 1];
                                 off += 2;
 
@@ -525,7 +525,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                     // CORRIGIDO: Aloca usando *sps_len
                                     *sps = malloc(*sps_len);
                                     if (*sps == NULL) {
-                                        fprintf(stderr, "Erro ao alocar mem�ria para SPS\n");
+                                        fprintf(stderr, "Erro ao alocar memória para SPS\n");
                                         return -2;
                                     }
                                     // CORRIGIDO: Copia usando *sps_len
@@ -533,7 +533,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                     off += *sps_len;
                                 }
                                 else {
-                                    fprintf(stderr, "Tamanho de SPS inv�lido: %d\n", *sps_len);
+                                    fprintf(stderr, "Tamanho de SPS inválido: %d\n", *sps_len);
                                     *sps_len = 0;
                                 }
                             }
@@ -544,7 +544,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                 int pps_count = conf[off++];
                                 if (pps_count > 0 && off + 2 <= avcc_size)
                                 {
-                                    // CORRIGIDO: L� o tamanho e armazena em *pps_len
+                                    // CORRIGIDO: Lê o tamanho e armazena em *pps_len
                                     *pps_len = (conf[off] << 8) | conf[off + 1];
                                     off += 2;
 
@@ -555,7 +555,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                         *pps = malloc(*pps_len);
                                         if (*pps == NULL)
                                         {
-                                            fprintf(stderr, "Erro ao alocar mem�ria para PPS\n");
+                                            fprintf(stderr, "Erro ao alocar memória para PPS\n");
                                             if (*sps) free(*sps);
                                             *sps = NULL;
                                             *sps_len = 0;
@@ -573,13 +573,13 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                         }
                                     }
                                     else {
-                                        fprintf(stderr, "Tamanho de PPS inv�lido: %d\n", *pps_len);
+                                        fprintf(stderr, "Tamanho de PPS inválido: %d\n", *pps_len);
                                         *pps_len = 0;
                                     }
                                 }
                             }
 
-                            // Verifica��o final
+                            // Verificação final
                             if (*sps && *sps_len > 0 && *pps && *pps_len > 0) {
                                 return 0;  // Sucesso
                             }
@@ -612,7 +612,7 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
 }
 
 
-static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
+static int load_sps_pps_03(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
 {
     uint8_t name[5] = { 0 };
     long file_size;
@@ -765,6 +765,282 @@ static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int
 
 
 
+// ============================================================================
+// CORREÇÃO DEFINITIVA - load_sps_pps COM DEBUG COMPLETO
+// ============================================================================
+//
+// Substitua a função load_sps_pps() em ContainerMetadataUtil.c por esta versão
+//
+// ============================================================================
+
+static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
+{
+    uint8_t name[5] = { 0 };
+    long file_size;
+
+    fseek(f, 0, SEEK_END);
+    file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    while (ftell(f) < file_size)
+    {
+        long box_start = ftell(f);
+        uint32_t size = read32(f);
+        if (fread(name, 1, 4, f) != 4) break;
+
+        uint64_t box_size = size;
+        if (size == 1) {
+            box_size = read64(f);
+        }
+        else if (size == 0) {
+            box_size = file_size - box_start;
+        }
+
+        if (box_size < 8) {
+            fseek(f, box_start + 8, SEEK_SET);
+            continue;
+        }
+
+        uint64_t next = box_start + box_size;
+
+        if (!memcmp(name, "moov", 4) || !memcmp(name, "trak", 4) ||
+            !memcmp(name, "mdia", 4) || !memcmp(name, "minf", 4) ||
+            !memcmp(name, "stbl", 4))
+        {
+            continue;
+        }
+
+        if (!memcmp(name, "stsd", 4))
+        {
+            uint8_t version = fgetc(f);
+            fseek(f, 3, SEEK_CUR);
+            uint32_t entry_count = read32(f);
+
+            for (uint32_t i = 0; i < entry_count; i++)
+            {
+                long entry_start = ftell(f);
+                uint32_t entry_size = read32(f);
+
+                if (entry_size < 8) break;
+
+                uint8_t codec[5] = { 0 };
+                if (fread(codec, 1, 4, f) != 4) break;
+
+                if (!memcmp(codec, "avc1", 4) || !memcmp(codec, "avc3", 4))
+                {
+                    fseek(f, entry_start + 8 + 78, SEEK_SET);
+
+                    while (ftell(f) < entry_start + entry_size - 8)
+                    {
+                        long sub_start = ftell(f);
+                        uint32_t sub_size = read32(f);
+
+                        if (sub_size < 8 || sub_size > entry_size) break;
+
+                        uint8_t sub_name[5] = { 0 };
+                        if (fread(sub_name, 1, 4, f) != 4) break;
+
+                        if (!memcmp(sub_name, "avcC", 4))
+                        {
+                            int avcc_size = sub_size - 8;
+                            if (avcc_size > 1024 || avcc_size < 7) {
+                                fseek(f, sub_start + sub_size, SEEK_SET);
+                                continue;
+                            }
+
+                            uint8_t conf[1024];
+                            if (fread(conf, 1, avcc_size, f) != avcc_size) break;
+
+                            printf("\n╔═══════════════════════════════════════╗\n");
+                            printf("║    DEBUG: Parsing avcC box           ║\n");
+                            printf("╚═══════════════════════════════════════╝\n\n");
+
+                            printf("avcC size: %d bytes\n", avcc_size);
+                            printf("avcC hex (primeiros 32 bytes):\n");
+                            for (int j = 0; j < avcc_size && j < 32; j++) {
+                                printf("%02X ", conf[j]);
+                                if ((j + 1) % 16 == 0) printf("\n");
+                            }
+                            printf("\n\n");
+
+                            // conf[0] = configurationVersion
+                            if (conf[0] != 1) {
+                                fprintf(stderr, "❌ configurationVersion != 1 (é %d)\n", conf[0]);
+                                fseek(f, sub_start + sub_size, SEEK_SET);
+                                continue;
+                            }
+                            printf("✓ configurationVersion: 1\n");
+
+                            // conf[1] = AVCProfileIndication
+                            // conf[2] = profile_compatibility
+                            // conf[3] = AVCLevelIndication
+                            printf("  Profile: 0x%02X\n", conf[1]);
+                            printf("  Compatibility: 0x%02X\n", conf[2]);
+                            printf("  Level: 0x%02X\n", conf[3]);
+
+                            // conf[4] bits 0-1 = lengthSizeMinusOne
+                            *length_size = (conf[4] & 3) + 1;
+                            printf("  Length size: %d bytes\n", *length_size);
+
+                            // conf[5] bits 0-4 = numOfSequenceParameterSets
+                            int off = 5;
+                            int sps_count = conf[off++] & 0x1F;
+                            printf("\n  Número de SPS: %d\n", sps_count);
+
+                            if (sps_count > 0)
+                            {
+                                // Próximos 2 bytes = tamanho do SPS
+                                *sps_len = (conf[off] << 8) | conf[off + 1];
+                                printf("  Tamanho do SPS no avcC: %d bytes\n", *sps_len);
+                                printf("  Offset do SPS no avcC: %d\n", off + 2);
+                                off += 2;
+
+                                if (*sps_len > 0 && *sps_len < avcc_size - off)
+                                {
+                                    printf("\n  SPS raw do avcC:\n  ");
+                                    for (int j = 0; j < *sps_len && j < 32; j++) {
+                                        printf("%02X ", conf[off + j]);
+                                        if ((j + 1) % 16 == 0 && j < *sps_len - 1) printf("\n  ");
+                                    }
+                                    printf("\n");
+
+                                    // VALIDAÇÃO CRÍTICA: Verificar se primeiro byte é NAL type 7
+                                    uint8_t first_byte = conf[off];
+                                    uint8_t nal_type = first_byte & 0x1F;
+
+                                    printf("\n  Primeiro byte do SPS: 0x%02X\n", first_byte);
+                                    printf("  NAL type extraído: %d ", nal_type);
+
+                                    if (nal_type == 7) {
+                                        printf("✓ (correto!)\n");
+                                    }
+                                    else {
+                                        printf("❌ (ERRADO! Esperado 7)\n");
+                                        fprintf(stderr, "\n❌ ERRO CRÍTICO: SPS do avcC não começa com NAL type 7!\n");
+                                        fprintf(stderr, "   Isso indica que o arquivo MP4 está corrompido ou\n");
+                                        fprintf(stderr, "   usa um formato de avcC não padrão.\n\n");
+
+                                        // Tentar salvar: procurar por 0x67 nos próximos bytes
+                                        int found_67 = -1;
+                                        for (int search = 0; search < *sps_len && search < 8; search++) {
+                                            if ((conf[off + search] & 0x1F) == 7) {
+                                                found_67 = search;
+                                                break;
+                                            }
+                                        }
+
+                                        if (found_67 > 0) {
+                                            fprintf(stderr, "   ⚠️  Encontrado NAL type 7 no offset +%d\n", found_67);
+                                            fprintf(stderr, "   Tentando ajustar...\n\n");
+                                            off += found_67;
+                                            *sps_len -= found_67;
+                                        }
+                                        else {
+                                            fprintf(stderr, "   Não foi possível encontrar NAL type 7 no SPS.\n");
+                                            fprintf(stderr, "   Tentando usar mesmo assim (pode falhar)...\n\n");
+                                        }
+                                    }
+
+                                    *sps = malloc(*sps_len);
+                                    if (*sps == NULL) return -2;
+                                    memcpy(*sps, &conf[off], *sps_len);
+                                    off += *sps_len;
+
+                                    printf("\n  ✓ SPS alocado: %d bytes\n", *sps_len);
+                                }
+                                else {
+                                    fprintf(stderr, "  ❌ Tamanho de SPS inválido\n");
+                                }
+                            }
+
+                            // PPS
+                            if (off < avcc_size)
+                            {
+                                int pps_count = conf[off++];
+                                printf("\n  Número de PPS: %d\n", pps_count);
+
+                                if (pps_count > 0 && off + 2 <= avcc_size)
+                                {
+                                    *pps_len = (conf[off] << 8) | conf[off + 1];
+                                    printf("  Tamanho do PPS no avcC: %d bytes\n", *pps_len);
+                                    printf("  Offset do PPS no avcC: %d\n", off + 2);
+                                    off += 2;
+
+                                    if (*pps_len > 0 && *pps_len <= avcc_size - off)
+                                    {
+                                        printf("\n  PPS raw do avcC:\n  ");
+                                        for (int j = 0; j < *pps_len && j < 32; j++) {
+                                            printf("%02X ", conf[off + j]);
+                                            if ((j + 1) % 16 == 0 && j < *pps_len - 1) printf("\n  ");
+                                        }
+                                        printf("\n");
+
+                                        // VALIDAÇÃO: Verificar NAL type 8
+                                        uint8_t pps_first = conf[off];
+                                        uint8_t pps_nal_type = pps_first & 0x1F;
+
+                                        printf("\n  Primeiro byte do PPS: 0x%02X\n", pps_first);
+                                        printf("  NAL type extraído: %d ", pps_nal_type);
+
+                                        if (pps_nal_type == 8) {
+                                            printf("✓ (correto!)\n");
+                                        }
+                                        else {
+                                            printf("❌ (ERRADO! Esperado 8)\n");
+
+                                            // Tentar encontrar 0x68
+                                            int found_68 = -1;
+                                            for (int search = 0; search < *pps_len && search < 8; search++) {
+                                                if ((conf[off + search] & 0x1F) == 8) {
+                                                    found_68 = search;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (found_68 > 0) {
+                                                fprintf(stderr, "   ⚠️  Encontrado NAL type 8 no offset +%d\n", found_68);
+                                                fprintf(stderr, "   Ajustando PPS...\n");
+                                                off += found_68;
+                                                *pps_len -= found_68;
+                                            }
+                                        }
+
+                                        *pps = malloc(*pps_len);
+                                        if (*pps == NULL) {
+                                            if (*sps) free(*sps);
+                                            return -2;
+                                        }
+                                        memcpy(*pps, &conf[off], *pps_len);
+
+                                        printf("\n  ✓ PPS alocado: %d bytes\n", *pps_len);
+                                    }
+                                }
+                            }
+
+                            printf("\n╔═══════════════════════════════════════╗\n");
+                            printf("║  ✓ avcC parsing completo             ║\n");
+                            printf("╚═══════════════════════════════════════╝\n\n");
+
+                            return 0;
+                        }
+
+                        fseek(f, sub_start + sub_size, SEEK_SET);
+                    }
+                }
+
+                fseek(f, entry_start + entry_size, SEEK_SET);
+            }
+        }
+
+        if (next > file_size) break;
+        fseek(f, next, SEEK_SET);
+    }
+
+    return -1;
+}
+
+
+
 
 int concod_load_video_metadata(FILE* f, VideoMetadata* meta)
 {
@@ -804,7 +1080,7 @@ int concod_load_video_metadata(FILE* f, VideoMetadata* meta)
     if (ret != 0)
     {
         printf("SPS/PPS not found.\n");
-        return -4;
+        return ret;
     }
 
     meta->LengthSize = length_size;
@@ -817,7 +1093,13 @@ int concod_load_video_metadata(FILE* f, VideoMetadata* meta)
     meta->width = w;
     meta->height = h;
 
-    return 0; // avcC n�o encontrado
+   //ret = debug_sps_pps(meta);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    return 0; // avcC não encontrado
 }
 
 

@@ -80,11 +80,109 @@ void Notification_Result(ResourceBuffer* object)
     printf("Notificou...");
 }
 
+typedef struct {
+    ISVCDecoder* Decoder;
+} DecoderSession;
+
+
+// --- Cria e inicializa decoder ---
+DecoderSession* CreateOpenH264Decoder()
+{
+    DecoderSession* session = calloc(1, sizeof(DecoderSession));
+    if (!session) return NULL;
+
+    // 1. Cria o decoder
+    if (WelsCreateDecoder(&session->Decoder) != 0 || !session->Decoder) {
+        fprintf(stderr, "Erro: WelsCreateDecoder falhou\n");
+        free(session);
+        return NULL;
+    }
+
+    // 2. Configura parâmetros
+    SDecodingParam decParam = { 0 };
+    decParam.uiTargetDqLayer = (uint8_t)-1;
+    decParam.eEcActiveIdc = ERROR_CON_SLICE_COPY;
+    decParam.bParseOnly = false;
+
+    // 3. Inicializa (CORRETO: (*decoder)->Function)
+    if ((*session->Decoder)->Initialize(session->Decoder, &decParam) != 0) {
+        fprintf(stderr, "Erro: Initialize falhou\n");
+        WelsDestroyDecoder(session->Decoder);
+        free(session);
+        return NULL;
+    }
+
+    printf("OpenH264 decoder inicializado com sucesso!\n");
+    return session;
+}
+
+// --- Envia SPS + PPS (sem start code) ---
+int SendSpsPps(DecoderSession* session)
+{
+    static const uint8_t sps_pps1[] = {
+        0x00, 0x00, 0x00, 0x01,
+          0x67, 0x64, 0x00, 0x1E, 0xAC, 0xD9, 0x40, 0x78,
+          0x05, 0x07, 0x29, 0xC1, 0xF0, 0xC8, 0x00, 0x00,
+          0x03, 0x00, 0xC8, 0x00, 0x00, 0x03, 0x01, 0xE0, 0x80,
+        0x00, 0x00, 0x00, 0x01,
+          0x68, 0xEE, 0x3C, 0x80
+    };
+
+    static const uint8_t sps_pps2[] = {
+        0x00, 0x00, 0x00, 0x01,
+          0x67, 0x64, 0x00, 0x32,
+          0xac, 0x72, 0x84, 0x40, 
+          0x50, 0x05, 0xbb, 0x01, 
+          0x10, 0x00, 0x00, 0x03, 
+          0x00, 0x10, 0x00, 0x00, 
+          0x03, 0x03, 0xc0, 0xf1,
+          0x83, 0x18, 0x46, 
+        0x00, 0x00, 0x00, 0x01,
+          0x68, 0xe8, 0x43, 0x89, 0x2c, 0x8b
+    };
+
+    // 00 00 00 01   67 64 00 32 
+    //               ac 72 84 40 
+    //               50 05 bb 01 
+    //               10 00 00 03 
+    //               00 10 00 00 
+    //               03 03 c0 f1
+    //               83 18 46
+    // 00 00 00 01   68 e8 43 89
+
+    uint8_t* pData[3];// = { 0 };
+    SBufferInfo info = { 0 };
+    memset(&info, 0, sizeof(SBufferInfo));
+    info.iBufferStatus = 1;
+    int leng = sizeof(sps_pps2);
+
+    /*FILE* f = fopen("e:/AmostraVideo/sps_pps_annexb.bin", "rb");
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    uint8_t* buffer = malloc(len);
+    fread(buffer, 1, len, f);
+    fclose(f);*/
+
+
+    int ret = (*session->Decoder)->DecodeFrame2(session->Decoder, sps_pps2, leng, pData, &info);
+
+    if (ret != 0)
+    {
+        fprintf(stderr, "Erro ao enviar SPS/PPS: %d\n", ret);
+        return ret;
+    }
+
+    printf("SPS/PPS enviados com sucesso!\n");
+    return 0;
+}
+
 
 
 void render_video(const char* path)
 {
     FrameIndexList* list = concod_get_frames(path);
+    if (!list) return;
 
 
     FILE* file = fopen(path, "rb");
@@ -93,10 +191,110 @@ void render_video(const char* path)
         return;
     }
 
-    MediaSourceSession* session = media_sim_create(list->Metadata.width, list->Metadata.height);// (1920, 1080);  // Ajuste width/height de stsd ou hardcoded
+    //MediaSourceSession* session = media_sim_create(list->Metadata.width, list->Metadata.height);// (1920, 1080);  // Ajuste width/height de stsd ou hardcoded
+    MediaSourceSession* session = media_sim_create(list->Metadata.width, list->Metadata.height);
+
+
+
+
+    // --- SPS + PPS SEM start code (NAL puro) ---
+    static const uint8_t sps_pps_raw[] = {
+        // SPS (NAL type 7)
+        0x00, 0x00, 0x00, 0x01,
+        0x67, 0x64, 0x00, 0x1E, 0xAC, 0xD9, 0x40, 0x78,
+        0x05, 0x07, 0x29, 0xC1, 0xF0, 0xC8, 0x00, 0x00,
+        0x03, 0x00, 0xC8, 0x00, 0x00, 0x03, 0x01, 0xE0, 0x80,
+
+        // PPS (NAL type 8)
+        0x00, 0x00, 0x00, 0x01,
+        0x68, 0xEE, 0x3C, 0x80
+    };
+    static const int sps_pps_len = sizeof(sps_pps_raw);
+
+    // --- Envio para OpenH264 ---
+    uint8_t* planes22 = NULL;  // NULL!
+    SBufferInfo info22 = { 0 };
+
+    // CRÍTICO: iBufferStatus = 1 → "parameter sets"
+    info22.iBufferStatus = 1;
+
+    int ret = (*session->Decoder)->DecodeFrame2(
+        session->Decoder,
+        sps_pps_raw,      // buffer SEM start code
+        sps_pps_len,      // tamanho total
+        &planes22,          // NULL
+        &info22             // iBufferStatus = 1
+    );
+
+
+
+    static const uint8_t config_nal[] = {
+    0x67, 0x64, 0x00, 0x1E, 0xAC, 0xD9, 0x40, 0x78,
+    0x05, 0x07, 0x29, 0xC1, 0xF0, 0xC8, 0x00, 0x00,
+    0x03, 0x00, 0xC8, 0x00, 0x00, 0x03, 0x01, 0xE0, 0x80,
+    0x68, 0xEE, 0x3C, 0x80
+    };
+    static const int config_len = sizeof(config_nal);
+
+    uint8_t* planes = NULL;
+    SBufferInfo info = { 0 };
+    info.iBufferStatus = 1;  // crucial!
+
+    ret = (*session->Decoder)->DecodeFrame2(session->Decoder, config_nal, config_len, &planes, &info);
+
+
+
+    // --- SPS (com start code) ---
+    static const uint8_t sps[] = {
+        0x00, 0x00, 0x00, 0x01,
+        0x67, 0x64, 0x00, 0x1E, 0xAC, 0xD9, 0x40, 0x78,
+        0x05, 0x07, 0x29, 0xC1, 0xF0, 0xC8, 0x00, 0x00,
+        0x03, 0x00, 0xC8, 0x00, 0x00, 0x03, 0x01, 0xE0, 0x80
+    };
+    static const int sps_len = sizeof(sps);
+
+    // --- PPS (com start code) ---
+    static const uint8_t pps[] = {
+        0x00, 0x00, 0x00, 0x01,
+        0x68, 0xEE, 0x3C, 0x80
+    };
+    static const int pps_len = sizeof(pps);
+
+    // --- Enviar SPS + PPS separadamente ---
+  //  uint8_t* planes = NULL;  // MUITO IMPORTANTE: NULL para parameter sets
+  //  SBufferInfo info = { 0 };
+
+
+    // 1. Envia SPS
+    ret = (*session->Decoder)->DecodeFrame2(session->Decoder, sps, sps_len, &planes, &info);
+    if (ret != 0) {
+        printf("ERRO ao enviar SPS: %d\n", ret);
+        return ret;
+    }
+    printf("SPS enviado com sucesso\n");
+
+    // 2. Envia PPS
+    ret = (*session->Decoder)->DecodeFrame2(session->Decoder, pps, pps_len, &planes, &info);
+    if (ret != 0) {
+        printf("ERRO ao enviar PPS: %d\n", ret);
+        return ret;
+    }
+
+
+
+
+
+
+
+
+    int res = concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
+
+
+
 
     ////Extrair SPS/PPS de 'avcC' (parse stsd ou do primeiro frame) e alimentar inicial
-    concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
+    //int res = concod_send_initial_header_from_meta(session->Decoder, &list->Metadata);
+    if (res != 0)return;
 
     // Loop por frames
     for (uint32_t i = 0; i < list->Count; i++) 
@@ -135,6 +333,16 @@ void render_video(const char* path)
 //int main(int argc, char* argv[])
 int main()
 {
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+
+    DecoderSession* session = CreateOpenH264Decoder();
+
+    SendSpsPps(session);
+
+
+
     // sample-5s.mp4
     // e:/small.mp4
    
@@ -143,7 +351,7 @@ int main()
 
     //concod_display_frame_index(frames);
 
-    render_video("e:/sample-5s.mp4");
+    render_video("e:/sample-5s.mp4");// small// "e:/sample-5s.mp4"
 
     //medias_waiting(session->Output);
 

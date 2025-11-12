@@ -44,6 +44,10 @@ extern "C" {
 	int concod_load_video_metadata(FILE* f, VideoMetadata* meta);
 	int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta);
 
+	int debug_sps_pps(const VideoMetadata* meta);
+
+	int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta);
+
 
 #ifdef __cplusplus
 }

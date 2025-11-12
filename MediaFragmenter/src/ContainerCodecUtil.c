@@ -304,9 +304,6 @@ FrameIndexList* concod_get_frames(const char* path)
         fclose(f);
         return NULL;
     }
-    // Libera SPS/PPS se não necessários aqui (metadata será recarregada depois)
-    if (meta.sps) free(meta.sps);
-    if (meta.pps) free(meta.pps);
 
     // Parse tables
     StszData stsz = { 0 };
@@ -329,7 +326,7 @@ FrameIndexList* concod_get_frames(const char* path)
     // Cria lista ordenada
     FrameIndexList* list = mframe_list_new(stsz.count);
     list->Metadata.pps = meta.pps; list->Metadata.pps_len = meta.pps_len; 
-    list->Metadata.sps = meta.sps; list->Metadata.sps_len = meta.pps_len;
+    list->Metadata.sps = meta.sps; list->Metadata.sps_len = meta.sps_len;
     list->Metadata.LengthSize = meta.LengthSize; 
     list->Metadata.Codec = meta.Codec; list->Metadata.Fps = meta.Fps; 
     list->Metadata.width = meta.width; list->Metadata.height = meta.height;

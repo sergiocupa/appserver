@@ -116,18 +116,11 @@ DecoderSession* CreateOpenH264Decoder()
     return session;
 }
 
-// --- Envia SPS + PPS (sem start code) ---
-int SendSpsPps(DecoderSession* session)
-{
-    static const uint8_t sps_pps1[] = {
-        0x00, 0x00, 0x00, 0x01,
-          0x67, 0x64, 0x00, 0x1E, 0xAC, 0xD9, 0x40, 0x78,
-          0x05, 0x07, 0x29, 0xC1, 0xF0, 0xC8, 0x00, 0x00,
-          0x03, 0x00, 0xC8, 0x00, 0x00, 0x03, 0x01, 0xE0, 0x80,
-        0x00, 0x00, 0x00, 0x01,
-          0x68, 0xEE, 0x3C, 0x80
-    };
 
+
+// --- Envia SPS + PPS (sem start code) ---
+int SendSpsPps(DecoderSession* session, const char* path)
+{
     static const uint8_t sps_pps2[] = {
         0x00, 0x00, 0x00, 0x01,
           0x67, 0x64, 0x00, 0x32,
@@ -141,20 +134,13 @@ int SendSpsPps(DecoderSession* session)
           0x68, 0xe8, 0x43, 0x89, 0x2c, 0x8b
     };
 
-    // 00 00 00 01   67 64 00 32 
-    //               ac 72 84 40 
-    //               50 05 bb 01 
-    //               10 00 00 03 
-    //               00 10 00 00 
-    //               03 03 c0 f1
-    //               83 18 46
-    // 00 00 00 01   68 e8 43 89
-
     uint8_t* pData[3];// = { 0 };
     SBufferInfo info = { 0 };
     memset(&info, 0, sizeof(SBufferInfo));
     info.iBufferStatus = 1;
     int leng = sizeof(sps_pps2);
+
+    
 
     /*FILE* f = fopen("e:/AmostraVideo/sps_pps_annexb.bin", "rb");
     fseek(f, 0, SEEK_END);
@@ -164,8 +150,23 @@ int SendSpsPps(DecoderSession* session)
     fread(buffer, 1, len, f);
     fclose(f);*/
 
+    FrameIndexList* list = concod_get_frames(path);
 
-    int ret = (*session->Decoder)->DecodeFrame2(session->Decoder, sps_pps2, leng, pData, &info);
+
+    // Cria AnnexB
+    uint8_t* annexb = malloc(list->Metadata.pps_len + list->Metadata.sps_len + 8);
+    annexb[0] = 0; annexb[1] = 0; annexb[2] = 0; annexb[3] = 1;
+    int pos = 4;
+    memcpy(annexb+ pos, list->Metadata.sps, list->Metadata.sps_len);
+    pos += list->Metadata.sps_len;
+
+    annexb[pos] = 0; annexb[pos+1] = 0; annexb[pos+2] = 0; annexb[pos+3] = 1;
+    pos += 4;
+    memcpy(annexb + pos, list->Metadata.pps, list->Metadata.pps_len);
+    pos += list->Metadata.pps_len;
+
+
+    int ret = (*session->Decoder)->DecodeFrame2(session->Decoder, annexb, pos, pData, &info);
 
     if (ret != 0)
     {
@@ -339,7 +340,7 @@ int main()
 
     DecoderSession* session = CreateOpenH264Decoder();
 
-    SendSpsPps(session);
+    SendSpsPps(session, "e:/AmostraVideo/big.mp4");
 
 
 

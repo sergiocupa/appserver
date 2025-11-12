@@ -410,7 +410,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
 
 
-static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
+static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
 {
     uint8_t name[5] = { 0 };
     long file_size;
@@ -515,25 +515,17 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
 
                             if (sps_count > 0)
                             {
-                                // CORRIGIDO: Lê o tamanho e armazena em *sps_len
                                 *sps_len = (conf[off] << 8) | conf[off + 1];
                                 off += 2;
 
-                                // CORRIGIDO: Verifica bounds antes de alocar
                                 if (*sps_len > 0 && *sps_len < avcc_size - off)
                                 {
-                                    // CORRIGIDO: Aloca usando *sps_len
                                     *sps = malloc(*sps_len);
-                                    if (*sps == NULL) {
-                                        fprintf(stderr, "Erro ao alocar memória para SPS\n");
-                                        return -2;
-                                    }
-                                    // CORRIGIDO: Copia usando *sps_len
                                     memcpy(*sps, &conf[off], *sps_len);
                                     off += *sps_len;
                                 }
-                                else {
-                                    fprintf(stderr, "Tamanho de SPS inválido: %d\n", *sps_len);
+                                else 
+                                {
                                     *sps_len = 0;
                                 }
                             }
@@ -544,52 +536,42 @@ static int load_sps_pps_02(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
                                 int pps_count = conf[off++];
                                 if (pps_count > 0 && off + 2 <= avcc_size)
                                 {
-                                    // CORRIGIDO: Lê o tamanho e armazena em *pps_len
                                     *pps_len = (conf[off] << 8) | conf[off + 1];
                                     off += 2;
 
-                                    // CORRIGIDO: Verifica bounds antes de alocar
                                     if (*pps_len > 0 && *pps_len <= avcc_size - off)
                                     {
-                                        // CORRIGIDO: Aloca usando *pps_len
                                         *pps = malloc(*pps_len);
                                         if (*pps == NULL)
                                         {
-                                            fprintf(stderr, "Erro ao alocar memória para PPS\n");
                                             if (*sps) free(*sps);
                                             *sps = NULL;
                                             *sps_len = 0;
                                             return -2;
                                         }
-                                        printf("DEBUG: PPS alocado em %p\n", (void*)*pps);
 
-                                        // CORRIGIDO: Copia usando *pps_len
                                         memcpy(*pps, &conf[off], *pps_len);
-
-                                        // Dump dos primeiros bytes do PPS
-                                        printf("DEBUG: Primeiros bytes do PPS: ");
-                                        for (int j = 0; j < (*pps_len < 10 ? *pps_len : 10); j++) {
-                                            printf("%02X ", (*pps)[j]);
-                                        }
                                     }
-                                    else {
-                                        fprintf(stderr, "Tamanho de PPS inválido: %d\n", *pps_len);
+                                    else 
+                                    {
                                         *pps_len = 0;
                                     }
                                 }
                             }
 
-                            // Verificação final
-                            if (*sps && *sps_len > 0 && *pps && *pps_len > 0) {
+                            if (*sps && *sps_len > 0 && *pps && *pps_len > 0)
+                            {
                                 return 0;  // Sucesso
                             }
 
                             // Se chegou aqui, algo deu errado
-                            if (*sps) {
+                            if (*sps) 
+                            {
                                 free(*sps);
                                 *sps = NULL;
                             }
-                            if (*pps) {
+                            if (*pps) 
+                            {
                                 free(*pps);
                                 *pps = NULL;
                             }
@@ -773,7 +755,7 @@ static int load_sps_pps_03(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, 
 //
 // ============================================================================
 
-static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
+static int load_sps_pps_04(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
 {
     uint8_t name[5] = { 0 };
     long file_size;

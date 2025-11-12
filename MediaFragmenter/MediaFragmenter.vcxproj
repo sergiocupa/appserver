@@ -35,6 +35,7 @@
     <ClCompile Include="src\MediaSourceSim.c" />
     <ClCompile Include="src\ContainerCodecUtil.c" />
     <ClCompile Include="src\Mp4Builder.c" />
+    <ClCompile Include="src\Mp4Diag.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

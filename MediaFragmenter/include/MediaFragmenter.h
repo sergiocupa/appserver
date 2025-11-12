@@ -49,6 +49,9 @@ extern "C" {
 	int concod_send_initial_header_from_meta(ISVCDecoder* decoder, const VideoMetadata* meta);
 
 
+	void mp4diag_video_metadata(const VideoMetadata* meta);
+
+
 #ifdef __cplusplus
 }
 #endif

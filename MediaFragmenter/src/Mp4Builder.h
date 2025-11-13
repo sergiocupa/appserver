@@ -13,37 +13,22 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
-#ifndef MEDIA_FRAGMENTER_H
-#define MEDIA_FRAGMENTER_H
+#ifndef MP4_BUILDER_H
+#define MP4_BUILDER_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C" { 
 #endif
 
-    #include "../src/MediaFragmenterType.h"
+    #include "MediaFragmenterType.h"
 
-
-	int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h);
-	int rgb_to_yuv(uint8_t* rgb_pixels, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v, int* stride_y, int* stride_u, int* stride_v);
-
-
-	uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length);
+	/*uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length);
 	uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size);
-	FrameIndexList* mp4builder_get_frames(const char* path);
-
-
-	// Visualizador
-	MediaSourceSession* media_sim_create(int width, int height);
-	int media_sim_init_segment(MediaSourceSession* source, MediaBuffer* data);
-	int media_sim_feed(MediaSourceSession* source, MediaBuffer* data);
-	void media_sim_release(MediaSourceSession** source);
-	void medias_waiting(VideoOutput* v);
-
-
+	FrameIndexList* mp4builder_get_frames(const char* path, int generate_annexb);*/
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MEDIA_FRAGMENTER */
+#endif /* MP4_BUILDER */

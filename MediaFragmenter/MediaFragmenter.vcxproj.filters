@@ -30,6 +30,15 @@
     <ClInclude Include="src\FileUtil.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Mp4Builder.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mp4Diag.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mp4MetadataUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c">
@@ -38,16 +47,10 @@
     <ClCompile Include="src\MediaFragmenterType.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\ContainerCodecUtil.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\MediaSourceSim.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ImageTools.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ContainerMetadataUtil.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\FileUtil.c">
@@ -57,6 +60,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Mp4Diag.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mp4BuilderTest.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mp4MetadataUtil.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

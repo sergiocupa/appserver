@@ -32,7 +32,15 @@ extern "C" {
 
     #define NAL_TYPE(nal) ((nal) & 0x1F)             // Para H.264
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
+    
 
+    typedef struct _MediaBuffer
+    {
+        int           Max;
+        int           Size;
+        uint_fast8_t* Data;
+    }
+    MediaBuffer;
 
 
 
@@ -72,16 +80,13 @@ extern "C" {
 
     typedef struct
     {
-        uint8_t* sps;
-        int sps_len;
-        uint8_t* pps;
-        int pps_len;
-
-        int width;
-        int height;
-        int   Codec;// 264 ou 265
-        double Fps;
-        int LengthSize;
+        MediaBuffer Sps;
+        MediaBuffer Pps;
+        int         Width;
+        int         Height;
+        int         Codec;// 264 ou 265
+        double      Fps;
+        int         LengthSize;
     } 
     VideoMetadata;
 
@@ -169,13 +174,7 @@ extern "C" {
     }
     FrameIndexList;
 
-    typedef struct _MediaBuffer
-    {
-        int           Max;
-        int           Length;
-        uint_fast8_t* Data;
-    }
-    MediaBuffer;
+
 
     typedef struct
     {

@@ -18,7 +18,7 @@ static const uint64_t POW10_64[] =
 
 void mbuffer_resize(MediaBuffer* buffer, int length)
 {
-    if ((buffer->Length + length) >= buffer->Max)
+    if ((buffer->Size + length) >= buffer->Max)
     {
         buffer->Max = (buffer->Max + length) * 2;
         char* content = (char*)realloc(buffer->Data, buffer->Max * sizeof(char));
@@ -128,39 +128,39 @@ void mbuffer_append_by_file(MediaBuffer* buffer, FILE* src, uint64_t file_offset
     fseek(src, size, SEEK_SET);
     mbuffer_resize(buffer, size);
     fread(buffer->Data, 1, size, src);
-    buffer->Length += size;
+    buffer->Size += size;
 }
 
 
 void mbuffer_init(MediaBuffer* buffer)
 {
-    buffer->Max    = 100;
-    buffer->Length = 0;
-    buffer->Data   = (uint_fast8_t*)malloc(buffer->Max * sizeof(char));
+    buffer->Max  = 100;
+    buffer->Size = 0;
+    buffer->Data = (uint_fast8_t*)malloc(buffer->Max * sizeof(char));
 }
 
 void mbuffer_prepare(MediaBuffer* buffer, uint64_t size)
 {
-    buffer->Max    = size;
-    buffer->Length = 0;
-    buffer->Data   = (uint_fast8_t*)malloc(buffer->Max * sizeof(char));
+    buffer->Max  = size;
+    buffer->Size = 0;
+    buffer->Data = (uint_fast8_t*)malloc(buffer->Max * sizeof(char));
 }
 
 MediaBuffer* mbuffer_new()
 {
     MediaBuffer* db = (MediaBuffer*)malloc(sizeof(MediaBuffer));
-    db->Max    = 100;
-    db->Length = 0;
-    db->Data   = (uint_fast8_t*)malloc(db->Max * sizeof(char));
+    db->Max  = 100;
+    db->Size = 0;
+    db->Data = (uint_fast8_t*)malloc(db->Max * sizeof(char));
     return db;
 }
 
 MediaBuffer* mbuffer_create(int size)
 {
     MediaBuffer* db = (MediaBuffer*)malloc(sizeof(MediaBuffer));
-    db->Max     = size;
-    db->Length  = 0;
-    db->Data    = (uint_fast8_t*)malloc(db->Max * sizeof(char));
+    db->Max  = size;
+    db->Size = 0;
+    db->Data = (uint_fast8_t*)malloc(db->Max * sizeof(char));
     return db;
 }
 
@@ -179,8 +179,8 @@ void mbuffer_append(MediaBuffer* buffer, const uint_fast8_t* data, const int len
     mbuffer_resize(buffer, length);
 
     memcpy(buffer->Data, data, length);
-    buffer->Length += length;
-    buffer->Data[buffer->Length] = 0;
+    buffer->Size += length;
+    buffer->Data[buffer->Size] = 0;
 }
 
 void mbuffer_append_string(MediaBuffer* buffer, const char* data)
@@ -190,25 +190,25 @@ void mbuffer_append_string(MediaBuffer* buffer, const char* data)
     mbuffer_resize(buffer, size);
 
     memcpy(buffer->Data, data, size);
-    buffer->Length += size;
-    buffer->Data[buffer->Length] = 0;
+    buffer->Size += size;
+    buffer->Data[buffer->Size] = 0;
 }
 
 void mbuffer_append_uint8(MediaBuffer* buffer, uint32_t value)
 {
     mbuffer_resize(buffer, 1);
 
-    buffer->Data[buffer->Length]     = value;
-    buffer->Data[buffer->Length + 1] = 0;
+    buffer->Data[buffer->Size]   = value;
+    buffer->Data[buffer->Size+1] = 0;
 }
 
 void mbuffer_append_uint16(MediaBuffer* buffer, uint32_t value)
 {
     mbuffer_resize(buffer, 2);
 
-    buffer->Data[buffer->Length]     = value >> 8;
-    buffer->Data[buffer->Length + 1] = value & 0xFF;
-    buffer->Data[buffer->Length + 2] = 0;
+    buffer->Data[buffer->Size]   = value >> 8;
+    buffer->Data[buffer->Size+1] = value & 0xFF;
+    buffer->Data[buffer->Size+2] = 0;
 }
 
 
@@ -232,7 +232,7 @@ void mbuffer_append_uint32_string(MediaBuffer* buffer, uint32_t value)
         if (digit != 0 || started || i == 9) 
         {
             *p++ = (char)('0' + digit);
-            buffer->Length++;
+            buffer->Size++;
             started = 1;
         }
     }
@@ -262,7 +262,7 @@ void mbuffer_append_uint64_string(MediaBuffer* buffer, uint64_t value)
         if (digit != 0 || started || i == 19) 
         {
             *p++ = (char)('0' + digit);
-            buffer->Length++;
+            buffer->Size++;
             started = 1;
         }
     }
@@ -275,37 +275,37 @@ void mbuffer_append_uint32(MediaBuffer* buffer, uint32_t value)
 {
     mbuffer_resize(buffer, 4);
 
-    buffer->Data[buffer->Length]     = value >> 24;
-    buffer->Data[buffer->Length + 1] = value >> 16;
-    buffer->Data[buffer->Length + 2] = value >> 8;
-    buffer->Data[buffer->Length + 3] = value & 0xFF;
-    buffer->Data[buffer->Length + 4] = 0;
+    buffer->Data[buffer->Size]     = value >> 24;
+    buffer->Data[buffer->Size + 1] = value >> 16;
+    buffer->Data[buffer->Size + 2] = value >> 8;
+    buffer->Data[buffer->Size + 3] = value & 0xFF;
+    buffer->Data[buffer->Size + 4] = 0;
 }
 
 void mbuffer_append_uint64(MediaBuffer* buffer, uint32_t value)
 {
     mbuffer_resize(buffer, 8);
 
-    buffer->Data[buffer->Length]     = value >> 56;
-    buffer->Data[buffer->Length + 1] = value >> 48;
-    buffer->Data[buffer->Length + 2] = value >> 40;
-    buffer->Data[buffer->Length + 3] = value >> 32;
-    buffer->Data[buffer->Length + 4] = value >> 24;
-    buffer->Data[buffer->Length + 5] = value >> 16;
-    buffer->Data[buffer->Length + 6] = value >> 8;
-    buffer->Data[buffer->Length + 7] = value & 0xFF;
-    buffer->Data[buffer->Length + 8] = 0;
+    buffer->Data[buffer->Size]     = value >> 56;
+    buffer->Data[buffer->Size + 1] = value >> 48;
+    buffer->Data[buffer->Size + 2] = value >> 40;
+    buffer->Data[buffer->Size + 3] = value >> 32;
+    buffer->Data[buffer->Size + 4] = value >> 24;
+    buffer->Data[buffer->Size + 5] = value >> 16;
+    buffer->Data[buffer->Size + 6] = value >> 8;
+    buffer->Data[buffer->Size + 7] = value & 0xFF;
+    buffer->Data[buffer->Size + 8] = 0;
 }
 
 void mbuffer_box_from_buf(MediaBuffer* db, const char* type, MediaBuffer* content)
 {
-    uint32_t size = (uint32_t)(8 + content->Length);
+    uint32_t size = (uint32_t)(8 + content->Size);
     mbuffer_append_uint32(db, size);
     mbuffer_append_string(db, type);
 
-    if (content->Length)
+    if (content->Size)
     {
-        mbuffer_append(db, content->Data, content->Length);
+        mbuffer_append(db, content->Data, content->Size);
     }
 }
 

@@ -25,17 +25,20 @@
     <ClInclude Include="src\FileUtil.h" />
     <ClInclude Include="src\MediaFragmenterType.h" />
     <ClInclude Include="src\MediaSourceSim.h" />
+    <ClInclude Include="src\Mp4Builder.h" />
+    <ClInclude Include="src\Mp4Diag.h" />
+    <ClInclude Include="src\Mp4MetadataUtil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\ContainerMetadataUtil.c" />
     <ClCompile Include="src\FileUtil.c" />
     <ClCompile Include="src\ImageTools.c" />
     <ClCompile Include="src\MediaFragmenter.c" />
     <ClCompile Include="src\MediaFragmenterType.c" />
     <ClCompile Include="src\MediaSourceSim.c" />
-    <ClCompile Include="src\ContainerCodecUtil.c" />
     <ClCompile Include="src\Mp4Builder.c" />
+    <ClCompile Include="src\Mp4BuilderTest.c" />
     <ClCompile Include="src\Mp4Diag.c" />
+    <ClCompile Include="src\Mp4MetadataUtil.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

@@ -113,15 +113,6 @@ void render_video(const char* path)
         if (mb.Size > 0)
         {
             int fe = media_sim_feed(session, &mb);
-            if (!fe)
-            {
-                printf("Render Frame %d...\r\n", i);
-            }
-            else
-            {
-                printf("Render - FAIL %d...\r\n", fe);
-            }
-
             free(mb.Data);
         }
 
@@ -150,7 +141,7 @@ int main()
 
     //concod_display_frame_index(frames);
 
-    render_video("e:/sample-5s.mp4");// small// "e:/sample-5s.mp4"
+    render_video("e:/AmostraVideo/sample-3.mp4");// small// "e:/sample-5s.mp4"
 
     //medias_waiting(session->Output);
 

@@ -128,6 +128,8 @@ extern "C" {
     {
         int           Width;
         int           Height;
+        int           WindowWidth;
+        int           WindowHeight;
         int           a;
         SDL_Window*   win;
         SDL_Renderer* ren;

@@ -6,9 +6,21 @@
 
 void* event_loop_thread(void* arg)
 {
+    //SDL_SetHint(SDL_HINT_RENDER_DRIVER, "direct3d"); Gera erro
+
+    // 0 -> Nearest
+    // 1 -> Linear
+    // 2 -> Anisotropic 
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
+
     VideoOutput* v = (VideoOutput*)arg;
-    v->win = SDL_CreateWindow("DASH Player Simulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, v->Width, v->Height, 0);
-    v->ren = SDL_CreateRenderer(v->win, -1, 0);
+    v->win = SDL_CreateWindow("DASH Player Simulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, v->Width, v->Height, SDL_WINDOW_RESIZABLE);
+    
+    // Opção SDL_RENDERER_ACCELERATED congela a tela ao redimencionar.
+    //v->ren = SDL_CreateRenderer(v->win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    v->ren = SDL_CreateRenderer(v->win, -1, SDL_RENDERER_SOFTWARE);
+
     v->tex = SDL_CreateTexture(v->ren, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, v->Width, v->Height);
     //v->tex = SDL_CreateTexture(v->ren, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STATIC, v->Width, v->Height);
 
@@ -30,6 +42,12 @@ void* event_loop_thread(void* arg)
             {
                 if (v->KeyDown) v->KeyDown(event.key.keysym.sym);
             }
+
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED) 
+            {
+                v->WindowWidth  = event.window.data1;
+                v->WindowHeight = event.window.data2;
+            }
         }
         SDL_Delay(10);  // Evita 100% CPU
     }
@@ -41,6 +59,8 @@ static VideoOutput* video_output_create(int w, int h)
     VideoOutput* v = calloc(1, sizeof(VideoOutput));
     v->Width  = w;
     v->Height = h;
+    v->WindowWidth = w;
+    v->WindowHeight = h;
 
     v->WaitShow = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -51,77 +71,73 @@ static VideoOutput* video_output_create(int w, int h)
     return v;
 }
 
+
+
 static void video_output_show(VideoOutput* v, unsigned char** planes, SBufferInfo* info)
 {
-    // ⚠️ CORREÇÃO CRÍTICA: Verificar se os planos são válidos
-    if (!planes[0] || !planes[1] || !planes[2])
-    {
-        fprintf(stderr, "ERRO: Planos YUV inválidos (NULL)\n");
-        return;
-    }
+    if (!planes[0] || !planes[1] || !planes[2]) return;
 
-    // Obter dimensões reais do frame decodificado
-    int width = info->UsrData.sSystemBuffer.iWidth;
-    int height = info->UsrData.sSystemBuffer.iHeight;
-
-    // Obter strides (podem ser diferentes da largura devido ao alinhamento)
+    int video_w = info->UsrData.sSystemBuffer.iWidth;
+    int video_h = info->UsrData.sSystemBuffer.iHeight;
     int stride_y = info->UsrData.sSystemBuffer.iStride[0];
     int stride_u = info->UsrData.sSystemBuffer.iStride[1];
-    int stride_v = info->UsrData.sSystemBuffer.iStride[1];  // OpenH264 usa mesmo stride para U e V
+    int stride_v = info->UsrData.sSystemBuffer.iStride[1];
 
-    // 🔧 SOLUÇÃO 1: Verificar se as dimensões batem
-    if (width != v->Width || height != v->Height)
+    // === Apenas na primeira vez ou quando a resolução do VÍDEO muda ===
+    if (video_w != v->Width || video_h != v->Height || !v->tex)
     {
-        fprintf(stderr, "AVISO: Dimensões do frame (%dx%d) diferem da janela (%dx%d)\n",
-            width, height, v->Width, v->Height);
+        if (v->tex) SDL_DestroyTexture(v->tex);
 
-        // Recriar textura com dimensões corretas
-        SDL_DestroyTexture(v->tex);
         v->tex = SDL_CreateTexture(v->ren, SDL_PIXELFORMAT_IYUV,
-            SDL_TEXTUREACCESS_STREAMING, width, height);
-        v->Width = width;
-        v->Height = height;
+            SDL_TEXTUREACCESS_STREAMING,
+            video_w, video_h);   // <<<<< SEMPRE tamanho do vídeo
+
+        if (!v->tex) {
+            fprintf(stderr, "Erro textura: %s\n", SDL_GetError());
+            return;
+        }
+
+        v->Width = video_w;   // Width/Height agora = tamanho real do vídeo
+        v->Height = video_h;
     }
 
-    // 🔧 SOLUÇÃO 2: Debug dos valores YUV (apenas primeiros pixels)
-#ifdef DEBUG_YUV
-    printf("YUV Debug:\n");
-    printf("  Y[0]=%d, Y[1]=%d, Y[2]=%d\n", planes[0][0], planes[0][1], planes[0][2]);
-    printf("  U[0]=%d, U[1]=%d, U[2]=%d\n", planes[1][0], planes[1][1], planes[1][2]);
-    printf("  V[0]=%d, V[1]=%d, V[2]=%d\n", planes[2][0], planes[2][1], planes[2][2]);
-    printf("  Strides: Y=%d, U=%d, V=%d\n", stride_y, stride_u, stride_v);
-    printf("  Dimensões: %dx%d\n", width, height);
-#endif
+    // Atualiza textura (sempre com strides do vídeo original)
+    SDL_UpdateYUVTexture(v->tex, NULL,
+        planes[0], stride_y,
+        planes[1], stride_u,
+        planes[2], stride_v);
 
-    // 🔧 SOLUÇÃO 3: Atualizar textura com strides corretos
-    int result = SDL_UpdateYUVTexture(
-        v->tex, NULL,
-        planes[0], stride_y,  // Y plane e seu stride
-        planes[1], stride_u,  // U plane e seu stride
-        planes[2], stride_v   // V plane e seu stride
-    );
-
-    if (result < 0)
-    {
-        fprintf(stderr, "ERRO SDL_UpdateYUVTexture: %s\n", SDL_GetError());
-        return;
-    }
-
-    // Limpar renderizador com preto (não verde!)
+    // === Render com letterbox (agora o dst muda a cada frame) ===
     SDL_SetRenderDrawColor(v->ren, 0, 0, 0, 255);
     SDL_RenderClear(v->ren);
 
-    // Copiar textura para renderizador
-    result = SDL_RenderCopy(v->ren, v->tex, NULL, NULL);
-    if (result < 0)
-    {
-        fprintf(stderr, "ERRO SDL_RenderCopy: %s\n", SDL_GetError());
-        return;
+    int win_w, win_h;
+    SDL_GetWindowSize(v->win, &win_w, &win_h);
+
+
+    // Para manter o aspect. Se nao precisa pode remover aqui e o IF abaixo, e o ultimo parametro de SDL_RenderCopy como NULL
+    float video_aspect = (float)video_w / (float)video_h;
+    float win_aspect = (float)win_w / (float)win_h;
+
+    SDL_Rect dst;
+    if (win_aspect > video_aspect) {
+        dst.h = win_h;
+        dst.w = (int)(win_h * video_aspect + 0.5f);
+        dst.x = (win_w - dst.w) / 2;
+        dst.y = 0;
+    }
+    else {
+        dst.w = win_w;
+        dst.h = (int)(win_w / video_aspect + 0.5f);
+        dst.x = 0;
+        dst.y = (win_h - dst.h) / 2;
     }
 
+    SDL_RenderCopy(v->ren, v->tex, NULL, &dst);
     SDL_RenderPresent(v->ren);
-    SDL_Delay(33);
 }
+
+
 
 static void video_output_destroy(VideoOutput* v)
 {
@@ -172,34 +188,45 @@ static int h264_decoder_feed(ISVCDecoder* decoder, unsigned char* data, int len,
     memset(&info, 0, sizeof(info));
 
     DECODING_STATE state = (*decoder)->DecodeFrame2(decoder, data, len, planes, &info);
-    if (state != 0)
-    {
-        fprintf(stderr, "AVISO: DecodeFrame2 retornou estado %d (não é erro necessariamente)\n", state);
-    }
+    //if (state != 0)
+    //{
+    //    //fprintf(stderr, "AVISO: DecodeFrame2 retornou estado %d (não é erro necessariamente)\n", state);
+    //}
 
-    // CORREÇÃO CRÍTICA: Verificar se há frame disponível
-    if (info.iBufferStatus == 1)
+    if (state == dsErrorFree || state == dsFramePending)
     {
-        // Verificar se os planos são válidos antes de renderizar
-        if (planes[0] && planes[1] && planes[2])
+        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2])
         {
-            /*printf("✓ Frame decodificado: %dx%d, strides=[%d,%d,%d]\n",
-                info.UsrData.sSystemBuffer.iWidth,
-                info.UsrData.sSystemBuffer.iHeight,
-                info.UsrData.sSystemBuffer.iStride[0],
-                info.UsrData.sSystemBuffer.iStride[1],
-                info.UsrData.sSystemBuffer.iStride[1]);*/
+            video_output_show(out, planes, &info);
+            return;
+        }
 
+        memset(&info, 0, sizeof(info));
+        memset(planes, 0, sizeof(planes));
+
+        state = (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
+
+        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2]) // Verificar se flush liberou o frame
+        {
             video_output_show(out, planes, &info);
         }
         else
         {
-            fprintf(stderr, "ERRO: Planos YUV retornaram NULL após decodificação\n");
+            printf("Nenhum frame disponível (normal para SPS/PPS ou frames B)\n");
         }
     }
     else
     {
-        //printf("  (sem frame disponível, buffer status = %d)\n", info.iBufferStatus);
+        // Tentar flush mesmo com erro (pode ter frames válidos no buffer)
+        memset(&info, 0, sizeof(info));
+        memset(planes, 0, sizeof(planes));
+
+        (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
+
+        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2])
+        {
+            video_output_show(out, planes, &info);
+        }
     }
 }
 

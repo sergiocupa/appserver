@@ -27,17 +27,23 @@ uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length)
     return annexb;
 }
 
-uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size)
+//uint8_t* mp4builder_create_fragment(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size)
+//{
+//
+//}
+
+int mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output)
 {
     if (!frame || frame->Nals.Count == 0)
     {
         fprintf(stderr, "Frame inválido ou sem NALs.\n");
-        return NULL;
+        return -1;
     }
 
-    if (!metadata || metadata->LengthSize < 1 || metadata->LengthSize > 4) {
+    if (!metadata || metadata->LengthSize < 1 || metadata->LengthSize > 4)
+    {
         fprintf(stderr, "Metadata ou length_size inválido.\n");
-        return NULL;
+        return -2;
     }
 
     // Verifica se frame contém IDR (tipo 5 para H.264)
@@ -76,11 +82,11 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
         total_size += 4 + frame->Nals.Items[i]->Size;
     }
 
-    uint8_t* annexb = (uint8_t*)malloc(total_size);
-    if (!annexb)
+    output->Data = (uint8_t*)malloc(total_size);
+    if (!output->Data)
     {
         fprintf(stderr, "Falha na alocação de memória (%zu bytes).\n", total_size);
-        return NULL;
+        return -3;
     }
 
     size_t pos = 0;
@@ -88,11 +94,11 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
     // Injeta SPS antes do frame se necessário
     if (need_inject_sps)
     {
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x01;
-        memcpy(annexb + pos, metadata->Sps.Data, metadata->Sps.Size);
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x01;
+        memcpy(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
         pos += metadata->Sps.Size;
 
 #ifdef DEBUG_NALS
@@ -101,12 +107,13 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
     }
 
     // Injeta PPS antes do frame se necessário
-    if (need_inject_pps) {
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x01;
-        memcpy(annexb + pos, metadata->Pps.Data, metadata->Pps.Size);
+    if (need_inject_pps) 
+    {
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x01;
+        memcpy(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
         pos += metadata->Pps.Size;
 
 #ifdef DEBUG_NALS
@@ -122,22 +129,22 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
         // Adiciona start code Annex B: 00 00 00 01
         if (pos + 4 > total_size)
         {
-            free(annexb);
+            free(output->Data);
             fprintf(stderr, "Overflow no buffer Annex B (start code).\n");
-            return NULL;
+            return -4;
         }
 
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x00;
-        annexb[pos++] = 0x01;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x00;
+        output->Data[pos++] = 0x01;
 
         // nal->Offset já aponta para o início do NAL (sem o prefixo de tamanho)
         if (fseek(f, nal->Offset, SEEK_SET) != 0)
         {
-            free(annexb);
+            free(output->Data);
             fprintf(stderr, "Erro no fseek para NAL %d (offset=%llu).\n", j, nal->Offset);
-            return NULL;
+            return -5;
         }
 
         // Tamanho do NAL (header + payload)
@@ -145,20 +152,18 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
 
         if (pos + nal_data_size > total_size)
         {
-            free(annexb);
-            fprintf(stderr, "NAL %d size (%zu) excede buffer alocado (pos=%zu, total=%zu).\n",
-                j, nal_data_size, pos, total_size);
-            return NULL;
+            free(output->Data);
+            fprintf(stderr, "NAL %d size (%zu) excede buffer alocado (pos=%zu, total=%zu).\n", j, nal_data_size, pos, total_size);
+            return -6;
         }
 
         // Lê o NAL unit completo do arquivo
-        size_t bytes_read = fread(annexb + pos, 1, nal_data_size, f);
+        size_t bytes_read = fread(output->Data + pos, 1, nal_data_size, f);
         if (bytes_read != nal_data_size)
         {
-            free(annexb);
-            fprintf(stderr, "Falha ao ler NAL %d: esperado %zu bytes, lido %zu bytes.\n",
-                j, nal_data_size, bytes_read);
-            return NULL;
+            free(output->Data);
+            fprintf(stderr, "Falha ao ler NAL %d: esperado %zu bytes, lido %zu bytes.\n", j, nal_data_size, bytes_read);
+            return -7;
         }
 
 #ifdef DEBUG_NALS
@@ -168,14 +173,16 @@ uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta
         pos += nal_data_size;
     }
 
-    *annexb_size = pos;
+    output->Size = pos;
 
     // Verificação de integridade
-    if (pos != total_size) {
+    if (pos != total_size) 
+    {
         fprintf(stderr, "AVISO: Tamanho final (%zu) diferente do esperado (%zu).\n", pos, total_size);
+        return -8;
     }
 
-    return annexb;
+    return 0;
 }
 
 

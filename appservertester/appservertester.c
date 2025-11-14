@@ -103,14 +103,17 @@ void render_video(const char* path)
     media_sim_feed(session, &mi);
     free(mi.Data);
 
+    int res = 0;
+
     // Loop por frames
     for (uint32_t i = 0; i < list->Count; i++) 
     {
         FrameIndex* frame = list->Frames[i];
 
         MediaBuffer mb;
-        mb.Data = mp4builder_single_frame(file, frame, &list->Metadata, &mb.Size);
-        if (mb.Size > 0)
+        res = mp4builder_single_frame(file, frame, &list->Metadata, &mb);
+
+        if (!res)
         {
             int fe = media_sim_feed(session, &mb);
             free(mb.Data);

@@ -28,7 +28,7 @@ extern "C" {
 
 
 	uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length);
-	uint8_t* mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size);
+	int mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output);
 	FrameIndexList* mp4builder_get_frames(const char* path);
 
 

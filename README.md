@@ -14,27 +14,27 @@ Features to be implemented:
 - [X] Server-side multiplexing.
 - [X] Define header and format for data transport. The protocol incorporates: stream-level multiplexing; application-level multiplexing; session scope control; stream flow control (timeline); FEC correction methods; stream-synchronized objects; it can be used as an object-only transport, in bidirectional mode; asynchronous mode at the transport level, not just in application mode (it does not wait for a response, as is the case with the HTTP protocol); secure mode waits for ACK (Action event, with or without Callback). The current version uses WebSocket for browser use and UDP for applications. For future versions, I will evaluate the use of the QUIC protocol.
 - [ ] Implement an MP4 handler for preparing video fragments, with support for the H.264 and H.265 codecs. Initially, I will use a desktop window to facilitate the first stage of development.
-    ** Basic implementation **
+    **Basic implementation**
     - [X] Extract MP4 metadata.
     - [X] Extract the frame index.
     - [X] Prepare the header for decoder initialization (Annex B SPS/PPS).
     - [X] Implement header and payload handling for H.264.
     - [X] Implement a desktop presentation window for testing, including screen resizing.
     - [X] Perform basic tests with video playback.
-    ** MP4 fragmentation and editing implementation **
+    **MP4 fragmentation and editing implementation**
     - 🧩 Create frame grouping.
     - [ ] Create a pause manager for rendering the frame group.
     - [ ] Test with the decoder and on-screen presentation.
-    ** DASH server implementation (Adaptive streaming support will not be implemented, as this version is only for testing) **
+    **DASH server implementation (Adaptive streaming support will not be implemented, as this version is only for testing)**
     - [ ] Create an MP4 file with the initialization header.
     - [ ] Create an MP4 file containing video fragments.
     - [ ] Implement handshake between client and HTTP server.
     - [ ] Implement an HTML page for browser-based testing.
     - [ ] Perform browser tests.
-    ** MP4 creator **
+    **MP4 creator**
     - [ ] Allow creation of a single file, header-only file, or fragment-only files.
     - [ ] Allow video creation from raw RGB or YUV frame input.
-    ** Compatibility **
+    **Compatibility**
     - [ ] Make all features compatible with the H.265 codec.
     - [ ] Test with videos extracted from YouTube, online samples, and an external camera.
 - [ ] Integrate the stream preparer for use in real-time streaming, for UDP or WebSocket.

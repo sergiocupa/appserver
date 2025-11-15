@@ -23,12 +23,8 @@ Features to be implemented:
     - [X] Implement a desktop presentation window for testing, including screen resizing.
     - [X] Perform basic tests with video playback.
     
-    **MP4 fragmentation and editing implementation**
-    - 🧩 Create frame grouping.
-    - [ ] Create a pause manager for rendering the frame group.
-    - [ ] Test with the decoder and on-screen presentation.
-    
     **DASH server implementation (Adaptive streaming support will not be implemented, as this version is only for testing)**
+    - 🧩 Create frame grouping ([moof][mdat]).
     - [ ] Create an MP4 file with the initialization header.
     - [ ] Create an MP4 file containing video fragments.
     - [ ] Implement handshake between client and HTTP server.

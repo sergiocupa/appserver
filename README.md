@@ -38,7 +38,7 @@ Features to be implemented:
     **Compatibility**
     - [ ] Make all features compatible with the H.265 codec.
     - [ ] Test with videos extracted from YouTube, online samples, and an external camera.
-    - [ ] Create a project for this video fragmenter, separate from the server project.
+    - [ ] After completing the implementations and tests, transfer the fragmenter to https://github.com/sergioocupa/MediaFragmenter
 - [ ] Integrate the stream preparer for use in real-time streaming, for UDP or WebSocket.
 - [ ] Implementation of the protocol component in Javascript.
 - [ ] Protocol tests.

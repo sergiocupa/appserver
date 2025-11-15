@@ -1,189 +1,7 @@
-#include "../include/MediaFragmenter.h"
+﻿#include "../include/MediaFragmenter.h"
 #include "Mp4Builder.h"
 #include "Mp4MetadataUtil.h"
 #include "FileUtil.h"
-
-
-uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length)
-{
-    *length = meta->Pps.Size + meta->Sps.Size + 8;
-    uint8_t* annexb = malloc(*length);
-    annexb[0] = 0;
-    annexb[1] = 0; 
-    annexb[2] = 0;
-    annexb[3] = 1;
-    int pos = 4;
-
-    memcpy(annexb + pos, meta->Sps.Data, meta->Sps.Size);
-    pos += meta->Sps.Size;
-
-    annexb[pos]   = 0; 
-    annexb[pos+1] = 0; 
-    annexb[pos+2] = 0; 
-    annexb[pos+3] = 1;
-    pos += 4;
-
-    memcpy(annexb + pos, meta->Pps.Data, meta->Pps.Size);
-    return annexb;
-}
-
-//uint8_t* mp4builder_create_fragment(FILE* f, FrameIndex* frame, VideoMetadata* metadata, size_t* annexb_size)
-//{
-//
-//}
-
-int mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output)
-{
-    if (!frame || frame->Nals.Count == 0)
-    {
-        fprintf(stderr, "Frame inv�lido ou sem NALs.\n");
-        return -1;
-    }
-
-    if (!metadata || metadata->LengthSize < 1 || metadata->LengthSize > 4)
-    {
-        fprintf(stderr, "Metadata ou length_size inv�lido.\n");
-        return -2;
-    }
-
-    // Verifica se frame cont�m IDR (tipo 5 para H.264)
-    int has_idr = 0;
-    int has_sps = 0;
-    int has_pps = 0;
-
-    for (int i = 0; i < frame->Nals.Count; i++)
-    {
-        uint8_t nal_type = frame->Nals.Items[i]->Type;
-        if (nal_type == 5) has_idr = 1;      // IDR slice
-        if (nal_type == 7) has_sps = 1;      // SPS
-        if (nal_type == 8) has_pps = 1;      // PPS
-    }
-
-    // Se tem IDR mas n�o tem SPS/PPS, precisamos injetar
-    int need_inject_sps = (has_idr && !has_sps && metadata->Sps.Data && metadata->Sps.Size > 0);
-    int need_inject_pps = (has_idr && !has_pps && metadata->Pps.Data && metadata->Pps.Size > 0);
-
-    // Calcula tamanho necess�rio para Annex B:
-    // Para cada NAL: 4 bytes (start code) + tamanho do NAL
-    // + SPS/PPS se necess�rio
-    size_t total_size = 0;
-
-    if (need_inject_sps)
-    {
-        total_size += 4 + metadata->Sps.Size;  // start code + SPS
-    }
-    if (need_inject_pps)
-    {
-        total_size += 4 + metadata->Pps.Size;  // start code + PPS
-    }
-
-    for (int i = 0; i < frame->Nals.Count; i++)
-    {
-        total_size += 4 + frame->Nals.Items[i]->Size;
-    }
-
-    output->Data = (uint8_t*)malloc(total_size);
-    if (!output->Data)
-    {
-        fprintf(stderr, "Falha na aloca��o de mem�ria (%zu bytes).\n", total_size);
-        return -3;
-    }
-
-    size_t pos = 0;
-
-    // Injeta SPS antes do frame se necess�rio
-    if (need_inject_sps)
-    {
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x01;
-        memcpy(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
-        pos += metadata->Sps.Size;
-
-#ifdef DEBUG_NALS
-        fprintf(stderr, "Injetado SPS (%d bytes) antes de IDR frame\n", metadata->sps_len);
-#endif
-    }
-
-    // Injeta PPS antes do frame se necess�rio
-    if (need_inject_pps) 
-    {
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x01;
-        memcpy(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
-        pos += metadata->Pps.Size;
-
-#ifdef DEBUG_NALS
-        fprintf(stderr, "Injetado PPS (%d bytes) antes de IDR frame\n", metadata->pps_len);
-#endif
-    }
-
-    // Processa NALs do frame
-    for (int j = 0; j < frame->Nals.Count; j++)
-    {
-        NALUIndex* nal = frame->Nals.Items[j];
-
-        // Adiciona start code Annex B: 00 00 00 01
-        if (pos + 4 > total_size)
-        {
-            free(output->Data);
-            fprintf(stderr, "Overflow no buffer Annex B (start code).\n");
-            return -4;
-        }
-
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x00;
-        output->Data[pos++] = 0x01;
-
-        // nal->Offset j� aponta para o in�cio do NAL (sem o prefixo de tamanho)
-        if (fseek(f, nal->Offset, SEEK_SET) != 0)
-        {
-            free(output->Data);
-            fprintf(stderr, "Erro no fseek para NAL %d (offset=%llu).\n", j, nal->Offset);
-            return -5;
-        }
-
-        // Tamanho do NAL (header + payload)
-        size_t nal_data_size = nal->Size;
-
-        if (pos + nal_data_size > total_size)
-        {
-            free(output->Data);
-            fprintf(stderr, "NAL %d size (%zu) excede buffer alocado (pos=%zu, total=%zu).\n", j, nal_data_size, pos, total_size);
-            return -6;
-        }
-
-        // L� o NAL unit completo do arquivo
-        size_t bytes_read = fread(output->Data + pos, 1, nal_data_size, f);
-        if (bytes_read != nal_data_size)
-        {
-            free(output->Data);
-            fprintf(stderr, "Falha ao ler NAL %d: esperado %zu bytes, lido %zu bytes.\n", j, nal_data_size, bytes_read);
-            return -7;
-        }
-
-#ifdef DEBUG_NALS
-        fprintf(stderr, "NAL %d: tipo=%d, size=%zu\n", j, nal->Type, nal_data_size);
-#endif
-
-        pos += nal_data_size;
-    }
-
-    output->Size = pos;
-
-    // Verifica��o de integridade
-    if (pos != total_size) 
-    {
-        fprintf(stderr, "AVISO: Tamanho final (%zu) diferente do esperado (%zu).\n", pos, total_size);
-        return -8;
-    }
-
-    return 0;
-}
 
 
 
@@ -207,7 +25,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
         }
         else if (size == 0)
         {
-            box_size = end - box_start;  // CORRIGIDO: usa 'end', n�o file end
+            box_size = end - box_start;  // CORRIGIDO: usa 'end', não file end
         }
 
         if (box_size < header_size)
@@ -219,7 +37,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
         uint64_t next = box_start + box_size;
         uint64_t payload_start = box_start + header_size;
 
-        // hdlr para confirmar v�deo
+        // hdlr para confirmar vídeo
         if (!memcmp(name, "hdlr", 4))
         {
             fseek(f, payload_start, SEEK_SET);  // CORRIGIDO: vai para payload_start
@@ -303,7 +121,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stts->count = read32(f);
 
             if (stts->count > 0 && stts->count < 1000000)
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stts->entries = malloc(stts->count * sizeof(struct SttsEntry));
                 if (!stts->entries)
                 {
@@ -314,7 +132,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
                 for (uint32_t i = 0; i < stts->count; i++)
                 {
-                    if (ftell(f) + 8 > next) {  // CORRIGIDO: verifica��o de bounds
+                    if (ftell(f) + 8 > next) {  // CORRIGIDO: verificação de bounds
                         stts->count = i;
                         break;
                     }
@@ -336,7 +154,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stsc->count = read32(f);
 
             if (stsc->count > 0 && stsc->count < 1000000)
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stsc->entries = malloc(stsc->count * sizeof(struct StscEntry));
                 if (!stsc->entries)
                 {
@@ -348,7 +166,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                 for (uint32_t i = 0; i < stsc->count; i++)
                 {
                     if (ftell(f) + 12 > next)
-                    {  // CORRIGIDO: verifica��o de bounds
+                    {  // CORRIGIDO: verificação de bounds
                         stsc->count = i;
                         break;
                     }
@@ -372,7 +190,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stsz->count = read32(f);
 
             if (stsz->count > 0 && stsz->count < 10000000)
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stsz->sizes = malloc(stsz->count * sizeof(uint32_t));
                 if (!stsz->sizes)
                 {
@@ -381,11 +199,11 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                     continue;
                 }
 
-                if (sample_size == 0) {  // Tamanhos vari�veis
+                if (sample_size == 0) {  // Tamanhos variáveis
                     for (uint32_t i = 0; i < stsz->count; i++)
                     {
                         if (ftell(f) + 4 > next)
-                        {  // CORRIGIDO: verifica��o de bounds
+                        {  // CORRIGIDO: verificação de bounds
                             stsz->count = i;
                             break;
                         }
@@ -416,7 +234,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
             stco->count = read32(f);
 
             if (stco->count > 0 && stco->count < 1000000)
-            {  // CORRIGIDO: valida��o
+            {  // CORRIGIDO: validação
                 stco->offsets = malloc(stco->count * sizeof(uint64_t));
                 if (!stco->offsets)
                 {
@@ -429,7 +247,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                 {
                     int bytes_needed = stco->is_co64 ? 8 : 4;
                     if (ftell(f) + bytes_needed > next)
-                    {  // CORRIGIDO: verifica��o de bounds
+                    {  // CORRIGIDO: verificação de bounds
                         stco->count = i;
                         break;
                     }
@@ -463,7 +281,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
         return NULL;
     }
     // Adicionado: Extrai metadata cedo para obter length_size do avcC
-    //   Fazer uma funcao s� para esta info
+    //   Fazer uma funcao só para esta info
     //   Por fim validar tamanho do frame, com tamanho total dos NALs.
 
     VideoMetadata meta = { 0 };
@@ -476,10 +294,10 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     fseek(f, 0, SEEK_SET);
 
     // Nao pega length_size, mas de onde vem isso? O Grok assumiu que tem este dado. Perguntar como obter este dado
-    int length_size = meta.LengthSize;  // Adicionado: Usa length_size extra�do (geralmente 4, mas din�mico)
+    int length_size = meta.LengthSize;  // Adicionado: Usa length_size extraído (geralmente 4, mas dinâmico)
     if (length_size < 1 || length_size > 4)
     {
-        printf("length_size inv�lido: %d\n", length_size);
+        printf("length_size inválido: %d\n", length_size);
         fclose(f);
         return NULL;
     }
@@ -497,7 +315,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     parse_video_track_tables(f, file_end, 0, &stsz, &stco, &stsc, &stts, &timescale, &meta.Codec);
     if (stsz.count == 0 || meta.Codec == 0)
     {
-        printf("Falha ao parsear tables de v�deo.\n");
+        printf("Falha ao parsear tables de vídeo.\n");
         fclose(f);
         return NULL;
     }
@@ -550,7 +368,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
         uint64_t pos = 0;
         while (pos < size)
         {
-            // Corrigido: L� nal_len dinamicamente com base em length_size (em vez de fixo read32)
+            // Corrigido: Lê nal_len dinamicamente com base em length_size (em vez de fixo read32)
             uint8_t nal_len_buf[4] = { 0 };
             if (fread(nal_len_buf, 1, length_size, f) != (size_t)length_size) break;
             uint32_t nal_len = read_n(nal_len_buf, length_size);
@@ -561,9 +379,9 @@ FrameIndexList* mp4builder_get_frames(const char* path)
             mnalu_list_add(&frame->Nals, offset + pos + length_size, nal_len, nal_type);
             
             fseek(f, nal_len - 1, SEEK_CUR); // Pula resto (header lido)
-            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size din�mico (em vez de fixo +4)
+            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size dinâmico (em vez de fixo +4)
         }
-        // Adicionado: Verifica��o de depura��o para garantir que todo o sample foi parseado
+        // Adicionado: Verificação de depuração para garantir que todo o sample foi parseado
         if (pos != size)
         {
             fprintf(stderr, "Aviso: Sample %u parseado incompleto (pos=%llu, size=%u)\n", i, pos, size);
@@ -583,3 +401,361 @@ FrameIndexList* mp4builder_get_frames(const char* path)
 }
 
 
+
+
+
+// ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+//                                              Funcoes para cria fragmentos MP4
+// ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+// Cria box mfhd (Movie Fragment Header)
+static void create_mfhd_box(uint32_t sequence_number, MediaBuffer* output)
+{
+    output->Size = 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, 16);
+    p += 4;
+
+    // Box type: 'mfhd'
+    p[0] = 'm'; p[1] = 'f'; p[2] = 'h'; p[3] = 'd';
+    p += 4;
+
+    // Version (1 byte) + Flags (3 bytes)
+    write_u32_be(p, 0);
+    p += 4;
+
+    // Sequence number
+    write_u32_be(p, sequence_number);
+}
+
+// Cria box tfhd (Track Fragment Header)
+static void create_tfhd_box(uint32_t track_id, MediaBuffer* output)
+{
+    output->Size = 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, 16);
+    p += 4;
+
+    // Box type: 'tfhd'
+    p[0] = 't'; p[1] = 'f'; p[2] = 'h'; p[3] = 'd';
+    p += 4;
+
+    // Version (0) + Flags (0x020000 = default-base-is-moof)
+    write_u32_be(p, 0x00020000);
+    p += 4;
+
+    // Track ID
+    write_u32_be(p, track_id);
+}
+
+// Cria box tfdt (Track Fragment Decode Time)
+static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output)
+{
+    // Usar versão 1 (64 bits) se necessário
+    int use_v1 = (base_media_decode_time > 0xFFFFFFFF);
+
+    output->Size = use_v1 ? 20 : 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, output->Size);
+    p += 4;
+
+    // Box type: 'tfdt'
+    p[0] = 't'; p[1] = 'f'; p[2] = 'd'; p[3] = 't';
+    p += 4;
+
+    // Version + Flags
+    write_u32_be(p, use_v1 ? 0x01000000 : 0x00000000);
+    p += 4;
+
+    // Base media decode time
+    if (use_v1)
+    {
+        write_u64_be(p, base_media_decode_time);
+    }
+    else
+    {
+        write_u32_be(p, (uint32_t)base_media_decode_time);
+    }
+}
+
+// Cria box trun (Track Fragment Run). Simplificado: assume duração fixa por sample
+static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uint32_t data_offset, MediaBuffer* output)
+{
+    // Flags: 0x000001 (data-offset-present)
+    //        0x000100 (sample-duration-present)
+    uint32_t flags = 0x00000101;
+
+    output->Size = 20;  // Header + data_offset + sample_count entries
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, output->Size);
+    p += 4;
+
+    // Box type: 'trun'
+    p[0] = 't'; p[1] = 'r'; p[2] = 'u'; p[3] = 'n';
+    p += 4;
+
+    // Version (0) + Flags
+    write_u32_be(p, flags);
+    p += 4;
+
+    // Sample count
+    write_u32_be(p, sample_count);
+    p += 4;
+
+    // Data offset (offset do mdat relativo ao início do moof)
+    write_u32_be(p, data_offset);
+}
+
+// Cria box traf (Track Fragment)
+static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, uint32_t moof_size, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer tfhd, tfdt, trun;
+
+    create_tfhd_box(track_id, &tfhd);
+    create_tfdt_box(base_media_decode_time, &tfdt);
+
+    // data_offset = tamanho do moof + 8 (header do mdat)
+    uint32_t data_offset = moof_size + 8;
+    create_trun_box(sample_count, sample_duration, data_offset, &trun);
+
+    // Calcular tamanho total do traf
+    output->Size = 8 + tfhd.Size + tfdt.Size + trun.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, output->Size);
+    p += 4;
+
+    // Box type: 'traf'
+    p[0] = 't'; p[1] = 'r'; p[2] = 'a'; p[3] = 'f';
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, tfhd.Data, tfhd.Size);
+    p += tfhd.Size;
+
+    memcpy(p, tfdt.Data, tfdt.Size);
+    p += tfdt.Size;
+
+    memcpy(p, trun.Data, trun.Size);
+
+    // Liberar sub-boxes
+    free(tfhd.Data);
+    free(tfdt.Data);
+    free(trun.Data);
+}
+
+// Cria box moof (Movie Fragment)
+static void create_moof_box(
+    uint32_t sequence_number,
+    uint32_t track_id,
+    uint64_t base_media_decode_time,
+    uint32_t sample_count,
+    uint32_t sample_duration,
+    MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer mfhd;
+    create_mfhd_box(sequence_number, &mfhd);
+
+    // Calcular tamanho estimado do moof (para data_offset)
+    // moof = 8 (header) + mfhd + traf
+    // Precisamos estimar o tamanho do traf primeiro
+
+    MediaBuffer tfhd_temp, tfdt_temp;
+    create_tfhd_box(track_id, &tfhd_temp);
+    create_tfdt_box(base_media_decode_time, &tfdt_temp);
+
+    uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + 20; // +20 para trun
+    free(tfhd_temp.Data);
+    free(tfdt_temp.Data);
+
+    uint32_t moof_size = 8 + mfhd.Size + traf_size;
+
+    // Agora criar traf com o tamanho correto
+    MediaBuffer traf;
+    create_traf_box(track_id, base_media_decode_time, sample_count,
+        sample_duration, moof_size, &traf);
+
+    // Recalcular tamanho real do moof
+    moof_size = 8 + mfhd.Size + traf.Size;
+
+    // Alocar buffer final
+    output->Size = moof_size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, moof_size);
+    p += 4;
+
+    // Box type: 'moof'
+    p[0] = 'm'; p[1] = 'o'; p[2] = 'o'; p[3] = 'f';
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, mfhd.Data, mfhd.Size);
+    p += mfhd.Size;
+
+    memcpy(p, traf.Data, traf.Size);
+
+    // Liberar sub-boxes
+    free(mfhd.Data);
+    free(traf.Data);
+}
+
+// Cria box mdat (Media Data)
+static void create_mdat_box(uint8_t* data, size_t data_size, MediaBuffer* output)
+{
+    output->Size = 8 + data_size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    write_u32_be(p, output->Size);
+    p += 4;
+
+    // Box type: 'mdat'
+    p[0] = 'm'; p[1] = 'd'; p[2] = 'a'; p[3] = 't';
+    p += 4;
+
+    // Copiar dados
+    memcpy(p, data, data_size);
+}
+
+
+int mp4builder_create_fragment( FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output)
+{
+    if (!f || !frame_list || !frag_info || !output)
+    {
+        fprintf(stderr, "ERRO: Parâmetros NULL\n");
+        return -1;
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 1: Usar Função 01 para obter dados H.264 (size-prefixed)
+    // ───────────────────────────────────────────────────────────────
+
+    MediaBuffer h264_data;
+
+    int result = h264_create_fragment(
+        f,
+        frame_list,
+        timeline_offset,
+        timeline_fragment_duration,
+        frame_offset,
+        frame_length,
+        0,  // NÃO incluir SPS/PPS (vão no init segment)
+        H264_FORMAT_MP4,  // Formato size-prefixed
+        &h264_data
+    );
+
+    if (result != 0)
+    {
+        fprintf(stderr, "ERRO: Falha ao criar dados H.264 (%d)\n", result);
+        return result;
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 2: Calcular número de samples (frames)
+    // ───────────────────────────────────────────────────────────────
+
+    int start_frame, end_frame;
+
+    if (frame_offset < 0)
+    {
+        // Timeline
+        float fps = frame_list->Metadata.Fps;
+        if (fps <= 0) fps = 30.0f;
+
+        start_frame = (int)(timeline_offset * fps);
+        end_frame = (int)((timeline_offset + timeline_fragment_duration) * fps);
+
+        if (end_frame > frame_list->Count)
+            end_frame = frame_list->Count;
+    }
+    else
+    {
+        // Frames
+        start_frame = frame_offset;
+        end_frame = frame_offset + frame_length;
+
+        if (end_frame > frame_list->Count)
+            end_frame = frame_list->Count;
+    }
+
+    uint32_t sample_count = end_frame - start_frame;
+
+    // Calcular duração por sample (assumindo FPS constante)
+    uint32_t sample_duration = frag_info->Timescale / (frame_list->Metadata.Fps > 0 ? frame_list->Metadata.Fps : 30.0f);
+
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 3: Criar box moof
+    // ───────────────────────────────────────────────────────────────
+
+    MediaBuffer moof;
+
+    create_moof_box( frag_info->SequenceNumber, frag_info->TrackID, frag_info->BaseMediaDecodeTime, sample_count, sample_duration, &moof);
+
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 4: Criar box mdat
+    // ───────────────────────────────────────────────────────────────
+
+    MediaBuffer mdat;
+    create_mdat_box(h264_data.Data, h264_data.Size, &mdat);
+
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 5: Juntar moof + mdat
+    // ───────────────────────────────────────────────────────────────
+
+    output->Size = moof.Size + mdat.Size;
+    output->Data = malloc(output->Size);
+
+    if (!output->Data)
+    {
+        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
+        free(h264_data.Data);
+        free(moof.Data);
+        free(mdat.Data);
+        return -2;
+    }
+
+    memcpy(output->Data, moof.Data, moof.Size);
+    memcpy(output->Data + moof.Size, mdat.Data, mdat.Size);
+
+ /*   printf("Fragmento MP4 criado:\n");
+    printf("   Sequence: %u\n", frag_info->SequenceNumber);
+    printf("   Samples: %u\n", sample_count);
+    printf("   moof: %zu bytes\n", moof.Size);
+    printf("   mdat: %zu bytes\n", mdat.Size);
+    printf("   Total: %zu bytes\n", output->Size);*/
+
+    // Liberar buffers temporários
+    free(h264_data.Data);
+    free(moof.Data);
+    free(mdat.Data);
+
+    return 0;
+}

@@ -607,6 +607,7 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
     meta->Pps.Data   = pps;
     meta->Codec      = codec;
     meta->Fps        = fps_out;
+    meta->Timescale  = timescale;
     meta->Width      = w;
     meta->Height     = h;
 

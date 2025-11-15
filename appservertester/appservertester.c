@@ -99,7 +99,7 @@ void render_video(const char* path)
 
 
     MediaBuffer mi;
-    mi.Data = mp4builder_create_annexb(&list->Metadata, &mi.Size);
+    mi.Data = h26x_create_annexb(&list->Metadata, &mi.Size);
     media_sim_feed(session, &mi);
     free(mi.Data);
 
@@ -111,7 +111,7 @@ void render_video(const char* path)
         FrameIndex* frame = list->Frames[i];
 
         MediaBuffer mb;
-        res = mp4builder_single_frame(file, frame, &list->Metadata, &mb);
+        res = h26x_create_single_frame(file, frame, &list->Metadata, &mb);
 
         if (!res)
         {

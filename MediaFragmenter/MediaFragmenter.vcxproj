@@ -31,6 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\FileUtil.c" />
+    <ClCompile Include="src\H26XBuilder.c" />
     <ClCompile Include="src\ImageTools.c" />
     <ClCompile Include="src\MediaFragmenter.c" />
     <ClCompile Include="src\MediaFragmenterType.c" />

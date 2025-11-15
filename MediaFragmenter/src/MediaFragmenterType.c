@@ -28,6 +28,98 @@ void mbuffer_resize(MediaBuffer* buffer, int length)
 }
 
 
+
+void frame_list_init(FrameList* nalus, int initial_count)
+{
+    nalus->Max   = initial_count;
+    nalus->Count = 0;
+    nalus->Items = (H26XFrame**)malloc(nalus->Max * sizeof(H26XFrame*));
+}
+FrameList* frame_list_new(int initial_count)
+{
+    FrameList* nalus = malloc(sizeof(FrameList));
+    nalus->Max = initial_count;
+    nalus->Count = 0;
+    nalus->Items = (H26XFrame**)malloc(nalus->Max * sizeof(H26XFrame*));
+    return nalus;
+}
+void frame_list_add(FrameList* frames, uint8_t* data, uint32_t size, int is_key_frame)
+{
+    int sz = frames->Count + 1;
+    if (sz >= frames->Max)
+    {
+        frames->Max *= 2;
+        frames->Items = (H26XFrame**)realloc((H26XFrame**)frames->Items, frames->Max * sizeof(NAL*));
+    }
+
+    frames->Items[frames->Count]              = (H26XFrame*)malloc(sizeof(H26XFrame));
+    frames->Items[frames->Count]->AnnexB.Data = data;
+    frames->Items[frames->Count]->AnnexB.Size = size;
+    frames->Items[frames->Count]->Index       = frames->Count;
+    frames->Items[frames->Count]->IsKeyframe  = is_key_frame;
+    frames->Count++;
+}
+void frame_list_release(FrameList** frames)
+{
+    int ix = 0;
+    while (ix < (*frames)->Count)
+    {
+        free((*frames)->Items[ix]->AnnexB.Data);
+        free((*frames)->Items[ix]);
+        ix++;
+    }
+    free((*frames)->Items);
+
+    *frames = 0;
+}
+
+
+
+void nal_list_init(NALList* nalus, int initial_count)
+{
+    nalus->Max   = initial_count;
+    nalus->Count = 0;
+    nalus->Items = (NAL**)malloc(nalus->Max * sizeof(NAL*));
+}
+NALList* nal_list_new(int initial_count)
+{
+    NALList* nalus = malloc(sizeof(NALList));
+    nalus->Max   = initial_count;
+    nalus->Count = 0;
+    nalus->Items = (NAL**)malloc(nalus->Max * sizeof(NAL*));
+    return nalus;
+}
+void nal_list_add(NALList* nalus, uint8_t* data, uint32_t size, uint8_t type)
+{
+    int sz = nalus->Count + 1;
+    if (sz >= nalus->Max)
+    {
+        nalus->Max *= 2;
+        nalus->Items = (NAL**)realloc((NAL**)nalus->Items, nalus->Max * sizeof(NAL*));
+    }
+
+    nalus->Items[nalus->Count]       = (NAL*)malloc(sizeof(NAL));
+    nalus->Items[nalus->Count]->Data = data;
+    nalus->Items[nalus->Count]->Size = size;
+    nalus->Items[nalus->Count]->Type = type;
+    nalus->Count++;
+}
+void nal_list_release(NALList** nalus)
+{
+    int ix = 0;
+    while (ix < (*nalus)->Count)
+    {
+        free((*nalus)->Items[ix]->Data);
+        free((*nalus)->Items[ix]);
+        ix++;
+    }
+    free((*nalus)->Items);
+
+    *nalus = 0;
+}
+
+
+
 void mnalu_list_init(NALUIndexList* nalus, int initial_count)
 {
     nalus->Max   = initial_count;

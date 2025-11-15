@@ -68,5 +68,8 @@
     <ClCompile Include="src\Mp4MetadataUtil.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\H26XBuilder.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -26,9 +26,12 @@ extern "C" {
 	int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h);
 	int rgb_to_yuv(uint8_t* rgb_pixels, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v, int* stride_y, int* stride_u, int* stride_v);
 
+	// Manipuladores de H264 ou H265
+	uint8_t* h26x_create_annexb(VideoMetadata* meta, int* length);
+	int h26x_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output);
+	int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, int include_sps_pps, H264FragmentFormat format, MediaBuffer* output);
 
-	uint8_t* mp4builder_create_annexb(VideoMetadata* meta, int* length);
-	int mp4builder_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output);
+	// Manipuladores de MP4
 	FrameIndexList* mp4builder_get_frames(const char* path);
 
 

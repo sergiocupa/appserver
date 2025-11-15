@@ -34,6 +34,29 @@ extern "C" {
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
     
 
+
+    typedef struct MP4FragmentInfo 
+    {
+        uint32_t SequenceNumber;      // Número de sequência do fragmento
+        uint64_t BaseMediaDecodeTime; // Timestamp base (em timescale units)
+        uint32_t Timescale;           // Timescale (ex: 90000)
+        uint32_t TrackID;             // ID da track (geralmente 1)
+
+    } 
+    MP4FragmentInfo;
+
+
+    // Formato de saída do fragmento H.264
+    typedef enum H264FragmentFormat
+    {
+        H264_FORMAT_ANNEXB,    // [00 00 00 01][NAL][00 00 00 01][NAL]...
+        H264_FORMAT_MP4        // [size][NAL][size][NAL]... (para mdat)
+    }
+    H264FragmentFormat;
+
+
+
+
     typedef struct _MediaBuffer
     {
         int           Max;
@@ -86,6 +109,7 @@ extern "C" {
         int         Height;
         int         Codec;// 264 ou 265
         double      Fps;
+        uint32_t    Timescale;
         int         LengthSize;
     } 
     VideoMetadata;
@@ -142,6 +166,42 @@ extern "C" {
         HANDLE        WaitShow;
     } 
     VideoOutput;
+
+
+    typedef struct
+    {
+        uint8_t  Type;
+        uint32_t Max;
+        uint32_t Size;
+        uint8_t* Data;
+    }
+    NAL;
+
+    typedef struct
+    {
+        uint32_t Max;
+        uint32_t Count;
+        NAL**   Items;
+    }
+    NALList;
+
+
+    typedef struct H26XFrame 
+    {
+        int IsKeyframe;      // Se é IDR
+        int Index;           // Índice do frame
+        MediaBuffer AnnexB;  // Frame completo em Annex-B
+    } 
+    H26XFrame;
+
+    typedef struct FrameList 
+    {
+        int Max;
+        int Count;
+        H26XFrame** Items;
+    } 
+    FrameList;
+
 
     typedef struct
     {
@@ -204,6 +264,17 @@ extern "C" {
 
     }
     MediaSourceSession;
+
+
+    void nal_list_init(NALList* nalus, int initial_count);
+    NALList* nal_list_new(int initial_count);
+    void nal_list_add(NALList* nalus, uint8_t* data, uint32_t size, uint8_t type);
+    void nal_list_release(NALList** nalus);
+
+    void frame_list_init(FrameList* nalus, int initial_count);
+    FrameList* frame_list_new(int initial_count);
+    void frame_list_add(FrameList* frames, uint8_t* data, uint32_t size, int is_key_frame);
+    void frame_list_release(FrameList** frames);
 
 
     void mbuffer_append_by_file(MediaBuffer* buffer, FILE* src, uint64_t file_offset, uint64_t size);

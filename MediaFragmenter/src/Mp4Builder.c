@@ -294,7 +294,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     }
     fseek(f, 0, SEEK_SET);
 
-    // Nao pega length_size, mas de onde vem isso? O Grok assumiu que tem este dado. Perguntar como obter este dado
+    // Nao pega length_size, mas de onde vem isso? Assumiu que tem este dado. Perguntar como obter este dado
     int length_size = meta.LengthSize;  // Adicionado: Usa length_size extraído (geralmente 4, mas dinâmico)
     if (length_size < 1 || length_size > 4)
     {
@@ -1679,7 +1679,7 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     memcpy(output->Data, ftyp.Data, ftyp.Size);
     memcpy(output->Data + ftyp.Size, moov.Data, moov.Size);
 
-  /*  printf("✅ Initialization segment criado:\n");
+  /*  printf("Initialization segment criado:\n");
     printf("   Resolução: %dx%d\n", metadata->Width, metadata->Height);
     printf("   Timescale: %u\n", config->Timescale);
     printf("   Track ID: %u\n", config->TrackID);

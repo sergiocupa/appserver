@@ -252,7 +252,7 @@ static MediaBuffer* _build_moov_box(const VideoInitData* v) // uint32_t timescal
 
     mbuffer_append_uint32(mvhd, 0);//            creation_time
     mbuffer_append_uint32(mvhd, 0);//            modification_time
-    mbuffer_append_uint32(mvhd, v->timescale);//       timescale
+    mbuffer_append_uint32(mvhd, v->timescale);// timescale
     mbuffer_append_uint32(mvhd, 0);//            duration
     mbuffer_append_uint32(mvhd, 0x00010000);//   rate 1.0
     mbuffer_append_uint16(mvhd, 0x0100);//       volume
@@ -291,18 +291,18 @@ static MediaBuffer* _build_moov_box(const VideoInitData* v) // uint32_t timescal
     mbuffer_append_uint8(tkhd, 0x00);
     mbuffer_append_uint8(tkhd, 0x07);
 
-    mbuffer_append_uint32(tkhd, 0);// creation time
-    mbuffer_append_uint32(tkhd, 0);// modification
-    mbuffer_append_uint32(tkhd, 1);// track_ID
-    mbuffer_append_uint32(tkhd, 0);// reserved
-    mbuffer_append_uint32(tkhd, 0);// duration
-    mbuffer_append_uint32(tkhd, 0);// reserved
-    mbuffer_append_uint32(tkhd, 0);// reserved
-    mbuffer_append_uint16(tkhd, 0);// layer
-    mbuffer_append_uint16(tkhd, 0);// alternate_group
+    mbuffer_append_uint32(tkhd, 0);//      creation time
+    mbuffer_append_uint32(tkhd, 0);//      modification
+    mbuffer_append_uint32(tkhd, 1);//      track_ID
+    mbuffer_append_uint32(tkhd, 0);//      reserved
+    mbuffer_append_uint32(tkhd, 0);//      duration
+    mbuffer_append_uint32(tkhd, 0);//      reserved
+    mbuffer_append_uint32(tkhd, 0);//      reserved
+    mbuffer_append_uint16(tkhd, 0);//      layer
+    mbuffer_append_uint16(tkhd, 0);//      alternate_group
     mbuffer_append_uint16(tkhd, 0x0100);// volume
-    mbuffer_append_uint16(tkhd, 0);// reserved
-
+    mbuffer_append_uint16(tkhd, 0);//      reserved
+     
     // matrix
     for (int i = 0; i < 9; i++)
     {
@@ -423,11 +423,11 @@ static MediaBuffer* _build_moov_box(const VideoInitData* v) // uint32_t timescal
 
     MediaBuffer* out = mbuffer_create(100);
 
-    mbuffer_box_from_buf(minf, "stbl", stbl); // wrap stbl into minf->stbl
-    mbuffer_box_from_buf(mdia, "minf", minf);// wrap minf into mdia
-    mbuffer_box_from_buf(trak, "mdia", mdia);// finally add mdia into trak
+    mbuffer_box_from_buf(minf, "stbl", stbl); //          wrap stbl into minf->stbl
+    mbuffer_box_from_buf(mdia, "minf", minf);//           wrap minf into mdia
+    mbuffer_box_from_buf(trak, "mdia", mdia);//           finally add mdia into trak
     mbuffer_box_from_buf(moov_content, "trak", trak);  // wrap trak into moov
-    mbuffer_box_from_buf(out, "moov", moov_content);  // write moov box to out buffer
+    mbuffer_box_from_buf(out, "moov", moov_content);  //         write moov box to out buffer
 
     mbuffer_release(&stbl);
     mbuffer_release(&minf);

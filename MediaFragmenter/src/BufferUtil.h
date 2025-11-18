@@ -13,24 +13,22 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
-#ifndef CALLBACK_BINDER_H
-#define CALLBACK_BINDER_H
+#ifndef BUFFER_UTIL_H
+#define BUFFER_UTIL_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    #include "../server_type.h"
+    #include <stdint.h>
 
-
-    void binder_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
-    void binder_list_add_receiver_extension(FunctionBindList* list, const char* extension, MessageMatchReceiverCalback function, bool with_callback);
-    void binder_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
-    MessageEmitterCalback binder_list_add_emitter(FunctionBindList* list, const char* route);
-
+    void buffer_write16(uint8_t* buf, uint16_t value);
+    void buffer_write32(uint8_t* buf, uint32_t value);
+    void buffer_write64(uint8_t* buf, uint64_t value);
+    void write_fourcc(uint8_t* buf, const char* fourcc);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CALLBACK_ASSEMBLER */
+#endif /* BUFFER_UTIL */

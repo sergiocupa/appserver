@@ -214,6 +214,13 @@ FunctionBind* bind_create(const char* route)
     string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
     return ar;
 }
+FunctionBind* bind_create_to_extension(const char* extension)
+{
+    FunctionBind* ar = (FunctionBind*)calloc(1, sizeof(FunctionBind));
+    int leng = strlen(extension);
+    string_init_copy(&ar->Extension, extension, leng);
+    return ar;
+}
 
 FunctionBind* bind_release(FunctionBind* _this)
 {

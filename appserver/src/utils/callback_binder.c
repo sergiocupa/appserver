@@ -178,10 +178,18 @@ static MessageEmitterCalback create_trampoline(ThunkArgs* args)
 
 
 
-
 void binder_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback)
 {
     FunctionBind* bind = bind_create(route);
+    bind->WithCallback = with_callback;
+    bind->CallbackFunc = function;
+
+    bind_list_add(list, bind);
+}
+
+void binder_list_add_receiver_extension(FunctionBindList* list, const char* extension, MessageMatchReceiverCalback function, bool with_callback)
+{
+    FunctionBind* bind = bind_create_to_extension(extension);
     bind->WithCallback = with_callback;
 	bind->CallbackFunc = function;
 

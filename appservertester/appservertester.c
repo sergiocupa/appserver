@@ -73,6 +73,14 @@ void* video_select_stream(Message* message)
 }
 
 
+// processa todas as entrada de requisição de inicializador de player DASH
+void* get_mpd(Message* message)
+{
+    // Fazer tratakmentos DASH
+    ...
+}
+
+
 
 MessageEmitterCalback Notification;
 void Notification_Result(ResourceBuffer* object)
@@ -136,75 +144,22 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    // sample-5s.mp4
-    // e:/small.mp4
-   
-    //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/Big_Buck_Bunn_H265.mp4");
-    //FrameIndexList* frames = mmp4_index_frames("e:/AmostraVideo/sample_960x540.mkv");
-
-    //concod_display_frame_index(frames);
-
     render_video("e:/AmostraVideo/sample-3.mp4");// small// "e:/sample-5s.mp4"
 
-    //medias_waiting(session->Output);
-
-    //concod_display_frame_index(frames);
-
-    /*VideoInitData vid;
-    MediaBuffer* init = mmp4_read_init_segment(&vid);
-
-    MediaSourceSession* session = media_sim_create(vid.width, vid.height);
-
-    media_sim_init_segment(session, init);
-
-    FILE* f = fopen("e:/small.mp4", "rb");
-    int ix = 0;
-    while (ix < frames->Count)
-    {
-        FrameIndex* frame = frames->Frames[ix];
-
-        MediaBuffer* mb = mmp4_read_frame(frame, f);
-
-        media_sim_feed(session, mb);
-
-        mbuffer_release(mb);
-        ix++;
-    }
-
-    fclose(f);
-    media_sim_release(session);*/
+    
 
 
+    FunctionBindList* bind = bind_list_create();
+    //app_add_receiver(bind, "service/videoplayer", video_player, true);
+    app_add_web_resource(bind, "service/videolist", video_list);
+    app_add_receiver(bind, "index", app_root, true);
+    app_add_receiver_extension(bind, ".mpd", get_mpd, true);
+    app_add_receiver(bind, "service/login", app_login, true);
 
 
+    Notification = app_add_emitter(bind, "service/notification");
 
-
-    //FrameIndexList* frames = index_frames_full("e:/small.mp4");
-
-    //printf("Frame count %d\r\n", frames->Count);
-
-    //int i = 0;
-    //while (i < frames->Count)
-    //{
-    //    FrameIndex* f = frames->Frames[i];
-
-    //    //if (f->NalType == 1 || f->NalType == 5)
-    //    //{
-    //        printf("Frame %3d | Offset %-8llu | Size %-6llu | NAL %-3d | Type %c | PTS %.3f\n", i, f->Offset, f->Size, f->NalType, f->FrameType, f->PTS);
-    //    //}
-    //    i++;
-    //}
-
-
-
-    //FunctionBindList* bind = bind_list_create();
-    ////app_add_receiver(bind, "service/videoplayer", video_player, true);
-    //app_add_web_resource(bind, "service/videolist", video_list);
-    //app_add_receiver(bind, "index", app_root, true);
-    //app_add_receiver(bind, "service/login", app_login, true);
-    //Notification = app_add_emitter(bind, "service/notification");
-
-    //AppServerInfo* server = appserver_create("video-service", 1234, "api", bind);
+    AppServerInfo* server = appserver_create("video-service", 1234, "api", bind);
 
 
     //int data = 12344;

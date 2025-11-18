@@ -46,6 +46,14 @@ extern "C" {
     MP4FragmentInfo;
 
 
+    typedef struct MP4InitConfig {
+        uint32_t Timescale;           // Timescale (ex: 90000)
+        uint32_t TrackID;             // ID da track (geralmente 1)
+        uint64_t FragmentDuration;    // Duração típica de fragmento (para mvex)
+
+    } MP4InitConfig;
+
+
     // Formato de saída do fragmento H.264
     typedef enum H264FragmentFormat
     {

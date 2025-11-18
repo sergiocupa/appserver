@@ -253,7 +253,47 @@ void appserver_received(Message* request)
     }
     else
     {
-        appserver_web_process(server, request);
+        // tenta por Extension. Testa final da rota
+        FunctionBind* ext = binder_extension_exist(server->BindList, server->Prefix, &request->Route);
+        if (ext)
+        {
+            MessageMatchReceiverCalback func = bind->CallbackFunc;
+            Element* result = func(request);
+
+            HttpStatusCode code = HTTP_STATUS_OK;
+
+            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+            if (result)
+            {
+                String* json = yason_render(result, 1);
+                buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
+                buffer->Type = APPLICATION_JSON;
+            }
+            else if (request->ResponseContent)
+            {
+                if (request->ResponseStatus != 0)
+                {
+                    code = request->ResponseStatus;
+                }
+
+                if (request->ContentType != CONTENT_TYPE_NONE)
+                {
+                    buffer->Data = string_utf8_to_bytes(request->ResponseContent->Data, &buffer->Length);
+                }
+                else
+                {
+                    buffer->Data = string_utf8_to_bytes("Controller method did not return a result", &buffer->Length);
+                    buffer->Type = TEXT_PLAIN;
+                    code = HTTP_STATUS_INTERNAL_ERROR;
+                }
+            }
+
+            appserver_http_response_send(server, request, code, buffer, 0, 0);
+        }
+        else
+        {
+            appserver_web_process(server, request);
+        }
     }
 }
 
@@ -370,6 +410,10 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 void app_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback)
 {
     binder_list_add_receiver(list, route, function, with_callback);
+}
+void app_add_receiver_extension(FunctionBindList* list, const char* extension, MessageMatchReceiverCalback function, bool with_callback)
+{
+    binder_list_add_receiver_extension(list, extension, function, with_callback);
 }
 void app_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function)
 {

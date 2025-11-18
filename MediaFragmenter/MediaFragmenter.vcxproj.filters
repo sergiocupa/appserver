@@ -39,6 +39,12 @@
     <ClInclude Include="src\Mp4MetadataUtil.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\BufferUtil.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DashBuilder.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c">
@@ -69,6 +75,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\H26XBuilder.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BufferUtil.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DashBuilder.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

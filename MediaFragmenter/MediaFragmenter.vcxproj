@@ -22,6 +22,8 @@
     <ClInclude Include="deps\openh264\include\codec_api.h" />
     <ClInclude Include="deps\sdl2\include\SDL2\SDL.h" />
     <ClInclude Include="include\MediaFragmenter.h" />
+    <ClInclude Include="src\BufferUtil.h" />
+    <ClInclude Include="src\DashBuilder.h" />
     <ClInclude Include="src\FileUtil.h" />
     <ClInclude Include="src\MediaFragmenterType.h" />
     <ClInclude Include="src\MediaSourceSim.h" />
@@ -30,6 +32,8 @@
     <ClInclude Include="src\Mp4MetadataUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\BufferUtil.c" />
+    <ClCompile Include="src\DashBuilder.c" />
     <ClCompile Include="src\FileUtil.c" />
     <ClCompile Include="src\H26XBuilder.c" />
     <ClCompile Include="src\ImageTools.c" />
@@ -129,7 +133,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>

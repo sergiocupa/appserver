@@ -2,6 +2,7 @@
 #include "Mp4Builder.h"
 #include "Mp4MetadataUtil.h"
 #include "FileUtil.h"
+#include "BufferUtil.h"
 
 
 
@@ -402,8 +403,6 @@ FrameIndexList* mp4builder_get_frames(const char* path)
 
 
 
-
-
 // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 //                                              Funcoes para cria fragmentos MP4
 // ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -418,7 +417,7 @@ static void create_mfhd_box(uint32_t sequence_number, MediaBuffer* output)
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, 16);
+    buffer_write32(p, 16);
     p += 4;
 
     // Box type: 'mfhd'
@@ -426,11 +425,11 @@ static void create_mfhd_box(uint32_t sequence_number, MediaBuffer* output)
     p += 4;
 
     // Version (1 byte) + Flags (3 bytes)
-    write_u32_be(p, 0);
+    buffer_write32(p, 0);
     p += 4;
 
     // Sequence number
-    write_u32_be(p, sequence_number);
+    buffer_write32(p, sequence_number);
 }
 
 // Cria box tfhd (Track Fragment Header)
@@ -442,7 +441,7 @@ static void create_tfhd_box(uint32_t track_id, MediaBuffer* output)
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, 16);
+    buffer_write32(p, 16);
     p += 4;
 
     // Box type: 'tfhd'
@@ -450,11 +449,11 @@ static void create_tfhd_box(uint32_t track_id, MediaBuffer* output)
     p += 4;
 
     // Version (0) + Flags (0x020000 = default-base-is-moof)
-    write_u32_be(p, 0x00020000);
+    buffer_write32(p, 0x00020000);
     p += 4;
 
     // Track ID
-    write_u32_be(p, track_id);
+    buffer_write32(p, track_id);
 }
 
 // Cria box tfdt (Track Fragment Decode Time)
@@ -469,7 +468,7 @@ static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, output->Size);
+    buffer_write32(p, output->Size);
     p += 4;
 
     // Box type: 'tfdt'
@@ -477,17 +476,17 @@ static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output
     p += 4;
 
     // Version + Flags
-    write_u32_be(p, use_v1 ? 0x01000000 : 0x00000000);
+    buffer_write32(p, use_v1 ? 0x01000000 : 0x00000000);
     p += 4;
 
     // Base media decode time
     if (use_v1)
     {
-        write_u64_be(p, base_media_decode_time);
+        buffer_write64(p, base_media_decode_time);
     }
     else
     {
-        write_u32_be(p, (uint32_t)base_media_decode_time);
+        buffer_write32(p, (uint32_t)base_media_decode_time);
     }
 }
 
@@ -504,7 +503,7 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, output->Size);
+    buffer_write32(p, output->Size);
     p += 4;
 
     // Box type: 'trun'
@@ -512,15 +511,15 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
     p += 4;
 
     // Version (0) + Flags
-    write_u32_be(p, flags);
+    buffer_write32(p, flags);
     p += 4;
 
     // Sample count
-    write_u32_be(p, sample_count);
+    buffer_write32(p, sample_count);
     p += 4;
 
     // Data offset (offset do mdat relativo ao início do moof)
-    write_u32_be(p, data_offset);
+    buffer_write32(p, data_offset);
 }
 
 // Cria box traf (Track Fragment)
@@ -543,7 +542,7 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, output->Size);
+    buffer_write32(p, output->Size);
     p += 4;
 
     // Box type: 'traf'
@@ -566,13 +565,7 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
 }
 
 // Cria box moof (Movie Fragment)
-static void create_moof_box(
-    uint32_t sequence_number,
-    uint32_t track_id,
-    uint64_t base_media_decode_time,
-    uint32_t sample_count,
-    uint32_t sample_duration,
-    MediaBuffer* output)
+static void create_moof_box( uint32_t sequence_number, uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, MediaBuffer* output)
 {
     // Criar sub-boxes
     MediaBuffer mfhd;
@@ -607,7 +600,7 @@ static void create_moof_box(
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, moof_size);
+    buffer_write32(p, moof_size);
     p += 4;
 
     // Box type: 'moof'
@@ -634,7 +627,7 @@ static void create_mdat_box(uint8_t* data, size_t data_size, MediaBuffer* output
     uint8_t* p = output->Data;
 
     // Box size
-    write_u32_be(p, output->Size);
+    buffer_write32(p, output->Size);
     p += 4;
 
     // Box type: 'mdat'
@@ -646,7 +639,1063 @@ static void create_mdat_box(uint8_t* data, size_t data_size, MediaBuffer* output
 }
 
 
-int mp4builder_create_fragment( FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output)
+
+
+
+// CRIAÇÃO DE BOXES: ftyp. Cria box ftyp (File Type Box). Define o tipo do arquivo MP4
+static void create_ftyp_box(MediaBuffer* output)
+{
+    // ftyp para fragmentos DASH:
+    // - major_brand: 'iso5' (ISO Base Media File Format v5)
+    // - minor_version: 512
+    // - compatible_brands: 'iso5', 'iso6', 'mp41'
+
+    output->Size = 24;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 24);
+    p += 4;
+
+    // Box type: 'ftyp'
+    write_fourcc(p, "ftyp");
+    p += 4;
+
+    // Major brand: 'iso5'
+    write_fourcc(p, "iso5");
+    p += 4;
+
+    // Minor version
+    buffer_write32(p, 512);
+    p += 4;
+
+    // Compatible brands
+    write_fourcc(p, "iso5");
+    p += 4;
+    write_fourcc(p, "mp41");
+    p += 4;
+}
+
+// CRIAÇÃO DE BOXES: moov > mvhd Cria box mvhd (Movie Header Box)
+static void create_mvhd_box(uint32_t timescale, uint32_t next_track_id, MediaBuffer* output)
+{
+    output->Size = 108;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 108);
+    p += 4;
+
+    // Box type: 'mvhd'
+    write_fourcc(p, "mvhd");
+    p += 4;
+
+    // Version (1 byte) + Flags (3 bytes)
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Creation time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Modification time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Timescale
+    buffer_write32(p, timescale);
+    p += 4;
+
+    // Duration (0 para fragmentos)
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Rate (1.0 = 0x00010000)
+    buffer_write32(p, 0x00010000);
+    p += 4;
+
+    // Volume (1.0 = 0x0100)
+    buffer_write16(p, 0x0100);
+    p += 2;
+
+    // Reserved
+    memset(p, 0, 10);
+    p += 10;
+
+    // Matrix (identity matrix)
+    uint32_t matrix[9] = {
+        0x00010000, 0, 0,
+        0, 0x00010000, 0,
+        0, 0, 0x40000000
+    };
+    for (int i = 0; i < 9; i++)
+    {
+        buffer_write32(p, matrix[i]);
+        p += 4;
+    }
+
+    // Pre-defined
+    memset(p, 0, 24);
+    p += 24;
+
+    // Next track ID
+    buffer_write32(p, next_track_id);
+}
+
+
+// CRIAÇÃO DE BOXES: moov > mvex > mehd. Cria box mehd (Movie Extends Header Box)
+static void create_mehd_box(uint64_t fragment_duration, MediaBuffer* output)
+{
+    // Usar versão 1 (64 bits) se necessário
+    int use_v1 = (fragment_duration > 0xFFFFFFFF);
+
+    output->Size = use_v1 ? 20 : 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'mehd'
+    write_fourcc(p, "mehd");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, use_v1 ? 0x01000000 : 0x00000000);
+    p += 4;
+
+    // Fragment duration
+    if (use_v1)
+    {
+        buffer_write64(p, fragment_duration);
+    }
+    else
+    {
+        buffer_write32(p, (uint32_t)fragment_duration);
+    }
+}
+
+// CRIAÇÃO DE BOXES: moov > mvex > trex. Cria box trex (Track Extends Box). Define valores padrão para fragmentos
+static void create_trex_box(uint32_t track_id, MediaBuffer* output)
+{
+    output->Size = 32;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 32);
+    p += 4;
+
+    // Box type: 'trex'
+    write_fourcc(p, "trex");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Track ID
+    buffer_write32(p, track_id);
+    p += 4;
+
+    // Default sample description index
+    buffer_write32(p, 1);
+    p += 4;
+
+    // Default sample duration
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Default sample size
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Default sample flags
+    buffer_write32(p, 0);
+    p += 4;
+}
+
+// CRIAÇÃO DE BOXES: moov > mvex. Cria box mvex (Movie Extends Box). Indica que o arquivo usa fragmentação
+static void create_mvex_box(uint32_t track_id, uint64_t fragment_duration, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer mehd, trex;
+
+    create_mehd_box(fragment_duration, &mehd);
+    create_trex_box(track_id, &trex);
+
+    // Calcular tamanho total
+    output->Size = 8 + mehd.Size + trex.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'mvex'
+    write_fourcc(p, "mvex");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, mehd.Data, mehd.Size);
+    p += mehd.Size;
+
+    memcpy(p, trex.Data, trex.Size);
+
+    // Liberar sub-boxes
+    free(mehd.Data);
+    free(trex.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > tkhd. Cria box tkhd (Track Header Box)
+static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, MediaBuffer* output)
+{
+    output->Size = 92;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 92);
+    p += 4;
+
+    // Box type: 'tkhd'
+    write_fourcc(p, "tkhd");
+    p += 4;
+
+    // Version (0) + Flags (track enabled + in movie + in preview)
+    buffer_write32(p, 0x00000007);
+    p += 4;
+
+    // Creation time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Modification time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Track ID
+    buffer_write32(p, track_id);
+    p += 4;
+
+    // Reserved
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Duration (0 para fragmentos)
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Reserved
+    memset(p, 0, 8);
+    p += 8;
+
+    // Layer
+    buffer_write16(p, 0);
+    p += 2;
+
+    // Alternate group
+    buffer_write16(p, 0);
+    p += 2;
+
+    // Volume (0 para vídeo)
+    buffer_write16(p, 0);
+    p += 2;
+
+    // Reserved
+    buffer_write16(p, 0);
+    p += 2;
+
+    // Matrix (identity)
+    uint32_t matrix[9] = {
+        0x00010000, 0, 0,
+        0, 0x00010000, 0,
+        0, 0, 0x40000000
+    };
+    for (int i = 0; i < 9; i++)
+    {
+        buffer_write32(p, matrix[i]);
+        p += 4;
+    }
+
+    // Width (16.16 fixed point)
+    buffer_write32(p, width << 16);
+    p += 4;
+
+    // Height (16.16 fixed point)
+    buffer_write32(p, height << 16);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > mdhd. Cria box mdhd (Media Header Box)
+static void create_mdhd_box(uint32_t timescale, MediaBuffer* output)
+{
+    output->Size = 32;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 32);
+    p += 4;
+
+    // Box type: 'mdhd'
+    write_fourcc(p, "mdhd");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Creation time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Modification time
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Timescale
+    buffer_write32(p, timescale);
+    p += 4;
+
+    // Duration (0 para fragmentos)
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Language (undetermined = 0x55C4)
+    buffer_write16(p, 0x55C4);
+    p += 2;
+
+    // Pre-defined
+    buffer_write16(p, 0);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > hdlr. Cria box hdlr (Handler Reference Box)
+static void create_hdlr_box(MediaBuffer* output)
+{
+    const char* handler_name = "VideoHandler";
+    size_t name_len = strlen(handler_name);
+
+    output->Size = 32 + name_len + 1;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'hdlr'
+    write_fourcc(p, "hdlr");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Pre-defined
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Handler type: 'vide' (video)
+    write_fourcc(p, "vide");
+    p += 4;
+
+    // Reserved
+    memset(p, 0, 12);
+    p += 12;
+
+    // Handler name
+    strcpy((char*)p, handler_name);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > vmhd. Cria box vmhd (Video Media Header Box)
+static void create_vmhd_box(MediaBuffer* output)
+{
+    output->Size = 20;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 20);
+    p += 4;
+
+    // Box type: 'vmhd'
+    write_fourcc(p, "vmhd");
+    p += 4;
+
+    // Version (0) + Flags (1)
+    buffer_write32(p, 0x00000001);
+    p += 4;
+
+    // Graphics mode
+    buffer_write16(p, 0);
+    p += 2;
+
+    // Opcolor (R, G, B)
+    buffer_write16(p, 0);
+    p += 2;
+    buffer_write16(p, 0);
+    p += 2;
+    buffer_write16(p, 0);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > dinf > dref. Cria box dref (Data Reference Box)
+static void create_dref_box(MediaBuffer* output)
+{
+    output->Size = 28;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, 28);
+    p += 4;
+
+    // Box type: 'dref'
+    write_fourcc(p, "dref");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Entry count
+    buffer_write32(p, 1);
+    p += 4;
+
+    // --- url box ---
+    // Size
+    buffer_write32(p, 12);
+    p += 4;
+
+    // Type: 'url '
+    write_fourcc(p, "url ");
+    p += 4;
+
+    // Version + Flags (0x000001 = data is in this file)
+    buffer_write32(p, 0x00000001);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > dinf. Cria box dinf (Data Information Box)
+static void create_dinf_box(MediaBuffer* output)
+{
+    MediaBuffer dref;
+    create_dref_box(&dref);
+
+    output->Size = 8 + dref.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'dinf'
+    write_fourcc(p, "dinf");
+    p += 4;
+
+    // Copiar dref
+    memcpy(p, dref.Data, dref.Size);
+
+    free(dref.Data);
+}
+
+// CRIAÇÃO DE BOXES: avcC (AVC Configuration). Cria box avcC (AVC Decoder Configuration Record). Contém SPS e PPS
+static void create_avcc_box(VideoMetadata* metadata, MediaBuffer* output)
+{
+    if (!metadata->Sps.Data || metadata->Sps.Size == 0)
+    {
+        fprintf(stderr, "ERRO: SPS não encontrado\n");
+        output->Size = 0;
+        output->Data = NULL;
+        return;
+    }
+
+    if (!metadata->Pps.Data || metadata->Pps.Size == 0)
+    {
+        fprintf(stderr, "ERRO: PPS não encontrado\n");
+        output->Size = 0;
+        output->Data = NULL;
+        return;
+    }
+
+    // Tamanho: header(8) + config(7) + sps_array(3+2+size) + pps_array(3+2+size)
+    output->Size = 8 + 7 + 5 + metadata->Sps.Size + 3 + metadata->Pps.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'avcC'
+    write_fourcc(p, "avcC");
+    p += 4;
+
+    // --- AVC Configuration ---
+
+    // Configuration version
+    *p++ = 1;
+
+    // Profile (do SPS)
+    *p++ = metadata->Sps.Data[1];
+
+    // Profile compatibility (do SPS)
+    *p++ = metadata->Sps.Data[2];
+
+    // Level (do SPS)
+    *p++ = metadata->Sps.Data[3];
+
+    // Length size minus one (3 = 4 bytes)
+    *p++ = 0xFF;  // 6 bits reserved + 2 bits length = 0b11111111
+
+    // --- SPS Array ---
+
+    // Number of SPS (1 SPS, com reserved bits)
+    *p++ = 0xE1;  // 3 bits reserved + 5 bits count = 0b11100001
+
+    // SPS length
+    buffer_write16(p, metadata->Sps.Size);
+    p += 2;
+
+    // SPS data
+    memcpy(p, metadata->Sps.Data, metadata->Sps.Size);
+    p += metadata->Sps.Size;
+
+    // --- PPS Array ---
+
+    // Number of PPS
+    *p++ = 1;
+
+    // PPS length
+    buffer_write16(p, metadata->Pps.Size);
+    p += 2;
+
+    // PPS data
+    memcpy(p, metadata->Pps.Data, metadata->Pps.Size);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > stbl > stsd. Cria box stsd (Sample Description Box). Contém descrição do codec (avc1 + avcC)
+static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
+{
+    // Criar avcC
+    MediaBuffer avcc;
+    create_avcc_box(metadata, &avcc);
+
+    if (!avcc.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        return;
+    }
+
+    // stsd: 16 bytes + avc1 entry (86 bytes base + avcC)
+    output->Size = 16 + 86 + avcc.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'stsd'
+    write_fourcc(p, "stsd");
+    p += 4;
+
+    // Version + Flags
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Entry count
+    buffer_write32(p, 1);
+    p += 4;
+
+    // --- avc1 entry ---
+
+    // Entry size
+    buffer_write32(p, 86 + avcc.Size);
+    p += 4;
+
+    // Format: 'avc1'
+    write_fourcc(p, "avc1");
+    p += 4;
+
+    // Reserved (6 bytes)
+    memset(p, 0, 6);
+    p += 6;
+
+    // Data reference index
+    buffer_write16(p, 1);
+    p += 2;
+
+    // Pre-defined + Reserved (16 bytes)
+    memset(p, 0, 16);
+    p += 16;
+
+    // Width
+    buffer_write16(p, metadata->Width);
+    p += 2;
+
+    // Height
+    buffer_write16(p, metadata->Height);
+    p += 2;
+
+    // Horizontal resolution (72 dpi = 0x00480000)
+    buffer_write32(p, 0x00480000);
+    p += 4;
+
+    // Vertical resolution (72 dpi = 0x00480000)
+    buffer_write32(p, 0x00480000);
+    p += 4;
+
+    // Reserved
+    buffer_write32(p, 0);
+    p += 4;
+
+    // Frame count (1)
+    buffer_write16(p, 1);
+    p += 2;
+
+    // Compressor name (32 bytes, primeiro byte = length)
+    memset(p, 0, 32);
+    p += 32;
+
+    // Depth (0x0018 = 24-bit color)
+    buffer_write16(p, 0x0018);
+    p += 2;
+
+    // Pre-defined
+    buffer_write16(p, 0xFFFF);
+    p += 2;
+
+    // Copiar avcC
+    memcpy(p, avcc.Data, avcc.Size);
+
+    free(avcc.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > stbl (outros). Cria box stts (Time to Sample Box) - vazio para fragmentos
+static void create_stts_box(MediaBuffer* output)
+{
+    output->Size = 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    buffer_write32(p, 16);
+    p += 4;
+    write_fourcc(p, "stts");
+    p += 4;
+    buffer_write32(p, 0);  // Version + Flags
+    p += 4;
+    buffer_write32(p, 0);  // Entry count = 0
+}
+
+// Cria box stsc (Sample to Chunk Box) - vazio para fragmentos
+static void create_stsc_box(MediaBuffer* output)
+{
+    output->Size = 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    buffer_write32(p, 16);
+    p += 4;
+    write_fourcc(p, "stsc");
+    p += 4;
+    buffer_write32(p, 0);
+    p += 4;
+    buffer_write32(p, 0);
+}
+
+// Cria box stsz (Sample Size Box) - vazio para fragmentos
+static void create_stsz_box(MediaBuffer* output)
+{
+    output->Size = 20;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    buffer_write32(p, 20);
+    p += 4;
+    write_fourcc(p, "stsz");
+    p += 4;
+    buffer_write32(p, 0);  // Version + Flags
+    p += 4;
+    buffer_write32(p, 0);  // Sample size = 0 (variable)
+    p += 4;
+    buffer_write32(p, 0);  // Sample count = 0
+}
+
+// Cria box stco (Chunk Offset Box) - vazio para fragmentos
+static void create_stco_box(MediaBuffer* output)
+{
+    output->Size = 16;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    buffer_write32(p, 16);
+    p += 4;
+    write_fourcc(p, "stco");
+    p += 4;
+    buffer_write32(p, 0);
+    p += 4;
+    buffer_write32(p, 0);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf > stbl. Cria box stbl (Sample Table Box)
+static void create_stbl_box(VideoMetadata* metadata, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer stsd, stts, stsc, stsz, stco;
+
+    create_stsd_box(metadata, &stsd);
+    if (!stsd.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        return;
+    }
+
+    create_stts_box(&stts);
+    create_stsc_box(&stsc);
+    create_stsz_box(&stsz);
+    create_stco_box(&stco);
+
+    // Calcular tamanho total
+    output->Size = 8 + stsd.Size + stts.Size + stsc.Size + stsz.Size + stco.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'stbl'
+    write_fourcc(p, "stbl");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, stsd.Data, stsd.Size);
+    p += stsd.Size;
+
+    memcpy(p, stts.Data, stts.Size);
+    p += stts.Size;
+
+    memcpy(p, stsc.Data, stsc.Size);
+    p += stsc.Size;
+
+    memcpy(p, stsz.Data, stsz.Size);
+    p += stsz.Size;
+
+    memcpy(p, stco.Data, stco.Size);
+
+    // Liberar sub-boxes
+    free(stsd.Data);
+    free(stts.Data);
+    free(stsc.Data);
+    free(stsz.Data);
+    free(stco.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia > minf. Cria box minf (Media Information Box)
+static void create_minf_box(VideoMetadata* metadata, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer vmhd, dinf, stbl;
+
+    create_vmhd_box(&vmhd);
+    create_dinf_box(&dinf);
+    create_stbl_box(metadata, &stbl);
+
+    if (!stbl.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        free(vmhd.Data);
+        free(dinf.Data);
+        return;
+    }
+
+    // Calcular tamanho total
+    output->Size = 8 + vmhd.Size + dinf.Size + stbl.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'minf'
+    write_fourcc(p, "minf");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, vmhd.Data, vmhd.Size);
+    p += vmhd.Size;
+
+    memcpy(p, dinf.Data, dinf.Size);
+    p += dinf.Size;
+
+    memcpy(p, stbl.Data, stbl.Size);
+
+    // Liberar sub-boxes
+    free(vmhd.Data);
+    free(dinf.Data);
+    free(stbl.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak > mdia. Cria box mdia (Media Box)
+static void create_mdia_box(VideoMetadata* metadata, uint32_t timescale, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer mdhd, hdlr, minf;
+
+    create_mdhd_box(timescale, &mdhd);
+    create_hdlr_box(&hdlr);
+    create_minf_box(metadata, &minf);
+
+    if (!minf.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        free(mdhd.Data);
+        free(hdlr.Data);
+        return;
+    }
+
+    // Calcular tamanho total
+    output->Size = 8 + mdhd.Size + hdlr.Size + minf.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'mdia'
+    write_fourcc(p, "mdia");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, mdhd.Data, mdhd.Size);
+    p += mdhd.Size;
+
+    memcpy(p, hdlr.Data, hdlr.Size);
+    p += hdlr.Size;
+
+    memcpy(p, minf.Data, minf.Size);
+
+    // Liberar sub-boxes
+    free(mdhd.Data);
+    free(hdlr.Data);
+    free(minf.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov > trak. Cria box trak (Track Box)
+static void create_trak_box(VideoMetadata* metadata, uint32_t track_id, uint32_t timescale, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer tkhd, mdia;
+
+    create_tkhd_box(track_id, metadata->Width, metadata->Height, &tkhd);
+    create_mdia_box(metadata, timescale, &mdia);
+
+    if (!mdia.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        free(tkhd.Data);
+        return;
+    }
+
+    // Calcular tamanho total
+    output->Size = 8 + tkhd.Size + mdia.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'trak'
+    write_fourcc(p, "trak");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, tkhd.Data, tkhd.Size);
+    p += tkhd.Size;
+
+    memcpy(p, mdia.Data, mdia.Size);
+
+    // Liberar sub-boxes
+    free(tkhd.Data);
+    free(mdia.Data);
+}
+
+// CRIAÇÃO DE BOXES: moov. Cria box moov (Movie Box)
+static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_t track_id, uint64_t fragment_duration, MediaBuffer* output)
+{
+    // Criar sub-boxes
+    MediaBuffer mvhd, trak, mvex;
+
+    create_mvhd_box(timescale, track_id + 1, &mvhd);
+    create_trak_box(metadata, track_id, timescale, &trak);
+
+    if (!trak.Data)
+    {
+        output->Size = 0;
+        output->Data = NULL;
+        free(mvhd.Data);
+        return;
+    }
+
+    create_mvex_box(track_id, fragment_duration, &mvex);
+
+    // Calcular tamanho total
+    output->Size = 8 + mvhd.Size + trak.Size + mvex.Size;
+    output->Data = malloc(output->Size);
+
+    uint8_t* p = output->Data;
+
+    // Box size
+    buffer_write32(p, output->Size);
+    p += 4;
+
+    // Box type: 'moov'
+    write_fourcc(p, "moov");
+    p += 4;
+
+    // Copiar sub-boxes
+    memcpy(p, mvhd.Data, mvhd.Size);
+    p += mvhd.Size;
+
+    memcpy(p, trak.Data, trak.Size);
+    p += trak.Size;
+
+    memcpy(p, mvex.Data, mvex.Size);
+
+    // Liberar sub-boxes
+    free(mvhd.Data);
+    free(trak.Data);
+    free(mvex.Data);
+}
+
+
+
+
+
+// FUNÇÃO PRINCIPAL: CRIAR INITIALIZATION SEGMENT MP4. (ftyp + moov)
+int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, MediaBuffer* output)
+{
+    if (!metadata || !config || !output)
+    {
+        fprintf(stderr, "ERRO: Parâmetros NULL\n");
+        return -1;
+    }
+
+    // Validar SPS/PPS
+    if (!metadata->Sps.Data || metadata->Sps.Size == 0)
+    {
+        fprintf(stderr, "ERRO: SPS não encontrado\n");
+        return -2;
+    }
+
+    if (!metadata->Pps.Data || metadata->Pps.Size == 0)
+    {
+        fprintf(stderr, "ERRO: PPS não encontrado\n");
+        return -3;
+    }
+
+    // Validar configuração
+    if (config->Timescale == 0)
+    {
+        fprintf(stderr, "ERRO: Timescale inválido\n");
+        return -4;
+    }
+
+    if (config->TrackID == 0)
+    {
+        fprintf(stderr, "ERRO: TrackID inválido\n");
+        return -5;
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // CRIAR BOX ftyp
+    // ───────────────────────────────────────────────────────────────
+
+    MediaBuffer ftyp;
+    create_ftyp_box(&ftyp);
+
+    // ───────────────────────────────────────────────────────────────
+    // CRIAR BOX moov
+    // ───────────────────────────────────────────────────────────────
+
+    MediaBuffer moov;
+    create_moov_box(metadata,config->Timescale, config->TrackID, config->FragmentDuration, &moov);
+
+    if (!moov.Data)
+    {
+        fprintf(stderr, "ERRO: Falha ao criar moov box\n");
+        free(ftyp.Data);
+        return -6;
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // JUNTAR ftyp + moov
+    // ───────────────────────────────────────────────────────────────
+
+    output->Size = ftyp.Size + moov.Size;
+    output->Data = malloc(output->Size);
+
+    if (!output->Data)
+    {
+        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
+        free(ftyp.Data);
+        free(moov.Data);
+        return -7;
+    }
+
+    memcpy(output->Data, ftyp.Data, ftyp.Size);
+    memcpy(output->Data + ftyp.Size, moov.Data, moov.Size);
+
+  /*  printf("✅ Initialization segment criado:\n");
+    printf("   Resolução: %dx%d\n", metadata->Width, metadata->Height);
+    printf("   Timescale: %u\n", config->Timescale);
+    printf("   Track ID: %u\n", config->TrackID);
+    printf("   ftyp: %zu bytes\n", ftyp.Size);
+    printf("   moov: %zu bytes\n", moov.Size);
+    printf("   Total: %zu bytes\n", output->Size);*/
+
+    // Liberar buffers temporários
+    free(ftyp.Data);
+    free(moov.Data);
+
+    return 0;
+}
+
+
+int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output)
 {
     if (!f || !frame_list || !frag_info || !output)
     {
@@ -717,7 +1766,7 @@ int mp4builder_create_fragment( FILE* f, FrameIndexList* frame_list, double time
 
     MediaBuffer moof;
 
-    create_moof_box( frag_info->SequenceNumber, frag_info->TrackID, frag_info->BaseMediaDecodeTime, sample_count, sample_duration, &moof);
+    create_moof_box(frag_info->SequenceNumber, frag_info->TrackID, frag_info->BaseMediaDecodeTime, sample_count, sample_duration, &moof);
 
     // ───────────────────────────────────────────────────────────────
     // PASSO 4: Criar box mdat
@@ -745,14 +1794,14 @@ int mp4builder_create_fragment( FILE* f, FrameIndexList* frame_list, double time
     memcpy(output->Data, moof.Data, moof.Size);
     memcpy(output->Data + moof.Size, mdat.Data, mdat.Size);
 
- /*   printf("Fragmento MP4 criado:\n");
-    printf("   Sequence: %u\n", frag_info->SequenceNumber);
-    printf("   Samples: %u\n", sample_count);
-    printf("   moof: %zu bytes\n", moof.Size);
-    printf("   mdat: %zu bytes\n", mdat.Size);
-    printf("   Total: %zu bytes\n", output->Size);*/
+    /*   printf("Fragmento MP4 criado:\n");
+       printf("   Sequence: %u\n", frag_info->SequenceNumber);
+       printf("   Samples: %u\n", sample_count);
+       printf("   moof: %zu bytes\n", moof.Size);
+       printf("   mdat: %zu bytes\n", mdat.Size);
+       printf("   Total: %zu bytes\n", output->Size);*/
 
-    // Liberar buffers temporários
+       // Liberar buffers temporários
     free(h264_data.Data);
     free(moof.Data);
     free(mdat.Data);

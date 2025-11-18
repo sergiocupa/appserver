@@ -13,24 +13,19 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
-#ifndef CALLBACK_BINDER_H
-#define CALLBACK_BINDER_H
+#ifndef DASH_BUILDER_H
+#define DASH_BUILDER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+    #include "../include/MediaFragmenter.h"
 
-    #include "../server_type.h"
-
-
-    void binder_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
-    void binder_list_add_receiver_extension(FunctionBindList* list, const char* extension, MessageMatchReceiverCalback function, bool with_callback);
-    void binder_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
-    MessageEmitterCalback binder_list_add_emitter(FunctionBindList* list, const char* route);
+    char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* CALLBACK_ASSEMBLER */
+#endif /* DASH_BUILDER */

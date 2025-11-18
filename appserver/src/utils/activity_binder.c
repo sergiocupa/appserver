@@ -20,6 +20,29 @@
 #include <stdlib.h>
 
 
+
+static int string_ends_off_s(String* route, String* extension)
+{
+    if (route && extension)
+    {
+        if (route->Length > 0 && route->Length == extension->Length)
+        {
+            int ir = route->Length; int ie = extension->Length;
+            while (ir > 0 && ie > 0)
+            {
+                ir--; ie--;
+                if (route->Data[ir] != extension->Data[ie])
+                {
+                    break;
+                }
+            }
+            if (ir == 0) return 1;
+        }
+    }
+    return -1;
+}
+
+
 bool _file_exists(const char* path)
 {
     bool result = false;
@@ -207,6 +230,30 @@ bool binder_prefix_exist(StringArray* prefix, StringArray* route, int* ix)
 
 
 
+
+
+FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* prefix, String* extension)
+{
+    if (extension->Length > 0)
+    {
+        int ix = 0;
+        bool found = binder_prefix_exist(prefix, extension, &ix);
+        if (found)
+        {
+            int ax = 0;
+            while (ax < binders->Count)
+            {
+                FunctionBind* bind = binders->Items[ax];
+                int found = string_ends_off_s(&bind->Route, extension);
+                if (found) return 1;
+                ax++;
+            }
+        }
+    }
+    return 0;
+}
+
+
 FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route)
 {
     if (route->Count > 0)
@@ -302,8 +349,6 @@ bool binder_get_web_resource(FunctionBindList* binders, StringArray* prefix, Str
     }
     return false;
 }
-
-
 
 
 void binder_assemble_local(String* local, const char* abs_path, StringArray* prefix, StringArray* route)

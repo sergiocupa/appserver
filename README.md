@@ -24,10 +24,10 @@ Features to be implemented:
     - [X] Perform basic tests with video playback.
     
     **DASH server implementation (Adaptive streaming support will not be implemented, as this version is only for testing)**
-    - 🧩 Create frame grouping ([moof][mdat]).
-    - [ ] Create an MP4 file with the initialization header.
-    - [ ] Create an MP4 file containing video fragment.
-    - [ ] Implement handshake between client and HTTP server.
+    - [X] Create frame grouping ([moof][mdat]).
+    - [X] Create an MP4 file with the initialization header.
+    - [X] Create an MP4 file containing video fragment.
+    - 🧩 Implement handshake between client and HTTP server.
     - [ ] Implement an HTML page for browser-based testing.
     - [ ] Perform browser tests.
     

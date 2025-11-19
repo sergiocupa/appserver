@@ -21,7 +21,7 @@ extern "C" {
 #endif
     #include "../include/MediaFragmenter.h"
 
-    char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length);
+   // char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length);
 
 
 #ifdef __cplusplus

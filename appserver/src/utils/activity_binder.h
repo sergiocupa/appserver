@@ -24,7 +24,7 @@ extern "C" {
 
 
 	FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* prefix, String* extension);
-	FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route);
+	FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route, int* route_rest);
 	bool binder_get_web_resource(FunctionBindList* binders, StringArray* prefix, StringArray* route, String* abs_path, ResourceBuffer* buffer);
 	void binder_get_web_content_path(FunctionBindList* bind_list, StringArray* prefix, String* local);
 

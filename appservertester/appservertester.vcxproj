@@ -154,7 +154,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/submodules/utility/stringlib/include;$(SolutionDir)appserver/submodules/utility/platformlib/include;$(SolutionDir)appserver/submodules/utility/numericlib/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)MediaFragmenter\deps\openh264\include;$(SolutionDir)MediaFragmenter\deps\libde265\include</AdditionalIncludeDirectories>
       <LanguageStandard>Default</LanguageStandard>

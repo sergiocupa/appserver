@@ -156,35 +156,44 @@ extern "C" {
     ResourceBuffer;
 
 
+    typedef struct _MessageResponseInfo
+    {
+        int              Status;
+        ResourceBuffer   Content;
+        MessageFieldList Fields;
+    }
+    MessageResponseInfo;
+
+
     struct _Message
     {
-        bool               IsMatch;
-        MessageProtocol    Protocol;
-        String             Version;
-        MessageCommand     Cmd;
-        MessageCommand     OriginCmd;
-        int                ResponseStatus;
-        StringArray        Route;
-        String             Host;
-        MessageConnection  ConnectionOption;
-        String             UserAgent;
-        String             Content;
-        ContentTypeOption  ContentType;
-        int                ContentLength;
-        MessageFieldList   Fields;
-        String*            SessionUID;
-        String*            EventUID;
-        String*            OriginEventUID;
-        MessageFieldParam* Param;
-        String*            SecWebsocketKey;
-        String*            SecWebsocketAccept;
-        String*            Upgrade;
-        void*              MatchThread;
+        bool                 IsMatch;
+        MessageProtocol      Protocol;
+        String               Version;
+        MessageCommand       Cmd;
+        MessageCommand       OriginCmd;
+                             
+        StringArray          Route;
+        String               Host;
+        MessageConnection    ConnectionOption;
+        String               UserAgent;
+        String               Content;
+        ContentTypeOption    ContentType;
+        int                  ContentLength;
+        MessageFieldList     Fields;
+        String*              SessionUID;
+        String*              EventUID;
+        String*              OriginEventUID;
+        MessageFieldParam*   Param;
+        String*              SecWebsocketKey;
+        String*              SecWebsocketAccept;
+        String*              Upgrade;
+        void*                MatchThread;
+                             
+        AppClientInfo*       Client;
+        void*                Object;
 
-        AppClientInfo*     Client;
-        void*              Object;
-
-        String*            ResponseContent;
+        MessageResponseInfo* Response;
     };
 
 
@@ -276,7 +285,7 @@ extern "C" {
         bool        WithCallback;
 		bool        IsEventEmitter;
         StringArray Route;
-        StringArray Extension;
+        String      Extension;
         String      AbsPathWebContent;
         ThunkArgs   Thung;
 		MessageMatchReceiverCalback CallbackFunc;
@@ -364,6 +373,10 @@ extern "C" {
     void event_list_add(MessageEventList* list, MessageEvent* item);
     MessageEventList* event_list_release(MessageEventList* list, bool only_data);
     void event_list_remove(MessageEventList* list, MessageEvent* item);
+
+    MessageResponseInfo* message_response_create(int status, ContentTypeOption type);
+    MessageResponseInfo* message_response_create_content(int status, ContentTypeOption type, char* content, int size);
+    MessageResponseInfo* message_response_create_text(int status, char* content);
 
 
 #ifdef __cplusplus

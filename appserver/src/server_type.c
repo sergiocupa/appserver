@@ -514,3 +514,41 @@ MessageEventList* event_list_release(MessageEventList* list, bool only_data)
 }
 
 
+
+
+MessageResponseInfo* message_response_create(int status, ContentTypeOption type)
+{
+    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    memset(ar, 0, sizeof(MessageResponseInfo));
+    resource_buffer_init(&ar->Content);
+    event_list_init(&ar->Fields);
+    ar->Content.Type = type;
+    ar->Status = status;
+    return ar;
+}
+
+MessageResponseInfo* message_response_create_content(int status, ContentTypeOption type, char* content, int size)
+{
+    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    memset(ar, 0, sizeof(MessageResponseInfo));
+    resource_buffer_init(&ar->Content);
+    event_list_init(&ar->Fields);
+    ar->Content.Type = type;
+    ar->Status = status;
+    resource_buffer_append(&ar->Content, content, size);
+    return ar;
+}
+
+MessageResponseInfo* message_response_create_text(int status, char* content)
+{
+    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    memset(ar, 0, sizeof(MessageResponseInfo));
+    resource_buffer_init(&ar->Content);
+    event_list_init(&ar->Fields);
+    ar->Content.Type = TEXT_PLAIN;
+    ar->Status = status;
+
+    int size = strlen(content);
+    resource_buffer_append(&ar->Content, content, size);
+    return ar;
+}

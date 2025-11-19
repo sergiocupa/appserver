@@ -43,6 +43,9 @@ extern "C" {
 	void medias_waiting(VideoOutput* v);
 
 
+	char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length);
+
+
 
 
 #ifdef __cplusplus

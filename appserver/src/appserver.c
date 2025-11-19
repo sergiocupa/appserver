@@ -39,6 +39,7 @@ MessageField HTTP_HEADER_ALLOW_METHODS;
 AppServerList Servers;
 
 
+
 void _ReportRequest(Message* request)
 {
     char* a  = message_command_titule(request->Cmd);
@@ -184,7 +185,7 @@ bool websocket_handshake_received(AppServerInfo* server, Message* request)
 
 void appserver_received(Message* request)
 {
-	if (request->Protocol == AOTP)
+    if (request->Protocol == AOTP)
 	{
 		appserver_received_aotp(request);
 		return;
@@ -202,15 +203,13 @@ void appserver_received(Message* request)
         return;
     }
 
-    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
+    int rest = -1;
+    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route, &rest);
     if (bind)
     {
-        if (request->ContentLength > 0)
+        if (request->ContentLength > 0 && request->ContentType == APPLICATION_JSON)
         {
-            if (request->ContentType == APPLICATION_JSON)
-            {
-                request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
-            }
+            request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
         }
 
         MessageMatchReceiverCalback func = bind->CallbackFunc;
@@ -225,14 +224,14 @@ void appserver_received(Message* request)
             buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
             buffer->Type = APPLICATION_JSON;
         }
-        else if(request->ResponseContent)
+        else if(request->Response)
         {
-            if (request->ResponseStatus != 0)
-            {
-                code = request->ResponseStatus;
-            }
+            if (request->ResponseStatus != 0) code = request->ResponseStatus;
 
-            buffer->Type = TEXT_PLAIN;
+            // usar buffer do request->Response
+            // depois de send, liberar tudo.
+
+            buffer->Type = (request->ContentType == CONTENT_TYPE_NONE) ? TEXT_PLAIN : request->ContentType;
             buffer->Data = string_utf8_to_bytes(request->ResponseContent->Data, &buffer->Length);
         }
         else
@@ -253,47 +252,11 @@ void appserver_received(Message* request)
     }
     else
     {
-        // tenta por Extension. Testa final da rota
-        FunctionBind* ext = binder_extension_exist(server->BindList, server->Prefix, &request->Route);
-        if (ext)
-        {
-            MessageMatchReceiverCalback func = bind->CallbackFunc;
-            Element* result = func(request);
-
-            HttpStatusCode code = HTTP_STATUS_OK;
-
-            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-            if (result)
-            {
-                String* json = yason_render(result, 1);
-                buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
-                buffer->Type = APPLICATION_JSON;
-            }
-            else if (request->ResponseContent)
-            {
-                if (request->ResponseStatus != 0)
-                {
-                    code = request->ResponseStatus;
-                }
-
-                if (request->ContentType != CONTENT_TYPE_NONE)
-                {
-                    buffer->Data = string_utf8_to_bytes(request->ResponseContent->Data, &buffer->Length);
-                }
-                else
-                {
-                    buffer->Data = string_utf8_to_bytes("Controller method did not return a result", &buffer->Length);
-                    buffer->Type = TEXT_PLAIN;
-                    code = HTTP_STATUS_INTERNAL_ERROR;
-                }
-            }
-
-            appserver_http_response_send(server, request, code, buffer, 0, 0);
-        }
-        else
-        {
-            appserver_web_process(server, request);
-        }
+        ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+        buffer->Data = string_utf8_to_bytes("Controller route not found", &buffer->Length);
+        buffer->Type = TEXT_PLAIN;
+        HttpStatusCode code = HTTP_STATUS_INTERNAL_ERROR;
+        appserver_http_response_send(server, request, code, buffer, 0, 0);
     }
 }
 

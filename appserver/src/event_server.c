@@ -96,7 +96,8 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
 {
     AppServerInfo* server = request->Client->Server;
 
-    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route);
+    int rest = -1;
+    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route, &rest);
     if (bind)
     {
         MessageMatchReceiverCalback func = bind->CallbackFunc;

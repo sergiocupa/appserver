@@ -15,7 +15,39 @@
 
 #include "appserver.h"
 #include "MediaFragmenter.h"
+#include <string.h>
+#include <stdlib.h>
 //#include <dashstream.h>
+
+
+char* get_filename_without_ext(const char* filename)
+{
+    char* dot = strrchr(filename, '.');
+    if (dot == NULL)
+    {
+        return _strdup(filename);  // sem extensão, retorna cópia
+    }
+
+    size_t len = dot - filename;
+    char* result = malloc(len + 1);
+    if (result)
+    {
+        strncpy(result, filename, len);
+        result[len] = '\0';
+    }
+    return result;
+}
+
+int file_exist(const char* filename)
+{
+    FILE* file = fopen(filename, "r");
+    if (file)
+    {
+        fclose(file);
+        return 1; // existe
+    }
+    return 0; // não existe
+}
 
 
 
@@ -76,8 +108,34 @@ void* video_select_stream(Message* message)
 // processa todas as entrada de requisição de inicializador de player DASH
 void* get_mpd(Message* message)
 {
-    // Fazer tratakmentos DASH
-    ...
+    if (message->Route.Count > 0)
+    {
+        String* name = message->Route.Items[message->Route.Count - 1];
+        char* ss = get_filename_without_ext(name->Data);
+        char path[1024]; 
+        sprintf(path, "E:/AmostraVideo/%s.mp4", ss);
+
+        if (file_exist(path))
+        {
+            FrameIndexList* list = mp4builder_get_frames(path);
+            if (!list) return 0;
+
+            size_t mpd_size;
+            char* mpd_content = dash_create_mpd(&list->Metadata, list, 2.0, &mpd_size);
+
+            message->Response = message_response_create(200, APPLICATION_XML);
+            resource_buffer_append(&message->Response->Content, mpd_content, mpd_size);
+
+            // add nos caebcalhos HTTP. Se nao tem funcionalidade para add fields, entao criar
+            ...
+        }
+        else
+        {
+            message->Response = message_response_create_text(500, "File not found");
+        }
+    }
+
+    return 0;
 }
 
 
@@ -144,7 +202,7 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    render_video("e:/AmostraVideo/sample-3.mp4");// small// "e:/sample-5s.mp4"
+    //render_video("e:/AmostraVideo/sample-3.mp4");// small// "e:/sample-5s.mp4"
 
     
 

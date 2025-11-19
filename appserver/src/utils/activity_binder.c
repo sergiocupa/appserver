@@ -20,6 +20,23 @@
 #include <stdlib.h>
 
 
+static int string_endsoff_token(String* a, int a_start, int a_leng, String* token, int token_start, int token_leng)
+{
+    int ia  = a_start;
+    int it  = token_start;
+    int val = token->Length - token_start;
+
+    while (ia < a->Length && it < token->Length)
+    {
+        if (a->Data[ia] != token->Data[it])
+        {
+            return -1;
+        }
+        ia++;
+        it++;
+    }
+    return token->Length > 0 && ia == val;
+}
 
 static int string_ends_off_s(String* route, String* extension)
 {
@@ -254,7 +271,7 @@ FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* pre
 }
 
 
-FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route)
+FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route, int* route_rest_index)
 {
     if (route->Count > 0)
     {
@@ -265,26 +282,57 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix,
             int ax = 0;
             while (ax < binders->Count)
             {
+                int cnt = 0;
                 FunctionBind* bind = binders->Items[ax];
 
-                int cnt = 0;
-                int iz = ix;
-                int iu = 0;
-                while (iz < route->Count && iu < bind->Route.Count)
+                if (bind->Route.Count > 0)
                 {
-                    if (string_equals_s(bind->Route.Items[iu], route->Items[iz]))
+                    int cnt = 0;
+                    int iz = ix;
+                    int testing = 0;
+                    int start_rest = 0;
+                    int iu = 0;
+                    while (iz < route->Count && iu < bind->Route.Count)
                     {
-                        cnt++;
+                        String* a = bind->Route.Items[iu];
+                        String* b = route->Items[iz];
+
+                        if (!testing && string_equals_s(bind->Route.Items[iu], route->Items[iz]))
+                        {
+                            cnt++;
+                        }
+                        else
+                        {
+                            testing = 1;
+                            if (!start_rest)
+                            {
+                                start_rest = 1;
+                                *route_rest_index = ix;
+                            }
+                        }
+                        iz++;
+                        iu++;
                     }
-                    iz++;
-                    iu++;
-                }
 
-                if (cnt == bind->Route.Count)
+                    if (bind->Route.Count > 0 && cnt == bind->Route.Count)
+                    {
+                        return bind;
+                    }
+                }
+                else if (bind->Extension.Length > 0)// testa somente ultimo item
                 {
-                    return  bind;
-                }
+                    if (route->Count > 0) 
+                    {
+                        String* tk = route->Items[route->Count - 1];
+                        int tp = tk->Length - bind->Extension.Length;
+                        if (tp < 0) tp = 0;
 
+                        if (string_endsoff_token(&bind->Extension, 0, bind->Extension.Length, tk, tp, bind->Extension.Length) == 1)
+                        {
+                            return bind;
+                        }
+                    }
+                }
                 ax++;
             }
         }

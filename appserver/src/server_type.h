@@ -158,9 +158,10 @@ extern "C" {
 
     typedef struct _MessageResponseInfo
     {
-        int              Status;
-        ResourceBuffer   Content;
-        MessageFieldList Fields;
+        int               Status;
+        ContentTypeOption ContentType;
+        ResourceBuffer    Content;
+        MessageFieldList  Fields;
     }
     MessageResponseInfo;
 
@@ -366,6 +367,8 @@ extern "C" {
     void resource_buffer_init(ResourceBuffer* source);
     void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, ...);
     void resource_buffer_append_string(ResourceBuffer* buffer, const char* data);
+
+    void message_field_list_add_v(MessageFieldList* list, const char* name, const char* value);
 
 
     void event_list_init(MessageEventList* list);

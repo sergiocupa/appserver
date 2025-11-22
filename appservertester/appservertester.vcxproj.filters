@@ -111,6 +111,9 @@
     <None Include="web\components\protocol\WebRouter2.js">
       <Filter>web\components\protocol</Filter>
     </None>
+    <None Include="web\SimplePlayer.html">
+      <Filter>web</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="web\Open in browser in offline mode.txt">

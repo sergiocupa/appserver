@@ -1,0 +1,455 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASH Player Simples</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+            input[type="text"]:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            button:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .video-container {
+            margin-top: 20px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 500px;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+            .status.loading {
+                background: #fff3cd;
+                color: #856404;
+            }
+
+            .status.success {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .status.error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .status.hidden {
+                display: none;
+            }
+
+        .info {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+            .info code {
+                background: #e9ecef;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: 'Courier New', monospace;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 DASH Video Player</h1>
+
+        <div class="input-group">
+            <input type="text"
+                   id="videoName"
+                   placeholder="Nome do vídeo (ex: video)"
+                   value="sample-3">
+            <button id="playBtn" onclick="playVideo()">▶ Play</button>
+        </div>
+
+        <div class="video-container">
+            <video id="videoPlayer" controls></video>
+        </div>
+
+        <div id="status" class="status hidden"></div>
+
+        <div class="info">
+            <strong>ℹ️ Como usar:</strong><br>
+            • Digite o nome do arquivo (sem extensão)<br>
+            • O player buscará: <code>http://localhost:8080/{nome}.mpd</code><br>
+            • Certifique-se que o servidor C está rodando
+        </div>
+    </div>
+
+    <script>
+
+        BaseUrl = "http://localhost:1234/api";
+
+        class SimpleDASHPlayer {
+            constructor(videoElement,base_url) {
+                this.video = videoElement;
+                this.mediaSource = null;
+                this.sourceBuffer = null;
+                this.currentFragment = 0;
+                this.totalFragments = 0;
+                this.isPlaying = false;
+                this.baseUrl = base_url;
+                this.videoName = '';
+            }
+
+            async play(videoName) {
+                if (this.isPlaying) {
+                    this.stop();
+                }
+
+                this.videoName = videoName;
+                this.currentFragment = 0;
+                this.isPlaying = true;
+
+                this.showStatus('loading', '🔄 Carregando MPD...');
+
+                try {
+                    // 1. Buscar e parsear MPD
+                    const mpd = await this.fetchMPD();
+                    this.showStatus('loading', '📋 MPD carregado. Inicializando player...');
+
+                    debugger;
+
+                    // 2. Configurar MediaSource
+                    await this.setupMediaSource(mpd.codec);
+
+                    // 3. Carregar Initialization Segment
+                    this.showStatus('loading', '🎬 Carregando initialization segment...');
+                    const initSegment = await this.fetchInitSegment();
+                    await this.appendBuffer(initSegment);
+
+                    this.showStatus('success', `✅ Pronto! ${this.totalFragments} fragmentos`);
+
+                    // 4. Começar a carregar fragmentos
+                    this.loadNextFragment();
+
+                } catch (error) {
+                    this.showStatus('error', `❌ Erro: ${error.message}`);
+                    console.error('Erro no player:', error);
+                    this.isPlaying = false;
+                }
+            }
+
+            stop() {
+                this.isPlaying = false;
+                this.currentFragment = 0;
+
+                if (this.sourceBuffer && !this.sourceBuffer.updating) {
+                    try {
+                        this.sourceBuffer.abort();
+                    } catch (e) {
+                        console.warn('Erro ao abortar sourceBuffer:', e);
+                    }
+                }
+
+                if (this.mediaSource && this.mediaSource.readyState === 'open') {
+                    try {
+                        this.mediaSource.endOfStream();
+                    } catch (e) {
+                        console.warn('Erro ao finalizar mediaSource:', e);
+                    }
+                }
+
+                this.video.src = '';
+                this.mediaSource = null;
+                this.sourceBuffer = null;
+            }
+
+            async fetchMPD() {
+                const url = `${this.baseUrl}/${this.videoName}.mpd`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`MPD não encontrado: ${url}`);
+                }
+
+                const text = await response.text();
+                return this.parseMPD(text);
+            }
+
+            parseMPD(xmlText) {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(xmlText, 'text/xml');
+
+                // Extrair codec
+                const adaptationSet = xml.querySelector('AdaptationSet');
+                const codec = adaptationSet?.getAttribute('codecs') || 'avc1.64001f';
+
+                // Extrair duração total
+                const mpd = xml.querySelector('MPD');
+                const durationStr = mpd?.getAttribute('mediaPresentationDuration') || 'PT0S';
+                const totalSeconds = this.parseDuration(durationStr);
+
+                // Extrair duração do fragmento
+                const segmentTemplate = xml.querySelector('SegmentTemplate');
+                const timescale = parseInt(segmentTemplate?.getAttribute('timescale') || '90000');
+                const duration = parseInt(segmentTemplate?.getAttribute('duration') || '180000');
+                const fragmentDuration = duration / timescale;
+
+                // Calcular número de fragmentos
+                this.totalFragments = Math.ceil(totalSeconds / fragmentDuration);
+
+                return {
+                    codec: codec,
+                    totalSeconds: totalSeconds,
+                    fragmentDuration: fragmentDuration,
+                    totalFragments: this.totalFragments
+                };
+            }
+
+            parseDuration(duration) {
+                // Parse PT1M30S -> 90 segundos
+                const matches = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
+                const minutes = parseInt(matches?.[1] || '0');
+                const seconds = parseInt(matches?.[2] || '0');
+                return minutes * 60 + seconds;
+            }
+
+            async setupMediaSource(codec) {
+                return new Promise((resolve, reject) => {
+                    this.mediaSource = new MediaSource();
+                    this.video.src = URL.createObjectURL(this.mediaSource);
+
+                    this.mediaSource.addEventListener('sourceopen', () => {
+                        try {
+                            const mimeType = `video/mp4; codecs="${codec}"`;
+
+                            if (!MediaSource.isTypeSupported(mimeType)) {
+                                reject(new Error(`Codec não suportado: ${mimeType}`));
+                                return;
+                            }
+
+                            this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeType);
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+
+                    this.mediaSource.addEventListener('sourceended', () => {
+                        console.log('MediaSource finalizado');
+                    });
+
+                    this.mediaSource.addEventListener('error', (e) => {
+                        reject(new Error('Erro no MediaSource'));
+                    });
+                });
+            }
+
+            async fetchInitSegment() {
+                const url = `${this.baseUrl}/init.mp4`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Init segment não encontrado');
+                }
+
+                return await response.arrayBuffer();
+            }
+
+            async fetchFragment(number) {
+                const url = `${this.baseUrl}/fragment_${number}.m4s`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`Fragmento ${number} não encontrado`);
+                }
+
+                return await response.arrayBuffer();
+            }
+
+            async loadNextFragment() {
+                if (!this.isPlaying || this.currentFragment >= this.totalFragments) {
+                    if (this.mediaSource && this.mediaSource.readyState === 'open') {
+                        this.mediaSource.endOfStream();
+                        this.showStatus('success', '✅ Reprodução completa!');
+                    }
+                    return;
+                }
+
+                try {
+                    const fragment = await this.fetchFragment(this.currentFragment);
+                    await this.appendBuffer(fragment);
+
+                    this.currentFragment++;
+
+                    // Atualizar status
+                    const progress = Math.round((this.currentFragment / this.totalFragments) * 100);
+                    this.showStatus('loading', `⏳ Carregando: ${this.currentFragment}/${this.totalFragments} (${progress}%)`);
+
+                    // Carregar próximo fragmento
+                    this.loadNextFragment();
+
+                } catch (error) {
+                    console.error('Erro ao carregar fragmento:', error);
+                    this.showStatus('error', `❌ Erro no fragmento ${this.currentFragment}`);
+                }
+            }
+
+            appendBuffer(data) {
+                return new Promise((resolve, reject) => {
+                    if (!this.sourceBuffer) {
+                        reject(new Error('SourceBuffer não inicializado'));
+                        return;
+                    }
+
+                    const appendData = () => {
+                        try {
+                            this.sourceBuffer.appendBuffer(data);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+
+                    if (this.sourceBuffer.updating) {
+                        this.sourceBuffer.addEventListener('updateend', appendData, { once: true });
+                    } else {
+                        appendData();
+                    }
+
+                    this.sourceBuffer.addEventListener('updateend', resolve, { once: true });
+                    this.sourceBuffer.addEventListener('error', reject, { once: true });
+                });
+            }
+
+            showStatus(type, message) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = `status ${type}`;
+                statusDiv.textContent = message;
+                statusDiv.classList.remove('hidden');
+            }
+        }
+
+        // Instância global do player
+        const player = new SimpleDASHPlayer(document.getElementById('videoPlayer'), BaseUrl);
+
+        function playVideo() {
+            const videoName = document.getElementById('videoName').value.trim();
+
+            if (!videoName) {
+                alert('Por favor, digite o nome do vídeo');
+                return;
+            }
+
+            const playBtn = document.getElementById('playBtn');
+            playBtn.disabled = true;
+            playBtn.textContent = '⏳ Carregando...';
+
+            player.play(videoName).finally(() => {
+                playBtn.disabled = false;
+                playBtn.textContent = '▶ Play';
+            });
+        }
+
+        // Permitir Enter para play
+        document.getElementById('videoName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                playVideo();
+            }
+        });
+
+        // Verificar suporte a MediaSource
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!window.MediaSource) {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = '❌ Seu navegador não suporta Media Source Extensions';
+                document.getElementById('status').classList.remove('hidden');
+                document.getElementById('playBtn').disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>

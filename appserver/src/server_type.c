@@ -19,6 +19,89 @@
 #include <string.h>
 
 
+
+void message_field_param_data(byte* data, int data_leng, int position, int length, MessageFieldParam* param)
+{
+    int s = string_index_of_char(data, data_leng, '=', position, length);
+    if (s >= 0)
+    {
+        string_sub(data, data_leng, position, (s - position), false, &param->Name);
+        string_sub(data, data_leng, (s + 1), (length - (s - position) - 1), false, &param->Value);
+    }
+    else
+    {
+        string_sub(data, data_leng, position, length, false, &param->Value);
+    }
+}
+
+
+void message_field_param_scalar(byte* data, MessageFieldParam* param)
+{
+    param->IsScalar   = true;
+    param->IsEndGroup = true;
+    param->IsEndParam = true;
+
+    string_append(&param->Name, data);
+}
+
+
+void message_field_param_add(byte* data, int begin, int end, bool first, bool is_within, MessageFieldParam* param)
+{
+    if (((begin + 1) < end) && (data[begin] == ' '))
+    {
+        begin++;
+    }
+
+    int m = 0;
+    int r = !is_within ? string_index_first(data, end + 1, " ,;(", 4, begin, &m)
+                       : string_index_first(data, end + 1, ",;)", 3, begin, &m);
+
+    if (r >= 0)
+    {
+        if (!is_within && r == 3)
+        {
+            param->IsHardware = true;
+            is_within = true;
+            message_field_param_add(data, (m + 1), end, false, is_within, param);
+            return;
+        }
+
+        int en = m - begin;
+        if (en > 0)
+        {
+            if (is_within && r == 2)
+            {
+                is_within = false;
+            }
+
+            message_field_param_data(data, end + 1, begin, (m - begin), param);
+
+            param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+            param->Next->Previus = param;
+            param->Next->IsHardware = is_within;
+
+            message_field_param_add(data, (m + 1), end, false, is_within, param->Next);
+
+            if (r == 0 || r == 1) param->IsEndGroup = true; else param->IsEndParam = true;
+        }
+        else
+        {
+            param->IsEndGroup = true;
+            param->IsEndParam = true;
+            param->IsScalar = first;
+            message_field_param_data(data, end + 1, begin, (end - begin), param);
+        }
+    }
+    else
+    {
+        param->IsEndGroup = true;
+        param->IsEndParam = true;
+        param->IsScalar = first;
+        message_field_param_data(data, end + 1, begin, (end - begin), param);
+    }
+}
+
+
 void message_field_param_release(MessageFieldParam* param);
 
 void message_field_param_release(MessageFieldParam* param)
@@ -79,6 +162,16 @@ void message_field_list_add(MessageFieldList* list, MessageField* field)
         list->Items[list->Count] = field;
         list->Count++;
     }
+}
+
+void message_field_list_add_v(MessageFieldList* list, const char* name, const char* value)
+{
+    MessageField* field = message_field_create(true);
+
+    string_append(&field->Name, name);
+    message_field_param_scalar(value, &field->Param);
+
+    message_field_list_add(list,field);
 }
 
 MessageField* message_field_release(MessageField* ins)
@@ -522,7 +615,7 @@ MessageResponseInfo* message_response_create(int status, ContentTypeOption type)
     memset(ar, 0, sizeof(MessageResponseInfo));
     resource_buffer_init(&ar->Content);
     event_list_init(&ar->Fields);
-    ar->Content.Type = type;
+    ar->ContentType = type;
     ar->Status = status;
     return ar;
 }

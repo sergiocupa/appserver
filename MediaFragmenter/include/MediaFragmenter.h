@@ -33,7 +33,8 @@ extern "C" {
 
 	// Manipuladores de MP4
 	FrameIndexList* mp4builder_get_frames(const char* path);
-
+	int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, MediaBuffer* output);
+	int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output);
 
 	// Visualizador
 	MediaSourceSession* media_sim_create(int width, int height);

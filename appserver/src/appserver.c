@@ -40,6 +40,14 @@ AppServerList Servers;
 
 
 
+void send_response_server_error(Message* request, const char* msg)
+{
+    int msgz = sizeof(msg);
+    ResourceBuffer rb = { .Data = msg, .Length = msgz, .Type = TEXT_PLAIN };
+    appserver_http_response_send(request->Client->Server, request, HTTP_STATUS_INTERNAL_ERROR, &rb, 0, 0);
+}
+
+
 void _ReportRequest(Message* request)
 {
     char* a  = message_command_titule(request->Cmd);
@@ -215,50 +223,45 @@ void appserver_received(Message* request)
         MessageMatchReceiverCalback func = bind->CallbackFunc;
         Element* result = func(request);
 
-        HttpStatusCode code = HTTP_STATUS_OK;
-
-        ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
         if (result)
         {
+            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
             String* json = yason_render(result, 1);
             buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
             buffer->Type = APPLICATION_JSON;
+            appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0, 0);
+            return;
         }
-        else if(request->Response)
+        else if (request->Response)
         {
-            if (request->ResponseStatus != 0) code = request->ResponseStatus;
+            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
 
-            // usar buffer do request->Response
-            // depois de send, liberar tudo.
-
-            buffer->Type = (request->ContentType == CONTENT_TYPE_NONE) ? TEXT_PLAIN : request->ContentType;
-            buffer->Data = string_utf8_to_bytes(request->ResponseContent->Data, &buffer->Length);
-        }
-        else
-        {
-            if (request->ResponseStatus != 0)
+            if (request->Response->ContentType != CONTENT_TYPE_NONE)
             {
-                code = request->ResponseStatus;
+                ResourceBuffer rb;
+                rb.Data   = request->Response->Content.Data;
+                rb.Length = request->Response->Content.Length;
+                rb.Type   = request->Response->ContentType;
+                appserver_http_response_send(server, request, HTTP_STATUS_OK, &rb, 0, 0);
             }
             else
             {
-                buffer->Data = string_utf8_to_bytes("Controller method did not return a result", &buffer->Length);
-                buffer->Type = TEXT_PLAIN;
-                code         = HTTP_STATUS_INTERNAL_ERROR;
+                send_response_server_error(request, "The content type was not defined.");
             }
         }
-
-        appserver_http_response_send(server, request, code, buffer, 0,0);
+        else
+        {
+            send_response_server_error(request, "Instantiating a response is required if no return object is defined.");
+        }
     }
     else
     {
-        ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-        buffer->Data = string_utf8_to_bytes("Controller route not found", &buffer->Length);
-        buffer->Type = TEXT_PLAIN;
-        HttpStatusCode code = HTTP_STATUS_INTERNAL_ERROR;
-        appserver_http_response_send(server, request, code, buffer, 0, 0);
+        send_response_server_error(request, "Controller route not found.");
     }
 }
+
+
+
 
 
 

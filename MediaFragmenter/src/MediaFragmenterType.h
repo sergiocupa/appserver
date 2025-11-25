@@ -47,7 +47,6 @@ extern "C" {
 
 
     typedef struct MP4InitConfig {
-        uint32_t Timescale;           // Timescale (ex: 90000)
         uint32_t TrackID;             // ID da track (geralmente 1)
         uint64_t FragmentDuration;    // Duração típica de fragmento (para mvex)
 

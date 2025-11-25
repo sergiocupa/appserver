@@ -495,11 +495,11 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
 {
     // Flags corrigidos:
     // 0x000001 = data-offset-present
-    // NÃO incluir 0x000004 (first-sample-flags) - Chrome rejeita
+    // 0x000004 = first-sample-flags-present (para indicar keyframe)
     // NÃO incluir 0x000100 (sample-duration) - usaremos default do trex
-    uint32_t flags = 0x00000001;  // apenas data-offset
+    uint32_t flags = 0x00000001;  // data-offset + first-sample-flags
 
-    // Tamanho: header(8) + version/flags(4) + count(4) + data_offset(4) = 20
+    // Tamanho: header(8) + flags(4) + count(4) + data_offset(4) + first_sample_flags(4) = 24
     output->Size = 20;
     output->Data = malloc(output->Size);
 
@@ -523,6 +523,12 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
 
     // Data offset (offset do mdat relativo ao início do moof)
     buffer_write32(p, data_offset);
+    p += 4;
+
+    // First sample flags:
+    // 0x02000000 = sample_is_non_sync_sample = 0 (é sync/keyframe)
+    // Para fragmentos DASH, o primeiro frame deve ser um keyframe (IDR)
+    //buffer_write32(p, 0x02000000);  // Non-sync = false → é keyframe
 }
 
 // Cria box traf (Track Fragment)
@@ -572,7 +578,7 @@ static void create_moof_box(uint32_t sequence_number, uint32_t track_id, uint64_
     create_tfhd_box(track_id, &tfhd_temp);
     create_tfdt_box(base_media_decode_time, &tfdt_temp);
 
-    // trun tem 20 bytes (sem first-sample-flags)
+    // MUDANÇA: trun agora tem 24 bytes (era 20)
     uint32_t trun_size = 20;
     uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + trun_size;
     free(tfhd_temp.Data);
@@ -807,9 +813,10 @@ static void create_trex_box(uint32_t track_id, uint32_t default_sample_duration,
     p += 4;
 
     // Default sample flags
-    // 0x00010000 = sample_depends_on=1 (depende de outro)
-    // 0x01000000 = sample_is_non_sync_sample (não é keyframe por padrão)
-    buffer_write32(p, 0x01010000);
+    // 0x00010000 = sample_depends_on=1 (samples dependentes por padrão = P/B frames)
+    // 0x01000000 = sample_is_non_sync_sample (REMOVIDO - causa rejeição no Chrome!)
+    // Fragmentos DASH começam com keyframe, então não precisamos marcar como non-sync
+    buffer_write32(p, 0x00010000);
     p += 4;
 }
 
@@ -857,8 +864,11 @@ static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, 
     write_fourcc(p, "tkhd");
     p += 4;
 
-    // Version (0) + Flags (track enabled + in movie + in preview)
-    buffer_write32(p, 0x00000007);
+    // Version (0) + Flags (track enabled + in movie)
+    // 0x000001 = track enabled
+    // 0x000002 = track in movie
+    // 0x000004 = track in preview (REMOVIDO - causa problema no Chrome!)
+    buffer_write32(p, 0x00000003);
     p += 4;
 
     // Creation time
@@ -1615,13 +1625,6 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
         return -3;
     }
 
-    // Validar configuração
-    if (config->Timescale == 0)
-    {
-        fprintf(stderr, "ERRO: Timescale inválido\n");
-        return -4;
-    }
-
     if (config->TrackID == 0)
     {
         fprintf(stderr, "ERRO: TrackID inválido\n");
@@ -1640,7 +1643,7 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     // ───────────────────────────────────────────────────────────────
 
     MediaBuffer moov;
-    create_moov_box(metadata, config->Timescale, config->TrackID, config->FragmentDuration, metadata->Fps, &moov);
+    create_moov_box(metadata, metadata->Timescale, config->TrackID, config->FragmentDuration, metadata->Fps, &moov);
 
     if (!moov.Data)
     {

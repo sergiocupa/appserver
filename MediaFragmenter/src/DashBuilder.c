@@ -185,7 +185,7 @@ char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragme
     // LOG DE DIAGNÓSTICO
     // ═══════════════════════════════════════════════════════════════════════
 
-    printf("═══════════════════════════════════════════════════\n");
+  /*  printf("═══════════════════════════════════════════════════\n");
     printf("DASH MPD Generation:\n");
     printf("───────────────────────────────────────────────────\n");
     printf("  Video: %dx%d @ %.2f fps\n", meta->Width, meta->Height, fps);
@@ -196,9 +196,8 @@ char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragme
     printf("  Fragment duration: %.2f seconds\n", fragment_duration_sec);
     printf("  Fragment duration (timescale units): %u\n", duration_units);
     printf("  Total fragments: %d\n", total_fragments);
-    printf("  Bitrate: %lu bps (%.2f Mbps)\n",
-        (unsigned long)bitrate, bitrate / 1000000.0);
-    printf("═══════════════════════════════════════════════════\n");
+    printf("  Bitrate: %lu bps (%.2f Mbps)\n", (unsigned long)bitrate, bitrate / 1000000.0);
+    printf("═══════════════════════════════════════════════════\n");*/
 
     // ═══════════════════════════════════════════════════════════════════════
     // CONSTRUIR MPD XML

@@ -1,4 +1,4 @@
-# AppServer
+<img width="1674" height="915" alt="image" src="https://github.com/user-attachments/assets/914032f7-2b74-4ccc-b4f6-48d3729e6578" /># AppServer
 HTTP, Application and Video Stream server. Can also be used as a WebAPI.
 For use in embedded systems, but can also be used as a micro WebAPI.
 At the moment, 07/11/2025, the implementation is not complete.
@@ -27,9 +27,9 @@ Features to be implemented:
     - [X] Create frame grouping ([moof][mdat]).
     - [X] Create an MP4 file with the initialization header.
     - [X] Create an MP4 file containing video fragment.
-    - 🧩 Implement handshake between client and HTTP server.
-    - [ ] Implement an HTML page for browser-based testing.
-    - [ ] Perform browser tests.
+    - [X] Implement handshake between client and HTTP server.
+    - [X] Implement an HTML page for browser-based testing.
+    - 🧩 Perform browser tests.
     
     **MP4 creator**
     - [ ] Allow creation of a single file, header-only file, or fragment-only files.

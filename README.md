@@ -1,4 +1,4 @@
-<img width="1674" height="915" alt="image" src="https://github.com/user-attachments/assets/914032f7-2b74-4ccc-b4f6-48d3729e6578" /># AppServer
+# AppServer
 HTTP, Application and Video Stream server. Can also be used as a WebAPI.
 For use in embedded systems, but can also be used as a micro WebAPI.
 At the moment, 07/11/2025, the implementation is not complete.

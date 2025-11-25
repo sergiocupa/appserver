@@ -5,6 +5,45 @@
 #include "BufferUtil.h"
 
 
+static int extract_sample_sizes(uint8_t* buffer, size_t buffer_size, uint32_t expected_count, uint32_t** sizes_out, uint32_t* actual_count_out)
+{
+    if (!buffer || !sizes_out || !actual_count_out) {
+        return -1;
+    }
+
+    uint32_t* sizes = (uint32_t*)malloc(expected_count * sizeof(uint32_t));
+    if (!sizes) {
+        return -1;
+    }
+
+    uint32_t count = 0;
+    size_t offset = 0;
+
+    while (offset < buffer_size && count < expected_count) {
+        if (offset + 4 > buffer_size) {
+            break;
+        }
+
+        // Ler tamanho (4 bytes, big-endian)
+        uint32_t size = ((uint32_t)buffer[offset] << 24) |
+            ((uint32_t)buffer[offset + 1] << 16) |
+            ((uint32_t)buffer[offset + 2] << 8) |
+            ((uint32_t)buffer[offset + 3]);
+
+        if (size == 0 || size > buffer_size - offset - 4) {
+            break;
+        }
+
+        sizes[count] = size + 4;  // size do sample + 4 bytes do campo size
+        count++;
+        offset += 4 + size;
+    }
+
+    *sizes_out = sizes;
+    *actual_count_out = count;
+    return 0;
+}
+
 
 static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszData* stsz, StcoData* stco, StscData* stsc, SttsData* stts, uint32_t* timescale, int* codec)
 {
@@ -490,17 +529,14 @@ static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output
     }
 }
 
-// Cria box trun (Track Fragment Run). Simplificado: assume duração fixa por sample
-static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uint32_t data_offset, MediaBuffer* output)
-{
-    // Flags corrigidos:
-    // 0x000001 = data-offset-present
-    // 0x000004 = first-sample-flags-present (para indicar keyframe)
-    // NÃO incluir 0x000100 (sample-duration) - usaremos default do trex
-    uint32_t flags = 0x00000001;  // data-offset + first-sample-flags
 
-    // Tamanho: header(8) + flags(4) + count(4) + data_offset(4) + first_sample_flags(4) = 24
-    output->Size = 20;
+static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uint32_t data_offset, uint32_t* sample_sizes, MediaBuffer* output)
+{
+    // Flags: data-offset + sample-duration + sample-size
+    uint32_t flags = 0x00000001 | 0x000100 | 0x000200;
+
+    // Tamanho dinâmico
+    output->Size = 8 + 4 + 4 + 4 + (sample_count * 8);
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
@@ -510,7 +546,7 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
     p += 4;
 
     // Box type: 'trun'
-    p[0] = 't'; p[1] = 'r'; p[2] = 'u'; p[3] = 'n';
+    write_fourcc(p, "trun");
     p += 4;
 
     // Version (0) + Flags
@@ -521,27 +557,34 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
     buffer_write32(p, sample_count);
     p += 4;
 
-    // Data offset (offset do mdat relativo ao início do moof)
+    // Data offset
     buffer_write32(p, data_offset);
     p += 4;
 
-    // First sample flags:
-    // 0x02000000 = sample_is_non_sync_sample = 0 (é sync/keyframe)
-    // Para fragmentos DASH, o primeiro frame deve ser um keyframe (IDR)
-    //buffer_write32(p, 0x02000000);  // Non-sync = false → é keyframe
+    // ✅ CRÍTICO: Escrever duration e size de cada sample
+    for (uint32_t i = 0; i < sample_count; i++)
+    {
+        buffer_write32(p, sample_duration);
+        p += 4;
+
+        buffer_write32(p, sample_sizes[i]);
+        p += 4;
+    }
 }
 
+
 // Cria box traf (Track Fragment)
-static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, uint32_t moof_size, MediaBuffer* output)
+static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, uint32_t moof_size, uint32_t* sample_sizes, MediaBuffer* output)
 {
     MediaBuffer tfhd, tfdt, trun;
 
     create_tfhd_box(track_id, &tfhd);
     create_tfdt_box(base_media_decode_time, &tfdt);
 
-    // data_offset = tamanho do moof + 8 (header do mdat)
+    // Data offset = moof_size + 8 (header do mdat)
     uint32_t data_offset = moof_size + 8;
-    create_trun_box(sample_count, sample_duration, data_offset, &trun);
+
+    create_trun_box(sample_count, sample_duration, data_offset, sample_sizes, &trun);
 
     output->Size = 8 + tfhd.Size + tfdt.Size + trun.Size;
     output->Data = malloc(output->Size);
@@ -551,7 +594,7 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
     buffer_write32(p, output->Size);
     p += 4;
 
-    p[0] = 't'; p[1] = 'r'; p[2] = 'a'; p[3] = 'f';
+    write_fourcc(p, "traf");
     p += 4;
 
     memcpy(p, tfhd.Data, tfhd.Size);
@@ -568,27 +611,36 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
 }
 
 // Cria box moof (Movie Fragment)
-static void create_moof_box(uint32_t sequence_number, uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, MediaBuffer* output)
+static void create_moof_box(
+    uint32_t sequence_number,
+    uint32_t track_id,
+    uint64_t base_media_decode_time,
+    uint32_t sample_count,
+    uint32_t sample_duration,
+    uint32_t* sample_sizes,
+    MediaBuffer* output)
 {
     MediaBuffer mfhd;
     create_mfhd_box(sequence_number, &mfhd);
 
-    // Estimar tamanho do moof para calcular data_offset
+    // Estimar tamanho do moof
     MediaBuffer tfhd_temp, tfdt_temp;
     create_tfhd_box(track_id, &tfhd_temp);
     create_tfdt_box(base_media_decode_time, &tfdt_temp);
 
-    // MUDANÇA: trun agora tem 24 bytes (era 20)
-    uint32_t trun_size = 20;
+    // ✅ CRÍTICO: Tamanho correto do trun (não mais fixo em 20!)
+    uint32_t trun_size = 8 + 4 + 4 + 4 + (sample_count * 8);
     uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + trun_size;
+
     free(tfhd_temp.Data);
     free(tfdt_temp.Data);
 
     uint32_t moof_size = 8 + mfhd.Size + traf_size;
 
-    // Criar traf com tamanho correto
+    // ✅ Criar traf passando sample_sizes
     MediaBuffer traf;
-    create_traf_box(track_id, base_media_decode_time, sample_count, sample_duration, moof_size, &traf);
+    create_traf_box(track_id, base_media_decode_time, sample_count,
+        sample_duration, moof_size, sample_sizes, &traf);
 
     // Recalcular tamanho real
     moof_size = 8 + mfhd.Size + traf.Size;
@@ -601,7 +653,7 @@ static void create_moof_box(uint32_t sequence_number, uint32_t track_id, uint64_
     buffer_write32(p, moof_size);
     p += 4;
 
-    p[0] = 'm'; p[1] = 'o'; p[2] = 'o'; p[3] = 'f';
+    write_fourcc(p, "moof");
     p += 4;
 
     memcpy(p, mfhd.Data, mfhd.Size);
@@ -1686,7 +1738,15 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
 }
 
 
-int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output)
+int mp4builder_create_fragment(
+    FILE* f,
+    FrameIndexList* frame_list,
+    double timeline_offset,
+    double timeline_fragment_duration,
+    int frame_offset,
+    int frame_length,
+    MP4FragmentInfo* frag_info,
+    MediaBuffer* output)
 {
     if (!f || !frame_list || !frag_info || !output)
     {
@@ -1695,9 +1755,8 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
     }
 
     // ───────────────────────────────────────────────────────────────
-    // PASSO 1: Usar Função 01 para obter dados H.264 (size-prefixed)
+    // PASSO 1: Obter dados H.264 (size-prefixed)
     // ───────────────────────────────────────────────────────────────
-
     MediaBuffer h264_data;
 
     int result = h264_create_fragment(
@@ -1707,7 +1766,7 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
         timeline_fragment_duration,
         frame_offset,
         frame_length,
-        0,  // NÃO incluir SPS/PPS (vão no init segment)
+        0,  // NÃO incluir SPS/PPS
         H264_FORMAT_MP4,  // Formato size-prefixed
         &h264_data
     );
@@ -1719,14 +1778,12 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
     }
 
     // ───────────────────────────────────────────────────────────────
-    // PASSO 2: Calcular número de samples (frames)
+    // PASSO 2: Calcular range de frames
     // ───────────────────────────────────────────────────────────────
-
     int start_frame, end_frame;
 
     if (frame_offset < 0)
     {
-        // Timeline
         float fps = frame_list->Metadata.Fps;
         if (fps <= 0) fps = 30.0f;
 
@@ -1738,7 +1795,6 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
     }
     else
     {
-        // Frames
         start_frame = frame_offset;
         end_frame = frame_offset + frame_length;
 
@@ -1748,28 +1804,48 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
 
     uint32_t sample_count = end_frame - start_frame;
 
-    // Calcular duração por sample (assumindo FPS constante)
-    uint32_t sample_duration = frag_info->Timescale / (frame_list->Metadata.Fps > 0 ? frame_list->Metadata.Fps : 30.0f);
+    // ───────────────────────────────────────────────────────────────
+    // ✅ PASSO 2.5: EXTRAIR TAMANHOS DOS SAMPLES (NOVO!)
+    // ───────────────────────────────────────────────────────────────
+    uint32_t* sample_sizes = NULL;
+    uint32_t actual_sample_count = 0;
+
+    if (extract_sample_sizes(h264_data.Data, h264_data.Size,
+        sample_count, &sample_sizes, &actual_sample_count) != 0)
+    {
+        fprintf(stderr, "ERRO: Falha ao extrair tamanhos dos samples\n");
+        free(h264_data.Data);
+        return -3;
+    }
+
+    // Ajustar se necessário
+    if (actual_sample_count != sample_count) {
+        sample_count = actual_sample_count;
+    }
+
+    // Calcular duração por sample
+    uint32_t sample_duration = frag_info->Timescale /
+        (frame_list->Metadata.Fps > 0 ? frame_list->Metadata.Fps : 30.0f);
 
     // ───────────────────────────────────────────────────────────────
     // PASSO 3: Criar box moof
     // ───────────────────────────────────────────────────────────────
-
     MediaBuffer moof;
 
-    create_moof_box(frag_info->SequenceNumber, frag_info->TrackID, frag_info->BaseMediaDecodeTime, sample_count, sample_duration, &moof);
+    // ✅ Passar sample_sizes para create_moof_box
+    create_moof_box(frag_info->SequenceNumber, frag_info->TrackID,
+        frag_info->BaseMediaDecodeTime, sample_count,
+        sample_duration, sample_sizes, &moof);
 
     // ───────────────────────────────────────────────────────────────
     // PASSO 4: Criar box mdat
     // ───────────────────────────────────────────────────────────────
-
     MediaBuffer mdat;
     create_mdat_box(h264_data.Data, h264_data.Size, &mdat);
 
     // ───────────────────────────────────────────────────────────────
     // PASSO 5: Juntar moof + mdat
     // ───────────────────────────────────────────────────────────────
-
     output->Size = moof.Size + mdat.Size;
     output->Data = malloc(output->Size);
 
@@ -1779,23 +1855,20 @@ int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timel
         free(h264_data.Data);
         free(moof.Data);
         free(mdat.Data);
+        free(sample_sizes);  // ✅ LIBERAR
         return -2;
     }
 
     memcpy(output->Data, moof.Data, moof.Size);
     memcpy(output->Data + moof.Size, mdat.Data, mdat.Size);
 
-    /*   printf("Fragmento MP4 criado:\n");
-       printf("   Sequence: %u\n", frag_info->SequenceNumber);
-       printf("   Samples: %u\n", sample_count);
-       printf("   moof: %zu bytes\n", moof.Size);
-       printf("   mdat: %zu bytes\n", mdat.Size);
-       printf("   Total: %zu bytes\n", output->Size);*/
-
-       // Liberar buffers temporários
+    // ───────────────────────────────────────────────────────────────
+    // PASSO 6: Liberar buffers temporários
+    // ───────────────────────────────────────────────────────────────
     free(h264_data.Data);
     free(moof.Data);
     free(mdat.Data);
+    free(sample_sizes);  // ✅ LIBERAR
 
     return 0;
 }

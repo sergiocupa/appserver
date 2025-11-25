@@ -28,6 +28,10 @@ extern "C" {
 	void mp4diag_video_metadata(const VideoMetadata* meta);
 
 
+	void mp4diag_analyze_init(const uint8_t* data, size_t size);
+	void mp4diag_analyze_fragment(const uint8_t* data, size_t size);
+
+
 #ifdef __cplusplus
 }
 #endif

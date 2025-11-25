@@ -197,11 +197,12 @@ void message_parser_method_param(Message* message)
 	if (message->Route.Count > 0)
 	{
 		String* data = message->Route.Items[message->Route.Count - 1];
-		int start = string_index_of_char(data, data->Length, '?', 0, data->Length);
+		int start = string_index_of_char(data->Data, data->Length, '?', 0, data->Length);
 		if (start > 0)
 		{
-			message->Param = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
-			message_parser_method_param_rec(data, start+1, message->Param);
+			// TO-DO: erro em message_parser_method_param_rec
+			//message->Param = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
+			//message_parser_method_param_rec(data->Data, start+1, message->Param);
 
 			data->Data[start] = '\0';
 			data->Length      = start;

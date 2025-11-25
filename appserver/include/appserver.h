@@ -31,6 +31,8 @@ extern "C" {
     void app_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
     MessageEmitterCalback app_add_emitter(FunctionBindList* list, const char* route);
 
+    void appserver_http_response_send(AppServerInfo* server, Message* request, HttpStatusCode http_status, ResourceBuffer* object, HeaderAppender header_appender, void* appender_args);
+
 
 #ifdef __cplusplus
 }

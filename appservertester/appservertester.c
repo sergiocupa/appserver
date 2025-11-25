@@ -1,4 +1,4 @@
-﻿//  MIT License – Modified for Mandatory Attribution
+                                                                                                                                                                                                                                                                                                                                 //  MIT License – Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -20,7 +20,7 @@
 //#include <dashstream.h>
 
 
-FrameIndexList* List;
+FrameIndexList* _List;
 int Index;
 
 
@@ -69,7 +69,7 @@ int string_index_end_cs(const char* data, int length, int end, const char token)
     return -1;
 }
 
-int numeric_parse_int(char* data, int index, int length, int* result)
+int _numeric_parse_int(char* data, int index, int length, int* result)
 {
     if (length > 22) length = 22;
     if (length < 0) length = 22;
@@ -117,10 +117,10 @@ int GetFragmentIndex(String* va)
         if (ext >= 0)
         {
             int sep = string_index_end_cs(va->Data, ext, 0, '_');
-            if (sep > ext)
+            if (sep >= 0 && sep < ext)
             {
                 int val = 0;
-                if (!numeric_parse_int(va->Data, sep + 1, (ext - sep + 1), &val))
+                if (!_numeric_parse_int(va->Data, sep + 1, (ext - sep -1), &val))
                 {
                     return val;
                 }
@@ -197,7 +197,7 @@ void* get_mpd(Message* message)
         String* name = message->Route.Items[message->Route.Count - 1];
         char* ss = get_filename_without_ext(name->Data);
         char path[1024];
-        sprintf(path, "E:/AmostraVideo/%.mp4", ss);
+        sprintf(path, "E:/AmostraVideo/%s.mp4", ss);
 
         if (file_exist(path))
         {
@@ -226,12 +226,12 @@ void* get_mpd(Message* message)
 
 void* init_mp4(Message* message)
 {
-    List = mp4builder_get_frames("E:/AmostraVideo/sample-3.mp4");
-    if (!List) return 0;
+    _List = mp4builder_get_frames("E:/AmostraVideo/sample-3.mp4");
+    if (!_List) return 0;
 
     MP4InitConfig config;
     MediaBuffer init_segment;
-    int result = mp4builder_create_init(&List->Metadata, &config, &init_segment);
+    int result = mp4builder_create_init(&_List->Metadata, &config, &init_segment);
 
     if (result != 0 || !init_segment.Data)
     {
@@ -240,6 +240,11 @@ void* init_mp4(Message* message)
         //if (video_name && !message->Params.Count) free(video_name);
         return NULL;
     }
+
+
+    FILE* arq = fopen("E:/AmostraVideo/sample-3_init.mp4", "wb");
+    fwrite(init_segment.Data, init_segment.Size, 1, arq);
+    fclose(arq);
 
     message->Response                 = message_response_create(HTTP_STATUS_OK, APPLICATION_OCTET_STREAM);
     message->Response->Content.Data   = (char*)init_segment.Data;
@@ -254,7 +259,7 @@ void* init_mp4(Message* message)
 
 void* fragment_m4s(Message* message)
 {
-    if (!List) return 0;
+    if (!_List) return 0;
 
     FILE* f = fopen("E:/AmostraVideo/sample-3.mp4", "rb");
     if (!f)
@@ -268,9 +273,9 @@ void* fragment_m4s(Message* message)
 
     if (frag_ix >= 0)
     {
-        if (frag_ix < List->Count)
+        if (frag_ix < _List->Count)
         {
-            FrameIndex* frame = List->Frames[frag_ix];
+            FrameIndex* frame = _List->Frames[frag_ix];
 
             int range = 60;// Para 2seg
             double timeline_offset = frag_ix * range;
@@ -278,18 +283,24 @@ void* fragment_m4s(Message* message)
             MP4FragmentInfo frag_info = {
             .SequenceNumber = frag_ix,
             .TrackID = 1,
-            .Timescale = List->Metadata.Timescale,
-            .BaseMediaDecodeTime = (uint64_t)(timeline_offset * List->Metadata.Timescale)
+            .Timescale = _List->Metadata.Timescale,
+            .BaseMediaDecodeTime = (uint64_t)(timeline_offset * _List->Metadata.Timescale)
             };
           
             MediaBuffer fragment = { 0 };
-            int res = mp4builder_create_fragment(f, List, -1, -1, frag_ix, range, &frag_info, &fragment);
+            int res = mp4builder_create_fragment(f, _List, -1, -1, frag_ix, range, &frag_info, &fragment);
 
             if (res != 0 || !fragment.Data)
             {
                 message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Failed to create fragment");
                 return 0;
             }
+
+
+            FILE* arq = fopen("E:/AmostraVideo/sample-3_frag_01.m4s", "wb");
+            fwrite(fragment.Data, fragment.Size, 1, arq);
+            fclose(arq);
+
 
             message->Response                 = message_response_create(HTTP_STATUS_OK, APPLICATION_OCTET_STREAM);
             message->Response->Content.Data   = (char*)fragment.Data;
@@ -390,7 +401,7 @@ int main()
     //app_add_receiver(bind, "service/videoplayer", video_player, true);
     app_add_web_resource(bind, "service/videolist", video_list);
     app_add_receiver(bind, "index", app_root, true);
-    app_add_receiver(bind, "init.mp4", app_root, true);
+    app_add_receiver(bind, "init.mp4", init_mp4, true);
     app_add_receiver_extension(bind, ".mpd", get_mpd, true);
     app_add_receiver_extension(bind, ".m4s", fragment_m4s, true);
     app_add_receiver(bind, "service/login", app_login, true);
@@ -410,4 +421,4 @@ int main()
 
 	getchar();
 	return 0;
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           

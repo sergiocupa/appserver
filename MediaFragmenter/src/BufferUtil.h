@@ -22,10 +22,35 @@ extern "C" {
 
     #include <stdint.h>
 
+
+    typedef struct
+    {
+        size_t Index;
+        size_t Max;
+        size_t Size;
+        const uint8_t* Data;
+    }
+    BufferReader;
+
+
     void buffer_write16(uint8_t* buf, uint16_t value);
     void buffer_write32(uint8_t* buf, uint32_t value);
     void buffer_write64(uint8_t* buf, uint64_t value);
     void write_fourcc(uint8_t* buf, const char* fourcc);
+
+
+    void buffer_init(BufferReader* br, const uint8_t* data, size_t size);
+    int buffer_available(BufferReader* br, size_t n);
+    uint8_t buffer_read8(BufferReader* br);
+    uint16_t buffer_read16(BufferReader* br);
+    uint32_t buffer_read32(BufferReader* br);
+    uint64_t buffer_read64(BufferReader* br);
+    void buffer_skip(BufferReader* br, size_t n);
+    size_t buffer_tell(BufferReader* br);
+    void buffer_seek(BufferReader* br, size_t pos);
+    const uint8_t* buffer_current(BufferReader* br);
+    int buffer_eof(BufferReader* br);
+
 
 #ifdef __cplusplus
 }

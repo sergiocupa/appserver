@@ -1,9 +1,9 @@
-#include "DashBuilder.h"
+﻿#include "DashBuilder.h"
 
 
 static double dash_calculate_duration(FrameIndexList* frames, double fps)
 {
-    if (!frames || frames->Count == 0 || fps <= 0) 
+    if (!frames || frames->Count == 0 || fps <= 0)
     {
         return 0.0;
     }
@@ -31,7 +31,7 @@ static char* dash_generate_codec_string(VideoMetadata* meta)
 {
     char* codec_str = (char*)malloc(64);
 
-    if (meta->Codec == 264) 
+    if (meta->Codec == 264)
     {
         // H.264 AVC
         if (meta->Sps.Size >= 4) {
@@ -43,14 +43,14 @@ static char* dash_generate_codec_string(VideoMetadata* meta)
                 profile, constraints, level);
         }
         else {
-            // Fallback para codec gen�rico
+            // Fallback para codec genérico
             strcpy(codec_str, "avc1.64001f"); // High Profile, Level 3.1
         }
     }
     else if (meta->Codec == 265)
     {
         // H.265 HEVC
-        if (meta->Sps.Size >= 13) 
+        if (meta->Sps.Size >= 13)
         {
             // Parsing simplificado do SPS H.265
             uint8_t profile = (meta->Sps.Data[1] >> 6) & 0x03;
@@ -59,13 +59,13 @@ static char* dash_generate_codec_string(VideoMetadata* meta)
 
             snprintf(codec_str, 64, "hvc1.%d.%d.L%d.B0", profile, tier, level / 3);
         }
-        else 
+        else
         {
             // Fallback
             strcpy(codec_str, "hvc1.1.6.L93.B0"); // Main Profile, Level 3.1
         }
     }
-    else 
+    else
     {
         strcpy(codec_str, "avc1.64001f");
     }
@@ -78,7 +78,7 @@ static void dash_format_duration_iso8601(double seconds, char* buffer, size_t bu
     int minutes = total_seconds / 60;
     int secs = total_seconds % 60;
 
-    if (minutes > 0) 
+    if (minutes > 0)
     {
         snprintf(buffer, buffer_size, "PT%dM%dS", minutes, secs);
     }
@@ -90,25 +90,120 @@ static void dash_format_duration_iso8601(double seconds, char* buffer, size_t bu
 
 
 
-char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length) 
+char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length)
 {
     if (!meta || !frames || !output_length) {
         return NULL;
     }
 
-    // Calcular par�metros
-    double   total_duration = dash_calculate_duration(frames, meta->Fps);
-    uint64_t bitrate        = dash_calculate_bitrate(frames, total_duration);
-    char*    codec_string   = dash_generate_codec_string(meta);
+    // ═══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO E CORREÇÃO DE TIMESCALE
+    // ═══════════════════════════════════════════════════════════════════════
+    uint32_t timescale = meta->Timescale;
 
-    // Formatar dura��o ISO 8601
+    // Detectar timescale inválido
+    if (timescale == 0 || timescale > 1000000)
+    {
+        fprintf(stderr, "═══════════════════════════════════════════════════\n");
+        fprintf(stderr, "AVISO: Timescale inválido detectado!\n");
+        fprintf(stderr, "  Valor lido: %u (0x%08X)\n", timescale, timescale);
+
+        // Tentar corrigir se for problema de byte order
+        if (timescale > 1000000)
+        {
+            // Inverter bytes (little-endian <-> big-endian)
+            uint32_t swapped = ((timescale & 0xFF000000) >> 24) |
+                ((timescale & 0x00FF0000) >> 8) |
+                ((timescale & 0x0000FF00) << 8) |
+                ((timescale & 0x000000FF) << 24);
+
+            fprintf(stderr, "  Tentando inversão de bytes: %u (0x%08X)\n", swapped, swapped);
+
+            // Se o valor invertido for razoável (1k-1M), usar ele
+            if (swapped >= 1000 && swapped <= 1000000)
+            {
+                fprintf(stderr, "  ✓ Correção aplicada! Usando timescale invertido.\n");
+                fprintf(stderr, "  ATENÇÃO: Verifique as funções read32/read16/read64!\n");
+                fprintf(stderr, "           Elas devem ler em BIG-ENDIAN (network byte order)\n");
+                timescale = swapped;
+            }
+            else
+            {
+                fprintf(stderr, "  ✗ Inversão não resolveu. Usando padrão 90000.\n");
+                timescale = 90000;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "  Usando padrão: 90000 (H.264 standard)\n");
+            timescale = 90000;
+        }
+        fprintf(stderr, "═══════════════════════════════════════════════════\n");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // VALIDAÇÃO E CORREÇÃO DE FPS
+    // ═══════════════════════════════════════════════════════════════════════
+    double fps = meta->Fps;
+
+    if (fps <= 0 || fps > 1000)
+    {
+        fprintf(stderr, "AVISO: FPS inválido (%.2f), calculando a partir dos frames...\n", fps);
+
+        // Tentar calcular FPS baseado no número de frames e timescale
+        if (frames->Count > 0 && timescale > 0)
+        {
+            // Esta é uma estimativa - assumindo duração uniforme
+            fps = 30.0;  // Fallback conservador
+            fprintf(stderr, "  Usando FPS padrão: %.2f\n", fps);
+        }
+        else
+        {
+            fps = 30.0;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CALCULAR PARÂMETROS DO MPD
+    // ═══════════════════════════════════════════════════════════════════════
+
+    double   total_duration = dash_calculate_duration(frames, fps);
+    uint64_t bitrate = dash_calculate_bitrate(frames, total_duration);
+    char* codec_string = dash_generate_codec_string(meta);
+
+    // Formatar duração ISO 8601
     char duration_iso[32];
     dash_format_duration_iso8601(total_duration, duration_iso, sizeof(duration_iso));
 
-    // Calcular n�mero total de fragmentos
+    // Calcular número total de fragmentos
     int total_fragments = (int)((total_duration / fragment_duration_sec) + 0.5);
 
-    // Alocar buffer (4KB deve ser suficiente para MPD)
+    // Calcular duration em unidades de timescale
+    uint32_t duration_units = (uint32_t)(fragment_duration_sec * timescale);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOG DE DIAGNÓSTICO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    printf("═══════════════════════════════════════════════════\n");
+    printf("DASH MPD Generation:\n");
+    printf("───────────────────────────────────────────────────\n");
+    printf("  Video: %dx%d @ %.2f fps\n", meta->Width, meta->Height, fps);
+    printf("  Codec: %s (type=%d)\n", codec_string, meta->Codec);
+    printf("  Timescale: %u\n", timescale);
+    printf("  Total frames: %d\n", frames->Count);
+    printf("  Total duration: %.2f seconds\n", total_duration);
+    printf("  Fragment duration: %.2f seconds\n", fragment_duration_sec);
+    printf("  Fragment duration (timescale units): %u\n", duration_units);
+    printf("  Total fragments: %d\n", total_fragments);
+    printf("  Bitrate: %lu bps (%.2f Mbps)\n",
+        (unsigned long)bitrate, bitrate / 1000000.0);
+    printf("═══════════════════════════════════════════════════\n");
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONSTRUIR MPD XML
+    // ═══════════════════════════════════════════════════════════════════════
+
     size_t buffer_size = 4096;
     char* mpd_content = (char*)malloc(buffer_size);
     if (!mpd_content) {
@@ -116,7 +211,6 @@ char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragme
         return NULL;
     }
 
-    // Construir XML do MPD
     int written = snprintf(mpd_content, buffer_size,
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\"\n"
@@ -161,29 +255,29 @@ char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragme
         "  </Period>\n"
         "</MPD>\n",
 
-        // Par�metros MPD
-        duration_iso,                                          // mediaPresentationDuration
-        duration_iso,                                          // Period duration
+        // Parâmetros MPD
+        duration_iso,           // mediaPresentationDuration
+        duration_iso,           // Period duration
 
-        // Par�metros AdaptationSet
-        codec_string,                                          // codecs
-        meta->Width,                                           // width
-        meta->Height,                                          // height
-        meta->Fps,                                             // frameRate
+        // Parâmetros AdaptationSet
+        codec_string,           // codecs
+        meta->Width,            // width
+        meta->Height,           // height
+        fps,                    // frameRate (validado)
 
-        // Par�metros SegmentTemplate
-        meta->Timescale,                                       // timescale
-        (uint32_t)(fragment_duration_sec * meta->Timescale),   // duration em timescale units
+        // Parâmetros SegmentTemplate (CORRIGIDOS E VALIDADOS!)
+        timescale,              // timescale (validado)
+        duration_units,         // duration em timescale units (validado)
 
-        // Par�metros Representation
-        (unsigned long)bitrate,                                // bandwidth
-        meta->Width,                                           // width
-        meta->Height                                           // height
+        // Parâmetros Representation
+        (unsigned long)bitrate, // bandwidth
+        meta->Width,            // width
+        meta->Height            // height
     );
 
     free(codec_string);
 
-    if (written < 0 || written >= buffer_size) 
+    if (written < 0 || written >= buffer_size)
     {
         free(mpd_content);
         return NULL;

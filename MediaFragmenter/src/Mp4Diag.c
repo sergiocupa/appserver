@@ -1,4 +1,6 @@
-﻿#include "MediaFragmenterType.h"
+﻿#include "Mp4Diag.h"
+#include "MediaFragmenterType.h"
+#include "BufferUtil.h"
 
 
 
@@ -403,3 +405,627 @@ void mp4diag_video_metadata(const VideoMetadata* meta)
     printf("\n");
 }
 
+
+
+
+
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// ANÁLISE DE BOXES ESPECÍFICOS
+// ════════════════════════════════════════════════════════════════════════════
+
+void analyze_ftyp(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    char major_brand[5] = { 0 };
+    memcpy(major_brand, buffer_current(br), 4);
+    buffer_skip(br, 4);
+
+    uint32_t minor_version = buffer_read32(br);
+
+    printf("%s  major_brand: %s\n", indent, major_brand);
+    printf("%s  minor_version: %u\n", indent, minor_version);
+    printf("%s  compatible_brands: ", indent);
+
+    int count = 0;
+    while (buffer_tell(br) < start + size) {
+        char brand[5] = { 0 };
+        memcpy(brand, buffer_current(br), 4);
+        buffer_skip(br, 4);
+        if (count > 0) printf(", ");
+        printf("%s", brand);
+        count++;
+    }
+    printf("\n");
+}
+
+void analyze_mvhd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t version = buffer_read8(br);
+    buffer_skip(br, 3); // flags
+
+    printf("%s  version: %u\n", indent, version);
+
+    if (version == 1) {
+        buffer_skip(br, 16); // creation + modification time
+        uint32_t timescale = buffer_read32(br);
+        uint64_t duration = buffer_read64(br);
+        printf("%s  timescale: %u\n", indent, timescale);
+        printf("%s  duration: %llu (%.2f seconds)\n", indent, duration,
+            (double)duration / timescale);
+    }
+    else {
+        buffer_skip(br, 8); // creation + modification time
+        uint32_t timescale = buffer_read32(br);
+        uint32_t duration = buffer_read32(br);
+        printf("%s  timescale: %u\n", indent, timescale);
+        printf("%s  duration: %u (%.2f seconds)\n", indent, duration,
+            (double)duration / timescale);
+    }
+}
+
+void analyze_tkhd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t version = buffer_read8(br);
+    uint32_t flags = buffer_read32(br) & 0xFFFFFF;
+
+    printf("%s  version: %u\n", indent, version);
+    printf("%s  flags: 0x%06X ", indent, flags);
+    if (flags & 0x000001) printf("(enabled) ");
+    if (flags & 0x000002) printf("(in-movie) ");
+    if (flags & 0x000004) printf("(in-preview) ");
+    printf("\n");
+
+    if (version == 1) {
+        buffer_skip(br, 16); // creation + modification
+        uint32_t track_id = buffer_read32(br);
+        printf("%s  track_id: %u\n", indent, track_id);
+    }
+    else {
+        buffer_skip(br, 8); // creation + modification
+        uint32_t track_id = buffer_read32(br);
+        printf("%s  track_id: %u\n", indent, track_id);
+    }
+}
+
+void analyze_mdhd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t version = buffer_read8(br);
+    buffer_skip(br, 3); // flags
+
+    printf("%s  version: %u\n", indent, version);
+
+    if (version == 1) {
+        buffer_skip(br, 16); // creation + modification
+        uint32_t timescale = buffer_read32(br);
+        uint64_t duration = buffer_read64(br);
+        printf("%s  timescale: %u ← CRÍTICO!\n", indent, timescale);
+        printf("%s  duration: %llu\n", indent, duration);
+    }
+    else {
+        buffer_skip(br, 8); // creation + modification
+        uint32_t timescale = buffer_read32(br);
+        uint32_t duration = buffer_read32(br);
+        printf("%s  timescale: %u ← CRÍTICO!\n", indent, timescale);
+        printf("%s  duration: %u\n", indent, duration);
+    }
+}
+
+void analyze_hdlr(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    buffer_skip(br, 4); // version + flags
+    buffer_skip(br, 4); // pre_defined
+
+    char handler[5] = { 0 };
+    memcpy(handler, buffer_current(br), 4);
+    buffer_skip(br, 4);
+
+    printf("%s  handler_type: %s\n", indent, handler);
+}
+
+void analyze_trex(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    buffer_skip(br, 4); // version + flags
+    uint32_t track_id = buffer_read32(br);
+    uint32_t desc_index = buffer_read32(br);
+    uint32_t duration = buffer_read32(br);
+    uint32_t sample_size = buffer_read32(br);
+    uint32_t sample_flags = buffer_read32(br);
+
+    printf("%s  track_id: %u\n", indent, track_id);
+    printf("%s  default_sample_description_index: %u\n", indent, desc_index);
+    printf("%s  default_sample_duration: %u ", indent, duration);
+    if (duration == 0) {
+        printf("← ❌ CRÍTICO! DEVE SER > 0\n");
+    }
+    else {
+        printf("← ✓\n");
+    }
+    printf("%s  default_sample_size: %u\n", indent, sample_size);
+    printf("%s  default_sample_flags: 0x%08X ", indent, sample_flags);
+    if (sample_flags == 0x01010000) {
+        printf("← ⚠️  PROBLEMA!\n");
+    }
+    else {
+        printf("← ✓\n");
+    }
+}
+
+void analyze_mehd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t version = buffer_read8(br);
+    buffer_skip(br, 3); // flags
+
+    if (version == 1) {
+        uint64_t duration = buffer_read64(br);
+        printf("%s  fragment_duration: %llu\n", indent, duration);
+    }
+    else {
+        uint32_t duration = buffer_read32(br);
+        printf("%s  fragment_duration: %u\n", indent, duration);
+    }
+}
+
+void analyze_avcc(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t config_version = buffer_read8(br);
+    uint8_t profile = buffer_read8(br);
+    uint8_t compat = buffer_read8(br);
+    uint8_t level = buffer_read8(br);
+    uint8_t length_size_minus_one = buffer_read8(br);
+
+    int nal_size = (length_size_minus_one & 0x3) + 1;
+
+    printf("%s  configurationVersion: %u\n", indent, config_version);
+    printf("%s  AVCProfileIndication: %u (0x%02X)\n", indent, profile, profile);
+    printf("%s  profile_compatibility: %u (0x%02X)\n", indent, compat, compat);
+    printf("%s  AVCLevelIndication: %u (0x%02X)\n", indent, level, level);
+    printf("%s  lengthSizeMinusOne: %u → NAL length = %d bytes ",
+        indent, length_size_minus_one, nal_size);
+    if (nal_size != 4) {
+        printf("← ⚠️  Deveria ser 4!\n");
+    }
+    else {
+        printf("← ✓\n");
+    }
+
+    uint8_t num_sps = buffer_read8(br) & 0x1F;
+    printf("%s  numOfSequenceParameterSets: %u\n", indent, num_sps);
+
+    for (int i = 0; i < num_sps; i++) {
+        uint16_t sps_len = buffer_read16(br);
+        printf("%s    SPS[%d]: %u bytes\n", indent, i, sps_len);
+        buffer_skip(br, sps_len);
+    }
+
+    uint8_t num_pps = buffer_read8(br);
+    printf("%s  numOfPictureParameterSets: %u\n", indent, num_pps);
+
+    for (int i = 0; i < num_pps; i++) {
+        uint16_t pps_len = buffer_read16(br);
+        printf("%s    PPS[%d]: %u bytes\n", indent, i, pps_len);
+        buffer_skip(br, pps_len);
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ANALISADOR RECURSIVO
+// ════════════════════════════════════════════════════════════════════════════
+
+void analyze_box(BufferReader* br, size_t end, int depth);
+
+int is_container(const char* type) {
+    const char* containers[] = {
+        "moov", "trak", "mdia", "minf", "stbl", "mvex",
+        "traf", "moof", "stsd", "dinf", NULL
+    };
+
+    for (int i = 0; containers[i]; i++) {
+        if (strcmp(type, containers[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+void analyze_box(BufferReader* br, size_t end, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    while (buffer_tell(br) < end && !buffer_eof(br)) {
+        size_t box_start = buffer_tell(br);
+
+        if (!buffer_available(br, 8)) break;
+
+        uint32_t size32 = buffer_read32(br);
+        char type[5] = { 0 };
+        memcpy(type, buffer_current(br), 4);
+        buffer_skip(br, 4);
+
+        uint64_t size = size32;
+        size_t header_size = 8;
+
+        if (size32 == 1) {
+            if (!buffer_available(br, 8)) break;
+            size = buffer_read64(br);
+            header_size = 16;
+        }
+        else if (size32 == 0) {
+            size = end - box_start;
+        }
+
+        if (size < header_size) break;
+
+        size_t box_end = box_start + size;
+        if (box_end > end) box_end = end;
+
+        // Mostrar box
+        printf("%s[%s] size=%llu offset=0x%zX", indent, type, size, box_start);
+
+        // Análise específica
+        if (strcmp(type, "ftyp") == 0) {
+            printf("\n");
+            analyze_ftyp(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "mvhd") == 0) {
+            printf("\n");
+            analyze_mvhd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "tkhd") == 0) {
+            printf("\n");
+            analyze_tkhd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "mdhd") == 0) {
+            printf(" ← TIMESCALE AQUI!\n");
+            analyze_mdhd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "hdlr") == 0) {
+            printf("\n");
+            analyze_hdlr(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "trex") == 0) {
+            printf(" ← CRÍTICO!\n");
+            analyze_trex(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "mehd") == 0) {
+            printf("\n");
+            analyze_mehd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "avcC") == 0) {
+            printf(" ← CODEC CONFIG!\n");
+            analyze_avcc(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "avc1") == 0) {
+            printf(" ← VIDEO SAMPLE ENTRY\n");
+        }
+        else {
+            printf("\n");
+        }
+
+        // Recursão para containers
+        if (is_container(type)) {
+            size_t payload_start = box_start + header_size;
+            buffer_seek(br, payload_start);
+            analyze_box(br, box_end, depth + 1);
+        }
+
+        buffer_seek(br, box_end);
+    }
+}
+
+void mp4diag_analyze_init(const uint8_t* data, size_t size)
+{
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+    printf("ANÁLISE COMPLETA DO INIT.MP4 - TODOS OS BOXES\n");
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+    printf("\nTamanho total: %zu bytes\n\n", size);
+
+    BufferReader br;
+    buffer_init(&br, data, size);
+
+    analyze_box(&br, size, 0);
+
+    printf("\n════════════════════════════════════════════════════════════════════════════\n");
+    printf("FIM DA ANÁLISE\n");
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+}
+
+
+
+
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// ANÁLISE DE BOXES ESPECÍFICOS DE FRAGMENTOS
+// ════════════════════════════════════════════════════════════════════════════
+
+void analyze_mfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    buffer_skip(br, 4); // version + flags
+    uint32_t sequence = buffer_read32(br);
+
+    printf("%s  sequence_number: %u\n", indent, sequence);
+}
+
+void analyze_tfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint32_t version_flags = buffer_read32(br);
+    uint32_t flags = version_flags & 0xFFFFFF;
+    uint32_t track_id = buffer_read32(br);
+
+    printf("%s  flags: 0x%06X\n", indent, flags);
+    printf("%s  track_id: %u\n", indent, track_id);
+
+    if (flags & 0x000001) {
+        uint64_t base_offset = buffer_read64(br);
+        printf("%s  base_data_offset: %llu\n", indent, base_offset);
+    }
+    if (flags & 0x000002) {
+        uint32_t desc_index = buffer_read32(br);
+        printf("%s  sample_description_index: %u\n", indent, desc_index);
+    }
+    if (flags & 0x000008) {
+        uint32_t duration = buffer_read32(br);
+        printf("%s  default_sample_duration: %u\n", indent, duration);
+    }
+    if (flags & 0x000010) {
+        uint32_t size = buffer_read32(br);
+        printf("%s  default_sample_size: %u\n", indent, size);
+    }
+    if (flags & 0x000020) {
+        uint32_t sample_flags = buffer_read32(br);
+        printf("%s  default_sample_flags: 0x%08X\n", indent, sample_flags);
+    }
+}
+
+void analyze_tfdt(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint8_t version = buffer_read8(br);
+    buffer_skip(br, 3); // flags
+
+    printf("%s  version: %u\n", indent, version);
+
+    if (version == 1) {
+        uint64_t time = buffer_read64(br);
+        printf("%s  baseMediaDecodeTime: %llu\n", indent, time);
+    }
+    else {
+        uint32_t time = buffer_read32(br);
+        printf("%s  baseMediaDecodeTime: %u\n", indent, time);
+    }
+}
+
+void analyze_trun(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint32_t version_flags = buffer_read32(br);
+    uint8_t version = (version_flags >> 24) & 0xFF;
+    uint32_t flags = version_flags & 0xFFFFFF;
+    uint32_t sample_count = buffer_read32(br);
+
+    printf("%s  version: %u\n", indent, version);
+    printf("%s  flags: 0x%06X\n", indent, flags);
+    printf("%s  sample_count: %u\n", indent, sample_count);
+
+    printf("%s  flags decoded:\n", indent);
+    printf("%s    data-offset:           %s\n", indent, (flags & 0x000001) ? "YES" : "NO");
+    printf("%s    first-sample-flags:    %s", indent, (flags & 0x000004) ? "YES" : "NO");
+    if (flags & 0x000004) {
+        printf(" ← ⚠️  Pode causar problemas!\n");
+    }
+    else {
+        printf(" ← ✓\n");
+    }
+    printf("%s    sample-duration:       %s\n", indent, (flags & 0x000100) ? "YES" : "NO");
+    printf("%s    sample-size:           %s\n", indent, (flags & 0x000200) ? "YES" : "NO");
+    printf("%s    sample-flags:          %s\n", indent, (flags & 0x000400) ? "YES" : "NO");
+    printf("%s    composition-offset:    %s\n", indent, (flags & 0x000800) ? "YES" : "NO");
+
+    if (flags & 0x000001) {
+        uint32_t data_offset = buffer_read32(br);
+        printf("%s  data_offset: %u (0x%X)\n", indent, data_offset, data_offset);
+    }
+
+    if (flags & 0x000004) {
+        uint32_t first_flags = buffer_read32(br);
+        printf("%s  first_sample_flags: 0x%08X\n", indent, first_flags);
+    }
+}
+
+void analyze_mdat(BufferReader* br, size_t start, uint32_t size, int depth) {
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    buffer_seek(br, start + 8);
+
+    uint32_t data_size = size - 8;
+    printf("%s  data_size: %u bytes\n", indent, data_size);
+
+    // Analisar primeiros bytes
+    const uint8_t* first = buffer_current(br);
+    size_t len = (data_size < 16) ? data_size : 16;
+
+    printf("%s  first 16 bytes: ", indent);
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x ", first[i]);
+    }
+    printf("\n");
+
+    // Detectar formato
+    if (len >= 4) {
+        if ((first[0] == 0x00 && first[1] == 0x00 &&
+            first[2] == 0x00 && first[3] == 0x01) ||
+            (first[0] == 0x00 && first[1] == 0x00 && first[2] == 0x01)) {
+            printf("%s  ❌ CRÍTICO: Formato Annex-B detectado!\n", indent);
+            printf("%s     MP4 deve usar AVCC (length prefix)!\n", indent);
+        }
+        else {
+            uint32_t nal_len = (first[0] << 24) | (first[1] << 16) |
+                (first[2] << 8) | first[3];
+            if (nal_len > 0 && nal_len < data_size) {
+                printf("%s  ✓ Formato AVCC detectado\n", indent);
+                printf("%s  first NAL length: %u\n", indent, nal_len);
+
+                if (len >= 5) {
+                    uint8_t nal_type = first[4] & 0x1F;
+                    printf("%s  first NAL type: %u ", indent, nal_type);
+                    if (nal_type == 5) printf("(IDR/keyframe) ✓\n");
+                    else if (nal_type == 1) printf("(Non-IDR) ⚠️\n");
+                    else if (nal_type == 6) printf("(SEI)\n");
+                    else if (nal_type == 7) printf("(SPS)\n");
+                    else if (nal_type == 8) printf("(PPS)\n");
+                    else printf("(type %u)\n", nal_type);
+                }
+            }
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ANALISADOR RECURSIVO
+// ════════════════════════════════════════════════════════════════════════════
+
+
+int is_frag_container(const char* type) 
+{
+    const char* containers[] = {
+        "moof", "traf", NULL
+    };
+
+    for (int i = 0; containers[i]; i++) {
+        if (strcmp(type, containers[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+void analyze_frag_box(BufferReader* br, size_t end, int depth) 
+{
+    char indent[100] = { 0 };
+    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+
+    while (buffer_tell(br) < end && !buffer_eof(br)) {
+        size_t box_start = buffer_tell(br);
+
+        if (!buffer_available(br, 8)) break;
+
+        uint32_t size32 = buffer_read32(br);
+        char type[5] = { 0 };
+        memcpy(type, buffer_current(br), 4);
+        buffer_skip(br, 4);
+
+        uint64_t size = size32;
+        size_t header_size = 8;
+
+        if (size32 == 1) {
+            if (!buffer_available(br, 8)) break;
+            size = buffer_read64(br);
+            header_size = 16;
+        }
+        else if (size32 == 0) {
+            size = end - box_start;
+        }
+
+        if (size < header_size) break;
+
+        size_t box_end = box_start + size;
+        if (box_end > end) box_end = end;
+
+        // Mostrar box
+        printf("%s[%s] size=%llu offset=0x%zX", indent, type, size, box_start);
+
+        // Análise específica
+        if (strcmp(type, "mfhd") == 0) {
+            printf("\n");
+            analyze_mfhd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "tfhd") == 0) {
+            printf("\n");
+            analyze_tfhd(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "tfdt") == 0) {
+            printf("\n");
+            analyze_tfdt(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "trun") == 0) {
+            printf(" ← CRÍTICO!\n");
+            analyze_trun(br, box_start, size, depth);
+        }
+        else if (strcmp(type, "mdat") == 0) {
+            printf(" ← DADOS DE VÍDEO\n");
+            analyze_mdat(br, box_start, size, depth);
+        }
+        else {
+            printf("\n");
+        }
+
+        // Recursão para containers
+        if (is_frag_container(type)) {
+            size_t payload_start = box_start + header_size;
+            buffer_seek(br, payload_start);
+            analyze_box(br, box_end, depth + 1);
+        }
+
+        buffer_seek(br, box_end);
+    }
+}
+
+void mp4diag_analyze_fragment(const uint8_t* data, size_t size) {
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+    printf("ANÁLISE COMPLETA DO FRAGMENT - TODOS OS BOXES\n");
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+    printf("\nTamanho total: %zu bytes\n\n", size);
+
+    BufferReader br;
+    buffer_init(&br, data, size);
+
+    analyze_frag_box(&br, size, 0);
+
+    printf("\n════════════════════════════════════════════════════════════════════════════\n");
+    printf("FIM DA ANÁLISE\n");
+    printf("════════════════════════════════════════════════════════════════════════════\n");
+}

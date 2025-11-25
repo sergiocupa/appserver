@@ -171,9 +171,9 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
                         stsc->count = i;
                         break;
                     }
-                    stsc->entries[i].first_chunk       = read32(f);
+                    stsc->entries[i].first_chunk = read32(f);
                     stsc->entries[i].samples_per_chunk = read32(f);
-                    stsc->entries[i].sample_desc_id    = read32(f);
+                    stsc->entries[i].sample_desc_id = read32(f);
                 }
             }
             fseek(f, next, SEEK_SET);
@@ -323,11 +323,11 @@ FrameIndexList* mp4builder_get_frames(const char* path)
 
     // Cria lista ordenada
     FrameIndexList* list = mframe_list_new(stsz.count);
-    list->Metadata.Pps.Data   = meta.Pps.Data; list->Metadata.Pps.Size = meta.Pps.Size;
-    list->Metadata.Sps.Data   = meta.Sps.Data; list->Metadata.Sps.Size = meta.Sps.Size;
+    list->Metadata.Pps.Data = meta.Pps.Data; list->Metadata.Pps.Size = meta.Pps.Size;
+    list->Metadata.Sps.Data = meta.Sps.Data; list->Metadata.Sps.Size = meta.Sps.Size;
     list->Metadata.LengthSize = meta.LengthSize;
-    list->Metadata.Codec      = meta.Codec; list->Metadata.Fps = meta.Fps;
-    list->Metadata.Width      = meta.Width; list->Metadata.Height = meta.Height;
+    list->Metadata.Codec = meta.Codec; list->Metadata.Fps = meta.Fps; list->Metadata.Timescale = meta.Timescale;
+    list->Metadata.Width = meta.Width; list->Metadata.Height = meta.Height;
 
     // Calcula offsets absolutos para cada sample usando stsc
     uint64_t* sample_offsets = malloc(stsz.count * sizeof(uint64_t));
@@ -378,7 +378,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
             uint8_t nal_type = nal_header & 0x1F; // Para H.264
 
             mnalu_list_add(&frame->Nals, offset + pos + length_size, nal_len, nal_type);
-            
+
             fseek(f, nal_len - 1, SEEK_CUR); // Pula resto (header lido)
             pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size dinâmico (em vez de fixo +4)
         }
@@ -493,11 +493,14 @@ static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output
 // Cria box trun (Track Fragment Run). Simplificado: assume duração fixa por sample
 static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uint32_t data_offset, MediaBuffer* output)
 {
-    // Flags: 0x000001 (data-offset-present)
-    //        0x000100 (sample-duration-present)
-    uint32_t flags = 0x00000101;
+    // Flags corrigidos:
+    // 0x000001 = data-offset-present
+    // NÃO incluir 0x000004 (first-sample-flags) - Chrome rejeita
+    // NÃO incluir 0x000100 (sample-duration) - usaremos default do trex
+    uint32_t flags = 0x00000001;  // apenas data-offset
 
-    output->Size = 20;  // Header + data_offset + sample_count entries
+    // Tamanho: header(8) + version/flags(4) + count(4) + data_offset(4) = 20
+    output->Size = 20;
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
@@ -525,7 +528,6 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
 // Cria box traf (Track Fragment)
 static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, uint32_t moof_size, MediaBuffer* output)
 {
-    // Criar sub-boxes
     MediaBuffer tfhd, tfdt, trun;
 
     create_tfhd_box(track_id, &tfhd);
@@ -535,21 +537,17 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
     uint32_t data_offset = moof_size + 8;
     create_trun_box(sample_count, sample_duration, data_offset, &trun);
 
-    // Calcular tamanho total do traf
     output->Size = 8 + tfhd.Size + tfdt.Size + trun.Size;
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
 
-    // Box size
     buffer_write32(p, output->Size);
     p += 4;
 
-    // Box type: 'traf'
     p[0] = 't'; p[1] = 'r'; p[2] = 'a'; p[3] = 'f';
     p += 4;
 
-    // Copiar sub-boxes
     memcpy(p, tfhd.Data, tfhd.Size);
     p += tfhd.Size;
 
@@ -558,62 +556,53 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
 
     memcpy(p, trun.Data, trun.Size);
 
-    // Liberar sub-boxes
     free(tfhd.Data);
     free(tfdt.Data);
     free(trun.Data);
 }
 
 // Cria box moof (Movie Fragment)
-static void create_moof_box( uint32_t sequence_number, uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, MediaBuffer* output)
+static void create_moof_box(uint32_t sequence_number, uint32_t track_id, uint64_t base_media_decode_time, uint32_t sample_count, uint32_t sample_duration, MediaBuffer* output)
 {
-    // Criar sub-boxes
     MediaBuffer mfhd;
     create_mfhd_box(sequence_number, &mfhd);
 
-    // Calcular tamanho estimado do moof (para data_offset)
-    // moof = 8 (header) + mfhd + traf
-    // Precisamos estimar o tamanho do traf primeiro
-
+    // Estimar tamanho do moof para calcular data_offset
     MediaBuffer tfhd_temp, tfdt_temp;
     create_tfhd_box(track_id, &tfhd_temp);
     create_tfdt_box(base_media_decode_time, &tfdt_temp);
 
-    uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + 20; // +20 para trun
+    // trun tem 20 bytes (sem first-sample-flags)
+    uint32_t trun_size = 20;
+    uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + trun_size;
     free(tfhd_temp.Data);
     free(tfdt_temp.Data);
 
     uint32_t moof_size = 8 + mfhd.Size + traf_size;
 
-    // Agora criar traf com o tamanho correto
+    // Criar traf com tamanho correto
     MediaBuffer traf;
-    create_traf_box(track_id, base_media_decode_time, sample_count,
-        sample_duration, moof_size, &traf);
+    create_traf_box(track_id, base_media_decode_time, sample_count, sample_duration, moof_size, &traf);
 
-    // Recalcular tamanho real do moof
+    // Recalcular tamanho real
     moof_size = 8 + mfhd.Size + traf.Size;
 
-    // Alocar buffer final
     output->Size = moof_size;
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
 
-    // Box size
     buffer_write32(p, moof_size);
     p += 4;
 
-    // Box type: 'moof'
     p[0] = 'm'; p[1] = 'o'; p[2] = 'o'; p[3] = 'f';
     p += 4;
 
-    // Copiar sub-boxes
     memcpy(p, mfhd.Data, mfhd.Size);
     p += mfhd.Size;
 
     memcpy(p, traf.Data, traf.Size);
 
-    // Liberar sub-boxes
     free(mfhd.Data);
     free(traf.Data);
 }
@@ -782,7 +771,7 @@ static void create_mehd_box(uint64_t fragment_duration, MediaBuffer* output)
 }
 
 // CRIAÇÃO DE BOXES: moov > mvex > trex. Cria box trex (Track Extends Box). Define valores padrão para fragmentos
-static void create_trex_box(uint32_t track_id, MediaBuffer* output)
+static void create_trex_box(uint32_t track_id, uint32_t default_sample_duration, MediaBuffer* output)
 {
     output->Size = 32;
     output->Data = malloc(output->Size);
@@ -794,7 +783,7 @@ static void create_trex_box(uint32_t track_id, MediaBuffer* output)
     p += 4;
 
     // Box type: 'trex'
-    write_fourcc(p, "trex");
+    p[0] = 't'; p[1] = 'r'; p[2] = 'e'; p[3] = 'x';
     p += 4;
 
     // Version + Flags
@@ -809,49 +798,45 @@ static void create_trex_box(uint32_t track_id, MediaBuffer* output)
     buffer_write32(p, 1);
     p += 4;
 
-    // Default sample duration
-    buffer_write32(p, 0);
+    // Default sample duration - AGORA COM VALOR CORRETO!
+    buffer_write32(p, default_sample_duration);
     p += 4;
 
-    // Default sample size
+    // Default sample size (0 = variável, cada sample terá tamanho diferente)
     buffer_write32(p, 0);
     p += 4;
 
     // Default sample flags
-    buffer_write32(p, 0);
+    // 0x00010000 = sample_depends_on=1 (depende de outro)
+    // 0x01000000 = sample_is_non_sync_sample (não é keyframe por padrão)
+    buffer_write32(p, 0x01010000);
     p += 4;
 }
 
 // CRIAÇÃO DE BOXES: moov > mvex. Cria box mvex (Movie Extends Box). Indica que o arquivo usa fragmentação
-static void create_mvex_box(uint32_t track_id, uint64_t fragment_duration, MediaBuffer* output)
+static void create_mvex_box(uint32_t track_id, uint64_t fragment_duration, uint32_t default_sample_duration, MediaBuffer* output)
 {
-    // Criar sub-boxes
     MediaBuffer mehd, trex;
 
     create_mehd_box(fragment_duration, &mehd);
-    create_trex_box(track_id, &trex);
+    create_trex_box(track_id, default_sample_duration, &trex);  // ← Agora passa duração!
 
-    // Calcular tamanho total
     output->Size = 8 + mehd.Size + trex.Size;
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
 
-    // Box size
     buffer_write32(p, output->Size);
     p += 4;
 
-    // Box type: 'mvex'
-    write_fourcc(p, "mvex");
+    p[0] = 'm'; p[1] = 'v'; p[2] = 'e'; p[3] = 'x';
     p += 4;
 
-    // Copiar sub-boxes
     memcpy(p, mehd.Data, mehd.Size);
     p += mehd.Size;
 
     memcpy(p, trex.Data, trex.Size);
 
-    // Liberar sub-boxes
     free(mehd.Data);
     free(trex.Data);
 }
@@ -917,11 +902,8 @@ static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, 
     p += 2;
 
     // Matrix (identity)
-    uint32_t matrix[9] = {
-        0x00010000, 0, 0,
-        0, 0x00010000, 0,
-        0, 0, 0x40000000
-    };
+    uint32_t matrix[9] = { 0x00010000, 0, 0, 0, 0x00010000, 0, 0, 0, 0x40000000 };
+
     for (int i = 0; i < 9; i++)
     {
         buffer_write32(p, matrix[i]);
@@ -1554,9 +1536,8 @@ static void create_trak_box(VideoMetadata* metadata, uint32_t track_id, uint32_t
 }
 
 // CRIAÇÃO DE BOXES: moov. Cria box moov (Movie Box)
-static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_t track_id, uint64_t fragment_duration, MediaBuffer* output)
+static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_t track_id, uint64_t fragment_duration, float fps, MediaBuffer* output)
 {
-    // Criar sub-boxes
     MediaBuffer mvhd, trak, mvex;
 
     create_mvhd_box(timescale, track_id + 1, &mvhd);
@@ -1570,23 +1551,31 @@ static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_
         return;
     }
 
-    create_mvex_box(track_id, fragment_duration, &mvex);
+    // NOVO: Calcular duração padrão do sample
+    uint32_t default_sample_duration = 0;
+    if (fps > 0)
+    {
+        default_sample_duration = (uint32_t)(timescale / fps);
+    }
+    else
+    {
+        // Fallback: assume 30fps
+        default_sample_duration = timescale / 30;
+    }
 
-    // Calcular tamanho total
+    create_mvex_box(track_id, fragment_duration, default_sample_duration, &mvex);
+
     output->Size = 8 + mvhd.Size + trak.Size + mvex.Size;
     output->Data = malloc(output->Size);
 
     uint8_t* p = output->Data;
 
-    // Box size
     buffer_write32(p, output->Size);
     p += 4;
 
-    // Box type: 'moov'
-    write_fourcc(p, "moov");
+    p[0] = 'm'; p[1] = 'o'; p[2] = 'o'; p[3] = 'v';
     p += 4;
 
-    // Copiar sub-boxes
     memcpy(p, mvhd.Data, mvhd.Size);
     p += mvhd.Size;
 
@@ -1595,7 +1584,6 @@ static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_
 
     memcpy(p, mvex.Data, mvex.Size);
 
-    // Liberar sub-boxes
     free(mvhd.Data);
     free(trak.Data);
     free(mvex.Data);
@@ -1652,7 +1640,7 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     // ───────────────────────────────────────────────────────────────
 
     MediaBuffer moov;
-    create_moov_box(metadata,config->Timescale, config->TrackID, config->FragmentDuration, &moov);
+    create_moov_box(metadata, config->Timescale, config->TrackID, config->FragmentDuration, metadata->Fps, &moov);
 
     if (!moov.Data)
     {
@@ -1679,15 +1667,15 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     memcpy(output->Data, ftyp.Data, ftyp.Size);
     memcpy(output->Data + ftyp.Size, moov.Data, moov.Size);
 
-  /*  printf("Initialization segment criado:\n");
-    printf("   Resolução: %dx%d\n", metadata->Width, metadata->Height);
-    printf("   Timescale: %u\n", config->Timescale);
-    printf("   Track ID: %u\n", config->TrackID);
-    printf("   ftyp: %zu bytes\n", ftyp.Size);
-    printf("   moov: %zu bytes\n", moov.Size);
-    printf("   Total: %zu bytes\n", output->Size);*/
+    /*  printf("Initialization segment criado:\n");
+      printf("   Resolução: %dx%d\n", metadata->Width, metadata->Height);
+      printf("   Timescale: %u\n", config->Timescale);
+      printf("   Track ID: %u\n", config->TrackID);
+      printf("   ftyp: %zu bytes\n", ftyp.Size);
+      printf("   moov: %zu bytes\n", moov.Size);
+      printf("   Total: %zu bytes\n", output->Size);*/
 
-    // Liberar buffers temporários
+      // Liberar buffers temporários
     free(ftyp.Data);
     free(moov.Data);
 

@@ -79,13 +79,13 @@ extern "C" {
 	//} StreamManager;
 
 
-	StreamManager* stream_manager_create(int stream_id, int width, int height, int fps, int bitrate, const char* codec, const char* url, AppClientInfo* client);
-	void stream_manager_free(StreamManager* manager);
-	void stream_manager_add_reference(StreamManager* manager);
-	void stream_manager_remove_reference(StreamManager** manager);
-	StreamManager* stream_manager_find_by_id(StreamManager* head, int stream_id);
-	StreamManager* stream_manager_find_by_client(StreamManager* head, AppClientInfo* client);
-	void stream_manager_print(StreamManager* manager);
+	//StreamManager* stream_manager_create(int stream_id, int width, int height, int fps, int bitrate, const char* codec, const char* url, AppClientInfo* client);
+	//void stream_manager_free(StreamManager* manager);
+	//void stream_manager_add_reference(StreamManager* manager);
+	//void stream_manager_remove_reference(StreamManager** manager);
+	//StreamManager* stream_manager_find_by_id(StreamManager* head, int stream_id);
+	//StreamManager* stream_manager_find_by_client(StreamManager* head, AppClientInfo* client);
+	//void stream_manager_print(StreamManager* manager);
 
 
 #ifdef __cplusplus

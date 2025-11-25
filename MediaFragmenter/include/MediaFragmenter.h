@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+    #include "../src/Mp4Diag.h"
     #include "../src/MediaFragmenterType.h"
 
 

@@ -34,6 +34,7 @@
   <ItemGroup>
     <ClCompile Include="src\BufferUtil.c" />
     <ClCompile Include="src\DashBuilder.c" />
+    <ClCompile Include="src\DashDiag.c" />
     <ClCompile Include="src\FileUtil.c" />
     <ClCompile Include="src\H26XBuilder.c" />
     <ClCompile Include="src\ImageTools.c" />

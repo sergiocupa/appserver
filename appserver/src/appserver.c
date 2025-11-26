@@ -343,7 +343,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     // Associa o socket à porta
     if (bind(server_socket, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR) 
     {
-        printf("Erro no bind. Código: %d\n", WSAGetLastError());
+        printf("Erro no bind da porta para servidor. Porta: %d. Código: %d\n", port, WSAGetLastError());
         closesocket(server_socket);
         WSACleanup();
         return 1;

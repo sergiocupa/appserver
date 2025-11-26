@@ -166,7 +166,7 @@
 
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 10px;
         }
 
@@ -222,33 +222,34 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 DASH Player - DEBUG MODE</h1>
+        <h1>DASH Player - DEBUG MODE</h1>
 
         <div class="input-group">
             <input type="text" id="videoName" placeholder="Nome do vídeo" value="sample-3">
-            <button onclick="playVideo()">▶ Play</button>
-            <button class="danger" onclick="stopVideo()">⏹ Stop</button>
-            <button onclick="clearLogs()">🗑 Clear Logs</button>
-            <button onclick="downloadLogs()">💾 Export Logs</button>
+            <button onclick="playVideo()">Play</button>
+            <button class="danger" onclick="stopVideo()">Stop</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+            <button onclick="downloadLogs()">Export Logs</button>
         </div>
 
         <div class="main-content">
             <div class="video-section">
-                <div class="debug-title">📺 Video Player</div>
+                <div class="debug-title">Video Player</div>
                 <video id="videoPlayer" controls></video>
                 <div class="controls">
-                    <button onclick="analyzeBuffer()">📊 Analyze Buffer</button>
-                    <button onclick="testManualAppend()">🧪 Test Manual Append</button>
+                    <button onclick="analyzeBuffer()">Analyze Buffer</button>
+                    <button onclick="player.video.currentTime -= 5">-5s</button>
+                    <button onclick="player.video.currentTime += 5">+5s</button>
                 </div>
             </div>
 
             <div class="debug-section" id="debugLog">
-                <div class="debug-title">📋 Debug Log</div>
+                <div class="debug-title">Debug Log</div>
             </div>
         </div>
 
         <div class="status-panel">
-            <div class="debug-title">📈 Status</div>
+            <div class="debug-title">Status</div>
             <div class="status-grid">
                 <div class="status-item">
                     <div class="status-label">MediaSource State</div>
@@ -266,16 +267,20 @@
                     <div class="status-label">Buffer Length</div>
                     <div class="status-value" id="bufLen">-</div>
                 </div>
+                <div class="status-item">
+                    <div class="status-label">Video Time</div>
+                    <div class="status-value" id="videoTime">-</div>
+                </div>
             </div>
         </div>
 
         <div id="errorDetails" class="error-details" style="display: none;">
-            <h3>❌ Error Details</h3>
+            <h3>Error Details</h3>
             <pre id="errorContent"></pre>
         </div>
 
         <div class="status-panel">
-            <div class="debug-title">🔬 Last Segment Analysis</div>
+            <div class="debug-title">Last Segment Analysis</div>
             <div id="segmentAnalysis">Nenhum segmento analisado ainda.</div>
         </div>
     </div>
@@ -284,14 +289,12 @@
         // ════════════════════════════════════════════════════════════════════
         // CONFIGURAÇÃO
         // ════════════════════════════════════════════════════════════════════
-
         const BaseUrl = "http://localhost:1234/api";
         const logs = [];
 
         // ════════════════════════════════════════════════════════════════════
         // FUNÇÕES DE LOG
         // ════════════════════════════════════════════════════════════════════
-
         function log(type, message, data = null) {
             const timestamp = new Date().toISOString().substr(11, 12);
             const entry = { timestamp, type, message, data };
@@ -313,8 +316,6 @@
             entryDiv.textContent = content;
             logDiv.appendChild(entryDiv);
             logDiv.scrollTop = logDiv.scrollHeight;
-
-            // Console também
             console.log(`[${type.toUpperCase()}]`, message, data || '');
         }
 
@@ -362,11 +363,28 @@
             } else {
                 document.getElementById('bufLen').textContent = '-';
             }
+
+            document.getElementById('videoTime').textContent =
+                player.video.currentTime.toFixed(2) + 's';
         }
 
         // ════════════════════════════════════════════════════════════════════
         // ANÁLISE DE MP4
         // ════════════════════════════════════════════════════════════════════
+        function hexDump(buffer, offset, length) {
+            const bytes = new Uint8Array(buffer, offset, length);
+            let result = '';
+            for (let i = 0; i < bytes.length; i += 16) {
+                const hex = Array.from(bytes.slice(i, i + 16))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join(' ');
+                const ascii = Array.from(bytes.slice(i, i + 16))
+                    .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.')
+                    .join('');
+                result += `${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48)}  ${ascii}\n`;
+            }
+            return result;
+        }
 
         function analyzeMP4Boxes(data, label) {
             const view = new DataView(data);
@@ -385,7 +403,6 @@
                         view.getUint8(offset + 7)
                     );
 
-                    // Handle size == 1 (extended size)
                     let headerSize = 8;
                     if (size === 1 && offset + 16 <= data.byteLength) {
                         const highBits = view.getUint32(offset + 8);
@@ -394,24 +411,16 @@
                         headerSize = 16;
                     }
 
-                    // Handle size == 0 (extends to end of file)
                     if (size === 0) {
                         size = data.byteLength - offset;
                     }
 
-                    // Validação
                     if (size < 8 || offset + size > data.byteLength) {
                         log('warning', `Box inválido em offset ${offset}: size=${size}, remaining=${data.byteLength - offset}`);
                         break;
                     }
 
-                    const box = {
-                        type,
-                        size,
-                        offset,
-                        headerSize
-                    };
-
+                    const box = { type, size, offset, headerSize };
                     boxes.push(box);
                     log('info', `Box encontrado: '${type}' size=${size} offset=${offset}`);
 
@@ -460,7 +469,6 @@
 
                 log('info', `ftyp: majorBrand='${majorBrand}', minorVersion=${minorVersion}`);
 
-                // Compatible brands
                 const brands = [];
                 for (let i = 16; i < size; i += 4) {
                     const brand = String.fromCharCode(
@@ -497,19 +505,35 @@
 
                     log('info', `${indent}├─ ${boxType} (${boxSize} bytes)`);
 
-                    // Recursão para containers conhecidos
-                    const containers = ['moov', 'trak', 'mdia', 'minf', 'stbl', 'mvex', 'moof', 'traf'];
-                    if (containers.includes(boxType) && depth < 5) {
-                        analyzeContainerBox(view, pos + 8, boxSize - 8, depth + 1);
-                    }
-
-                    // Análise específica
+                    // Análise específica de boxes importantes
                     if (boxType === 'tfdt') {
                         analyzeTfdt(view, pos);
                     } else if (boxType === 'trun') {
                         analyzeTrun(view, pos, boxSize);
                     } else if (boxType === 'mfhd') {
                         analyzeMfhd(view, pos);
+                    } else if (boxType === 'tfhd') {
+                        analyzeTfhd(view, pos);
+                    } else if (boxType === 'mvhd') {
+                        analyzeMvhd(view, pos);
+                    } else if (boxType === 'tkhd') {
+                        analyzeTkhd(view, pos);
+                    } else if (boxType === 'mdhd') {
+                        analyzeMdhd(view, pos);
+                    } else if (boxType === 'hdlr') {
+                        analyzeHdlr(view, pos, boxSize);
+                    } else if (boxType === 'stsd') {
+                        analyzeStsd(view, pos, boxSize);
+                    } else if (boxType === 'avcC') {
+                        analyzeAvcC(view, pos, boxSize);
+                    } else if (boxType === 'trex') {
+                        analyzeTrex(view, pos);
+                    }
+
+                    // Recursão para containers conhecidos
+                    const containers = ['moov', 'trak', 'mdia', 'minf', 'stbl', 'mvex', 'moof', 'traf', 'edts', 'dinf', 'avc1', 'avc3'];
+                    if (containers.includes(boxType)) {
+                        analyzeContainerBox(view, pos + 8, boxSize - 8, depth + 1);
                     }
 
                     pos += boxSize;
@@ -521,9 +545,28 @@
 
         function analyzeMfhd(view, offset) {
             try {
-                const version = view.getUint8(offset + 8);
                 const sequenceNumber = view.getUint32(offset + 12);
-                log('info', `    mfhd: version=${version}, sequenceNumber=${sequenceNumber}`);
+                log('data', `    mfhd: sequenceNumber=${sequenceNumber}`);
+            } catch (e) { }
+        }
+
+        function analyzeTfhd(view, offset) {
+            try {
+                const flags = (view.getUint8(offset + 9) << 16) |
+                    (view.getUint8(offset + 10) << 8) |
+                    view.getUint8(offset + 11);
+                const trackId = view.getUint32(offset + 12);
+
+                let flagsStr = [];
+                if (flags & 0x000001) flagsStr.push('base-data-offset');
+                if (flags & 0x000002) flagsStr.push('sample-description-index');
+                if (flags & 0x000008) flagsStr.push('default-sample-duration');
+                if (flags & 0x000010) flagsStr.push('default-sample-size');
+                if (flags & 0x000020) flagsStr.push('default-sample-flags');
+                if (flags & 0x010000) flagsStr.push('duration-is-empty');
+                if (flags & 0x020000) flagsStr.push('default-base-is-moof');
+
+                log('data', `    tfhd: trackId=${trackId}, flags=0x${flags.toString(16)} [${flagsStr.join(', ')}]`);
             } catch (e) { }
         }
 
@@ -538,7 +581,7 @@
                 } else {
                     baseMediaDecodeTime = view.getUint32(offset + 12);
                 }
-                log('info', `    tfdt: version=${version}, baseMediaDecodeTime=${baseMediaDecodeTime}`);
+                log('data', `    tfdt: version=${version}, baseMediaDecodeTime=${baseMediaDecodeTime}`);
             } catch (e) { }
         }
 
@@ -550,164 +593,201 @@
                     view.getUint8(offset + 11);
                 const sampleCount = view.getUint32(offset + 12);
 
-                log('info', `    trun: version=${version}, flags=0x${flags.toString(16)}, sampleCount=${sampleCount}`);
+                let flagsStr = [];
+                if (flags & 0x001) flagsStr.push('data-offset');
+                if (flags & 0x004) flagsStr.push('first-sample-flags');
+                if (flags & 0x100) flagsStr.push('sample-duration');
+                if (flags & 0x200) flagsStr.push('sample-size');
+                if (flags & 0x400) flagsStr.push('sample-flags');
+                if (flags & 0x800) flagsStr.push('sample-composition-time');
 
-                // Verificar flags
-                const hasDataOffset = (flags & 0x000001) !== 0;
-                const hasFirstSampleFlags = (flags & 0x000004) !== 0;
-                const hasSampleDuration = (flags & 0x000100) !== 0;
-                const hasSampleSize = (flags & 0x000200) !== 0;
-                const hasSampleFlags = (flags & 0x000400) !== 0;
-                const hasSampleCTO = (flags & 0x000800) !== 0;
+                log('data', `    trun: version=${version}, flags=0x${flags.toString(16)} [${flagsStr.join(', ')}], sampleCount=${sampleCount}`);
 
-                log('info', `    trun flags: dataOffset=${hasDataOffset}, firstSampleFlags=${hasFirstSampleFlags}, duration=${hasSampleDuration}, size=${hasSampleSize}`);
+                // Mostrar alguns samples se houver
+                if (sampleCount > 0 && sampleCount <= 5) {
+                    let sampleOffset = 16; // Após header + sample_count
+                    if (flags & 0x001) sampleOffset += 4; // data_offset
+                    if (flags & 0x004) sampleOffset += 4; // first_sample_flags
 
-                let pos = offset + 16;
-                if (hasDataOffset) {
-                    const dataOffset = view.getInt32(pos);
-                    log('info', `    trun: dataOffset=${dataOffset}`);
-                    pos += 4;
+                    for (let i = 0; i < sampleCount && (offset + sampleOffset + 8) < (offset + size); i++) {
+                        let sampleInfo = `      sample[${i}]:`;
+                        if (flags & 0x100) {
+                            sampleInfo += ` duration=${view.getUint32(offset + sampleOffset)}`;
+                            sampleOffset += 4;
+                        }
+                        if (flags & 0x200) {
+                            sampleInfo += ` size=${view.getUint32(offset + sampleOffset)}`;
+                            sampleOffset += 4;
+                        }
+                        log('data', sampleInfo);
+                    }
                 }
             } catch (e) { }
         }
 
-        function hexDump(data, offset, length) {
-            const bytes = new Uint8Array(data, offset, length);
-            let result = '';
-
-            for (let i = 0; i < bytes.length; i += 16) {
-                // Offset
-                result += i.toString(16).padStart(8, '0') + '  ';
-
-                // Hex bytes
-                for (let j = 0; j < 16; j++) {
-                    if (i + j < bytes.length) {
-                        result += bytes[i + j].toString(16).padStart(2, '0') + ' ';
-                    } else {
-                        result += '   ';
-                    }
-                    if (j === 7) result += ' ';
+        function analyzeMvhd(view, offset) {
+            try {
+                const version = view.getUint8(offset + 8);
+                let timescale, duration;
+                if (version === 1) {
+                    timescale = view.getUint32(offset + 28);
+                    duration = view.getUint32(offset + 36); // Simplified, ignoring high bits
+                } else {
+                    timescale = view.getUint32(offset + 20);
+                    duration = view.getUint32(offset + 24);
                 }
+                log('data', `    mvhd: version=${version}, timescale=${timescale}, duration=${duration}`);
+            } catch (e) { }
+        }
 
-                result += ' |';
-
-                // ASCII
-                for (let j = 0; j < 16 && i + j < bytes.length; j++) {
-                    const byte = bytes[i + j];
-                    result += (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+        function analyzeTkhd(view, offset) {
+            try {
+                const version = view.getUint8(offset + 8);
+                const flags = (view.getUint8(offset + 9) << 16) |
+                    (view.getUint8(offset + 10) << 8) |
+                    view.getUint8(offset + 11);
+                let trackId, width, height;
+                if (version === 1) {
+                    trackId = view.getUint32(offset + 28);
+                    width = view.getUint32(offset + 92) / 65536;
+                    height = view.getUint32(offset + 96) / 65536;
+                } else {
+                    trackId = view.getUint32(offset + 20);
+                    width = view.getUint32(offset + 84) / 65536;
+                    height = view.getUint32(offset + 88) / 65536;
                 }
+                log('data', `    tkhd: trackId=${trackId}, flags=0x${flags.toString(16)}, ${width}x${height}`);
+            } catch (e) { }
+        }
 
-                result += '|\n';
-            }
+        function analyzeMdhd(view, offset) {
+            try {
+                const version = view.getUint8(offset + 8);
+                let timescale;
+                if (version === 1) {
+                    timescale = view.getUint32(offset + 28);
+                } else {
+                    timescale = view.getUint32(offset + 20);
+                }
+                log('data', `    mdhd: version=${version}, timescale=${timescale}`);
+            } catch (e) { }
+        }
 
-            return result;
+        function analyzeHdlr(view, offset, size) {
+            try {
+                const handlerType = String.fromCharCode(
+                    view.getUint8(offset + 16),
+                    view.getUint8(offset + 17),
+                    view.getUint8(offset + 18),
+                    view.getUint8(offset + 19)
+                );
+                log('data', `    hdlr: handlerType='${handlerType}'`);
+            } catch (e) { }
+        }
+
+        function analyzeStsd(view, offset, size) {
+            try {
+                const entryCount = view.getUint32(offset + 12);
+                log('data', `    stsd: entryCount=${entryCount}`);
+            } catch (e) { }
+        }
+
+        function analyzeAvcC(view, offset, size) {
+            try {
+                const configVersion = view.getUint8(offset + 8);
+                const profileIndication = view.getUint8(offset + 9);
+                const profileCompatibility = view.getUint8(offset + 10);
+                const levelIndication = view.getUint8(offset + 11);
+                const lengthSizeMinusOne = view.getUint8(offset + 12) & 0x03;
+
+                log('data', `    avcC: profile=${profileIndication}, level=${levelIndication / 10}, lengthSize=${lengthSizeMinusOne + 1}`);
+            } catch (e) { }
+        }
+
+        function analyzeTrex(view, offset) {
+            try {
+                const trackId = view.getUint32(offset + 12);
+                const defaultSampleDescriptionIndex = view.getUint32(offset + 16);
+                const defaultSampleDuration = view.getUint32(offset + 20);
+                const defaultSampleSize = view.getUint32(offset + 24);
+                const defaultSampleFlags = view.getUint32(offset + 28);
+
+                log('data', `    trex: trackId=${trackId}, defaultDuration=${defaultSampleDuration}, defaultSize=${defaultSampleSize}`);
+            } catch (e) { }
         }
 
         // ════════════════════════════════════════════════════════════════════
-        // PLAYER DASH COM DEBUG
+        // DASH PLAYER CLASS
         // ════════════════════════════════════════════════════════════════════
-
-        class DebugDASHPlayer {
+        class DASHPlayer {
             constructor(videoElement, baseUrl) {
                 this.video = videoElement;
+                this.baseUrl = baseUrl;
                 this.mediaSource = null;
                 this.sourceBuffer = null;
+                this.isPlaying = false;
                 this.currentFragment = 0;
                 this.totalFragments = 0;
-                this.isPlaying = false;
-                this.baseUrl = baseUrl;
+                this.codec = '';
                 this.videoName = '';
+                this.fragmentQueue = [];
+                this.isAppending = false;
+                this.hasStartedPlayback = false;
                 this.lastInitData = null;
                 this.lastFragmentData = null;
-                this.codec = '';
-
-                // Adicionar listeners de erro no vídeo
-                this.video.addEventListener('error', (e) => {
-                    const error = this.video.error;
-                    showError('Video Element Error', `
-Code: ${error ? error.code : 'unknown'}
-Message: ${error ? error.message : 'unknown'}
-MEDIA_ERR_ABORTED: ${error?.code === 1}
-MEDIA_ERR_NETWORK: ${error?.code === 2}
-MEDIA_ERR_DECODE: ${error?.code === 3}
-MEDIA_ERR_SRC_NOT_SUPPORTED: ${error?.code === 4}
-                        `);
-                });
             }
 
             async play(videoName) {
-                if (this.isPlaying) {
-                    this.stop();
-                }
-
+                this.stop();
                 this.videoName = videoName;
-                this.currentFragment = 0;
                 this.isPlaying = true;
-
-                log('info', `Iniciando reprodução: ${videoName}`);
+                this.currentFragment = 0;
+                this.hasStartedPlayback = false;
 
                 try {
+                    log('info', `═══════════════════════════════════════════════════`);
+                    log('info', `Iniciando reprodução: ${videoName}`);
+                    log('info', `═══════════════════════════════════════════════════`);
+
                     // 1. Buscar e parsear MPD
-                    log('info', 'Buscando MPD...');
-                    const mpd = await this.fetchMPD();
-                    log('success', 'MPD carregado', mpd);
+                    const mpdInfo = await this.fetchMPD();
+                    log('success', 'MPD carregado', mpdInfo);
 
                     // 2. Configurar MediaSource
-                    log('info', 'Configurando MediaSource...');
-                    await this.setupMediaSource(mpd.codec);
+                    await this.setupMediaSource(mpdInfo.codec);
                     log('success', 'MediaSource configurado');
 
-                    // 3. Carregar Initialization Segment
-                    log('info', 'Carregando init segment...');
-                    const initSegment = await this.fetchInitSegment();
-                    this.lastInitData = initSegment;
-
-                    // Analisar init segment
-                    analyzeMP4Boxes(initSegment, 'Init Segment (init.mp4)');
-
-                    log('info', `Init segment: ${initSegment.byteLength} bytes`);
-                    await this.appendBuffer(initSegment, 'init');
-                    log('success', 'Init segment appendado com sucesso');
+                    // 3. Buscar init segment
+                    const initData = await this.fetchInitSegment();
+                    this.lastInitData = initData;
+                    analyzeMP4Boxes(initData, 'Init Segment');
+                    await this.appendBuffer(initData, 'init');
+                    log('success', 'Init segment appendado');
 
                     // 4. Começar a carregar fragmentos
-                    this.loadNextFragment();
+                    this.loadFragments();
 
                 } catch (error) {
-                    showError('Erro Fatal', `
-Message: ${error.message}
-Stack: ${error.stack}
-                        `);
-                    this.isPlaying = false;
+                    showError('Erro ao iniciar reprodução', error.message + '\n' + error.stack);
                 }
-
-                updateStatus();
             }
 
             stop() {
-                log('info', 'Parando reprodução...');
                 this.isPlaying = false;
-                this.currentFragment = 0;
-
-                if (this.sourceBuffer && !this.sourceBuffer.updating) {
-                    try {
-                        this.sourceBuffer.abort();
-                    } catch (e) {
-                        log('warning', `Erro ao abortar sourceBuffer: ${e.message}`);
-                    }
-                }
+                this.fragmentQueue = [];
+                this.hasStartedPlayback = false;
 
                 if (this.mediaSource && this.mediaSource.readyState === 'open') {
                     try {
                         this.mediaSource.endOfStream();
-                    } catch (e) {
-                        log('warning', `Erro ao finalizar mediaSource: ${e.message}`);
-                    }
+                    } catch (e) { }
                 }
 
+                this.video.pause();
                 this.video.src = '';
                 this.mediaSource = null;
                 this.sourceBuffer = null;
-
+                log('info', 'Player parado');
                 updateStatus();
             }
 
@@ -716,14 +796,10 @@ Stack: ${error.stack}
                 log('info', `Fetching MPD: ${url}`);
 
                 const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error(`MPD não encontrado: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`MPD não encontrado: ${response.status}`);
 
                 const text = await response.text();
                 log('data', 'MPD Content:', text.substring(0, 500));
-
                 return this.parseMPD(text);
             }
 
@@ -731,7 +807,6 @@ Stack: ${error.stack}
                 const parser = new DOMParser();
                 const xml = parser.parseFromString(xmlText, 'text/xml');
 
-                // Check for parse errors
                 const parseError = xml.querySelector('parsererror');
                 if (parseError) {
                     throw new Error(`XML Parse Error: ${parseError.textContent}`);
@@ -752,22 +827,23 @@ Stack: ${error.stack}
 
                 this.totalFragments = Math.ceil(totalSeconds / fragmentDuration);
 
-                log('info', `MPD Parsed: codec=${codec}, duration=${totalSeconds}s, fragments=${this.totalFragments}`);
+                log('info', `MPD Parsed: codec=${codec}, duration=${totalSeconds}s, fragmentDuration=${fragmentDuration}s, fragments=${this.totalFragments}`);
 
                 return {
-                    codec: codec,
-                    totalSeconds: totalSeconds,
-                    fragmentDuration: fragmentDuration,
+                    codec,
+                    totalSeconds,
+                    fragmentDuration,
                     totalFragments: this.totalFragments,
-                    timescale: timescale
+                    timescale
                 };
             }
 
             parseDuration(duration) {
-                const matches = duration.match(/PT(?:(\d+)M)?(?:(\d+)S)?/);
-                const minutes = parseInt(matches?.[1] || '0');
-                const seconds = parseInt(matches?.[2] || '0');
-                return minutes * 60 + seconds;
+                const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?/);
+                const hours = parseInt(matches?.[1] || '0');
+                const minutes = parseInt(matches?.[2] || '0');
+                const seconds = parseFloat(matches?.[3] || '0');
+                return hours * 3600 + minutes * 60 + seconds;
             }
 
             async setupMediaSource(codec) {
@@ -777,11 +853,10 @@ Stack: ${error.stack}
 
                     this.mediaSource.addEventListener('sourceopen', () => {
                         try {
-                            const mimeType = `video/mp4; codecs="${codec}"`;
+                            let mimeType = `video/mp4; codecs="${codec}"`;
                             log('info', `Tentando MIME type: ${mimeType}`);
 
                             if (!MediaSource.isTypeSupported(mimeType)) {
-                                // Tentar variações comuns
                                 const alternatives = [
                                     'video/mp4; codecs="avc1.64001f"',
                                     'video/mp4; codecs="avc1.640028"',
@@ -809,22 +884,11 @@ Stack: ${error.stack}
                                 this.sourceBuffer = this.mediaSource.addSourceBuffer(mimeType);
                             }
 
-                            // Configurar sourceBuffer
                             this.sourceBuffer.mode = 'segments';
 
-                            // Listeners para debug
-                            this.sourceBuffer.addEventListener('updateend', () => {
-                                log('info', 'SourceBuffer: updateend');
-                                updateStatus();
-                            });
-
-                            this.sourceBuffer.addEventListener('error', (e) => {
-                                log('error', 'SourceBuffer error event', e);
-                            });
-
-                            this.sourceBuffer.addEventListener('abort', () => {
-                                log('warning', 'SourceBuffer: abort');
-                            });
+                            this.sourceBuffer.addEventListener('updateend', () => this.onUpdateEnd());
+                            this.sourceBuffer.addEventListener('error', (e) => log('error', 'SourceBuffer error', e));
+                            this.sourceBuffer.addEventListener('abort', () => log('warning', 'SourceBuffer abort'));
 
                             resolve();
                         } catch (error) {
@@ -832,14 +896,8 @@ Stack: ${error.stack}
                         }
                     });
 
-                    this.mediaSource.addEventListener('sourceended', () => {
-                        log('info', 'MediaSource: sourceended');
-                    });
-
-                    this.mediaSource.addEventListener('sourceclose', () => {
-                        log('warning', 'MediaSource: sourceclose');
-                    });
-
+                    this.mediaSource.addEventListener('sourceended', () => log('info', 'MediaSource: sourceended'));
+                    this.mediaSource.addEventListener('sourceclose', () => log('warning', 'MediaSource: sourceclose'));
                     this.mediaSource.addEventListener('error', (e) => {
                         log('error', 'MediaSource error', e);
                         reject(new Error('MediaSource error'));
@@ -848,11 +906,10 @@ Stack: ${error.stack}
             }
 
             async fetchInitSegment() {
-                const url = `${this.baseUrl}/init.mp4?video=${this.videoName}`;
+                const url = `${this.baseUrl}/init.mp4`;
                 log('info', `Fetching init: ${url}`);
 
                 const response = await fetch(url);
-
                 if (!response.ok) {
                     const text = await response.text();
                     throw new Error(`Init segment error: ${response.status} - ${text}`);
@@ -860,64 +917,93 @@ Stack: ${error.stack}
 
                 const data = await response.arrayBuffer();
                 log('success', `Init segment recebido: ${data.byteLength} bytes`);
-
                 return data;
             }
 
             async fetchFragment(number) {
-                const url = `${this.baseUrl}/fragment_${number}.m4s?video=${this.videoName}`;
-                log('info', `Fetching fragment: ${url}`);
+                const url = `${this.baseUrl}/fragment_${number}.m4s`;
+                log('info', `Fetching fragment ${number}: ${url}`);
 
                 const response = await fetch(url);
-
                 if (!response.ok) {
-                    const text = await response.text();
-                    throw new Error(`Fragment ${number} error: ${response.status} - ${text}`);
+                    if (response.status === 404 || response.status === 500) {
+                        const text = await response.text();
+                        log('warning', `Fragment ${number}: ${response.status} - ${text}`);
+                        return null;
+                    }
+                    throw new Error(`Fragment ${number} error: ${response.status}`);
                 }
 
                 const data = await response.arrayBuffer();
                 log('success', `Fragment ${number} recebido: ${data.byteLength} bytes`);
-
                 return data;
             }
 
-            async loadNextFragment() {
-                if (!this.isPlaying || this.currentFragment >= this.totalFragments) {
-                    if (this.mediaSource && this.mediaSource.readyState === 'open') {
-                        log('info', 'Finalizando stream...');
-                        this.mediaSource.endOfStream();
-                    }
-                    return;
-                }
+            async loadFragments() {
+                while (this.isPlaying && this.currentFragment < this.totalFragments) {
+                    try {
+                        const fragment = await this.fetchFragment(this.currentFragment);
 
-                try {
-                    const fragment = await this.fetchFragment(this.currentFragment);
-                    this.lastFragmentData = fragment;
+                        if (!fragment) {
+                            log('info', 'Fim dos fragmentos (servidor retornou null)');
+                            break;
+                        }
 
-                    // Analisar fragmento
-                    analyzeMP4Boxes(fragment, `Fragment ${this.currentFragment}`);
+                        this.lastFragmentData = fragment;
+                        analyzeMP4Boxes(fragment, `Fragment ${this.currentFragment}`);
 
-                    await this.appendBuffer(fragment, `fragment_${this.currentFragment}`);
+                        await this.appendBuffer(fragment, `fragment_${this.currentFragment}`);
+                        log('success', `Fragment ${this.currentFragment} appendado`);
 
-                    log('success', `Fragment ${this.currentFragment} appendado`);
+                        // Iniciar playback após primeiro fragmento
+                        if (!this.hasStartedPlayback && this.currentFragment === 0) {
+                            this.startPlayback();
+                        }
 
-                    this.currentFragment++;
-                    updateStatus();
+                        this.currentFragment++;
+                        updateStatus();
 
-                    // Carregar próximo
-                    this.loadNextFragment();
-
-                } catch (error) {
-                    showError(`Erro no Fragment ${this.currentFragment}`, `
+                    } catch (error) {
+                        showError(`Erro no Fragment ${this.currentFragment}`, `
 Message: ${error.message}
 Stack: ${error.stack}
 
 MediaSource state: ${this.mediaSource?.readyState}
 SourceBuffer updating: ${this.sourceBuffer?.updating}
-SourceBuffer mode: ${this.sourceBuffer?.mode}
 Video error: ${this.video.error?.message || 'none'}
-                        `);
+                            `);
+                        break;
+                    }
                 }
+
+                // Finalizar stream
+                if (this.mediaSource && this.mediaSource.readyState === 'open') {
+                    try {
+                        await this.waitForBuffer();
+                        this.mediaSource.endOfStream();
+                        log('success', '═══════════════════════════════════════════════════');
+                        log('success', 'Stream finalizado com sucesso!');
+                        log('success', '═══════════════════════════════════════════════════');
+                    } catch (e) {
+                        log('warning', `Erro ao finalizar stream: ${e.message}`);
+                    }
+                }
+            }
+
+            startPlayback() {
+                this.hasStartedPlayback = true;
+
+                const tryPlay = () => {
+                    if (this.video.readyState >= 2) {
+                        this.video.play()
+                            .then(() => log('success', '▶ Playback iniciado automaticamente'))
+                            .catch(e => log('warning', `Autoplay bloqueado: ${e.message}. Clique no vídeo para iniciar.`));
+                    } else {
+                        setTimeout(tryPlay, 100);
+                    }
+                };
+
+                tryPlay();
             }
 
             appendBuffer(data, label) {
@@ -932,217 +1018,65 @@ Video error: ${this.video.error?.message || 'none'}
                         return;
                     }
 
-                    log('info', `appendBuffer: ${label}, ${data.byteLength} bytes, updating=${this.sourceBuffer.updating}`);
+                    log('info', `appendBuffer: ${label}, ${data.byteLength} bytes`);
 
-                    const doAppend = () => {
-                        try {
-                            log('info', `Executando appendBuffer para ${label}...`);
-                            this.sourceBuffer.appendBuffer(data);
-                        } catch (error) {
-                            // Capturar erro síncrono do appendBuffer
-                            showError(`appendBuffer sync error (${label})`, `
-Error: ${error.name}
-Message: ${error.message}
-
-Possíveis causas:
-- QuotaExceededError: Buffer cheio
-- InvalidStateError: SourceBuffer em estado inválido
-- InvalidAccessError: Dados inválidos
-
-Data size: ${data.byteLength} bytes
-First 8 bytes: ${Array.from(new Uint8Array(data, 0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')}
-                                `);
-                            reject(error);
-                            return;
-                        }
-                    };
-
-                    // Handler para quando terminar
-                    const onUpdateEnd = () => {
-                        log('info', `appendBuffer concluído: ${label}`);
-                        cleanup();
-                        resolve();
-                    };
-
-                    // Handler para erro
-                    const onError = (e) => {
-                        // Coletar informações detalhadas
-                        const errorInfo = {
-                            label: label,
-                            dataSize: data.byteLength,
-                            mediaSourceState: this.mediaSource?.readyState,
-                            sourceBufferUpdating: this.sourceBuffer?.updating,
-                            sourceBufferMode: this.sourceBuffer?.mode,
-                            videoError: this.video.error,
-                            videoReadyState: this.video.readyState,
-                            videoNetworkState: this.video.networkState,
-                            bufferedRanges: this.sourceBuffer?.buffered?.length > 0 ?
-                                `${this.sourceBuffer.buffered.start(0)} - ${this.sourceBuffer.buffered.end(0)}` : 'none'
-                        };
-
-                        // Analisar os dados que falharam
-                        log('error', `appendBuffer ERRO para ${label}`, errorInfo);
-
-                        // Verificar estrutura do MP4
-                        const view = new DataView(data);
-                        const firstBoxType = String.fromCharCode(
-                            view.getUint8(4), view.getUint8(5), view.getUint8(6), view.getUint8(7)
-                        );
-
-                        showError(`appendBuffer Error (${label})`, `
-═══════════════════════════════════════════════════
-ERRO NO SOURCEBUFFER
-═══════════════════════════════════════════════════
-
-Label: ${label}
-Data size: ${data.byteLength} bytes
-First box type: '${firstBoxType}'
-
-MediaSource state: ${errorInfo.mediaSourceState}
-SourceBuffer updating: ${errorInfo.sourceBufferUpdating}
-SourceBuffer mode: ${errorInfo.sourceBufferMode}
-Buffered ranges: ${errorInfo.bufferedRanges}
-
-Video element:
-      - readyState: ${errorInfo.videoReadyState}
-      - networkState: ${errorInfo.videoNetworkState}
-      - error: ${errorInfo.videoError?.message || 'none'}
-
-═══════════════════════════════════════════════════
-DIAGNÓSTICO
-═══════════════════════════════════════════════════
-
-${this.diagnoseError(data, label)}
-
-═══════════════════════════════════════════════════
-FIRST 64 BYTES (HEX)
-═══════════════════════════════════════════════════
-${Array.from(new Uint8Array(data, 0, Math.min(64, data.byteLength)))
-                                .map((b, i) => (i % 16 === 0 ? '\n' : '') + b.toString(16).padStart(2, '0'))
-                                .join(' ')}
-                            `);
-
-                        cleanup();
-                        reject(new Error(`appendBuffer failed for ${label}`));
-                    };
-
-                    const cleanup = () => {
-                        this.sourceBuffer.removeEventListener('updateend', onUpdateEnd);
-                        this.sourceBuffer.removeEventListener('error', onError);
-                    };
-
-                    this.sourceBuffer.addEventListener('updateend', onUpdateEnd, { once: true });
-                    this.sourceBuffer.addEventListener('error', onError, { once: true });
-
-                    // Aguardar se estiver atualizando
-                    if (this.sourceBuffer.updating) {
-                        log('warning', 'SourceBuffer ocupado, aguardando...');
-                        this.sourceBuffer.addEventListener('updateend', doAppend, { once: true });
-                    } else {
-                        doAppend();
-                    }
+                    this.fragmentQueue.push({ data, label, resolve, reject });
+                    this.processQueue();
                 });
             }
 
-            diagnoseError(data, label) {
-                const issues = [];
-                const view = new DataView(data);
-
-                // 1. Verificar se tem tamanho mínimo
-                if (data.byteLength < 8) {
-                    issues.push("❌ Dados muito pequenos (< 8 bytes)");
-                    return issues.join('\n');
+            processQueue() {
+                if (this.isAppending || this.fragmentQueue.length === 0) {
+                    return;
                 }
 
-                // 2. Verificar primeiro box
-                const firstBoxSize = view.getUint32(0);
-                const firstBoxType = String.fromCharCode(
-                    view.getUint8(4), view.getUint8(5), view.getUint8(6), view.getUint8(7)
-                );
-
-                if (label.includes('init')) {
-                    // Init segment deve começar com ftyp
-                    if (firstBoxType !== 'ftyp') {
-                        issues.push(`❌ Init segment deve começar com 'ftyp', encontrado '${firstBoxType}'`);
-                    } else {
-                        issues.push("✓ Init segment começa com 'ftyp'");
-                    }
-
-                    // Verificar se tem moov
-                    let hasMoov = false;
-                    let offset = 0;
-                    while (offset < data.byteLength - 8) {
-                        const size = view.getUint32(offset);
-                        const type = String.fromCharCode(
-                            view.getUint8(offset + 4), view.getUint8(offset + 5),
-                            view.getUint8(offset + 6), view.getUint8(offset + 7)
-                        );
-                        if (type === 'moov') hasMoov = true;
-                        if (size < 8) break;
-                        offset += size;
-                    }
-
-                    if (!hasMoov) {
-                        issues.push("❌ Init segment não contém 'moov' box");
-                    } else {
-                        issues.push("✓ Init segment contém 'moov' box");
-                    }
-
-                } else if (label.includes('fragment')) {
-                    // Fragment deve começar com moof ou styp
-                    if (firstBoxType !== 'moof' && firstBoxType !== 'styp') {
-                        issues.push(`❌ Fragment deve começar com 'moof' ou 'styp', encontrado '${firstBoxType}'`);
-                    } else {
-                        issues.push(`✓ Fragment começa com '${firstBoxType}'`);
-                    }
-
-                    // Verificar se tem mdat
-                    let hasMdat = false;
-                    let hasMoof = false;
-                    let offset = 0;
-                    while (offset < data.byteLength - 8) {
-                        const size = view.getUint32(offset);
-                        const type = String.fromCharCode(
-                            view.getUint8(offset + 4), view.getUint8(offset + 5),
-                            view.getUint8(offset + 6), view.getUint8(offset + 7)
-                        );
-                        if (type === 'mdat') hasMdat = true;
-                        if (type === 'moof') hasMoof = true;
-                        if (size < 8) break;
-                        offset += size;
-                    }
-
-                    if (!hasMoof) {
-                        issues.push("❌ Fragment não contém 'moof' box");
-                    } else {
-                        issues.push("✓ Fragment contém 'moof' box");
-                    }
-
-                    if (!hasMdat) {
-                        issues.push("❌ Fragment não contém 'mdat' box");
-                    } else {
-                        issues.push("✓ Fragment contém 'mdat' box");
-                    }
+                if (this.sourceBuffer.updating) {
+                    return;
                 }
 
-                // 3. Verificar se o tamanho do primeiro box é válido
-                if (firstBoxSize > data.byteLength) {
-                    issues.push(`❌ Primeiro box declara tamanho ${firstBoxSize} mas dados têm ${data.byteLength} bytes`);
+                this.isAppending = true;
+                const { data, label, resolve, reject } = this.fragmentQueue.shift();
+
+                try {
+                    this.sourceBuffer.appendBuffer(data);
+                    this._currentResolve = resolve;
+                    this._currentReject = reject;
+                    this._currentLabel = label;
+                } catch (error) {
+                    this.isAppending = false;
+                    log('error', `Erro síncrono ao appendar ${label}: ${error.message}`);
+                    reject(error);
+                    this.processQueue();
+                }
+            }
+
+            onUpdateEnd() {
+                this.isAppending = false;
+
+                if (this._currentResolve) {
+                    this._currentResolve();
+                    this._currentResolve = null;
+                    this._currentReject = null;
                 }
 
-                // 4. Verificar codec do MPD vs dados
-                issues.push(`\nCodec do MPD: ${this.codec}`);
-                issues.push(`Codec suportado: ${MediaSource.isTypeSupported(`video/mp4; codecs="${this.codec}"`) ? 'Sim' : 'Não'}`);
+                this.processQueue();
+            }
 
-                return issues.join('\n');
+            waitForBuffer() {
+                return new Promise((resolve) => {
+                    if (!this.sourceBuffer || !this.sourceBuffer.updating) {
+                        resolve();
+                    } else {
+                        this.sourceBuffer.addEventListener('updateend', resolve, { once: true });
+                    }
+                });
             }
         }
 
         // ════════════════════════════════════════════════════════════════════
         // INSTÂNCIA E FUNÇÕES GLOBAIS
         // ════════════════════════════════════════════════════════════════════
-
-        const player = new DebugDASHPlayer(document.getElementById('videoPlayer'), BaseUrl);
+        const player = new DASHPlayer(document.getElementById('videoPlayer'), BaseUrl);
 
         function playVideo() {
             const videoName = document.getElementById('videoName').value.trim();
@@ -1166,65 +1100,13 @@ ${Array.from(new Uint8Array(data, 0, Math.min(64, data.byteLength)))
             }
         }
 
-        async function testManualAppend() {
-            log('info', '=== TESTE MANUAL DE APPEND ===');
-
-            // Testar se MediaSource funciona com dados conhecidos
-            const testVideo = document.createElement('video');
-            const ms = new MediaSource();
-            testVideo.src = URL.createObjectURL(ms);
-
-            ms.addEventListener('sourceopen', async () => {
-                try {
-                    const mimeType = 'video/mp4; codecs="avc1.64001f"';
-                    log('info', `Teste: criando SourceBuffer com ${mimeType}`);
-
-                    if (!MediaSource.isTypeSupported(mimeType)) {
-                        log('error', 'Codec não suportado neste navegador');
-                        return;
-                    }
-
-                    const sb = ms.addSourceBuffer(mimeType);
-                    log('success', 'SourceBuffer criado com sucesso');
-
-                    // Tentar append com init real
-                    if (player.lastInitData) {
-                        log('info', 'Tentando append do último init segment...');
-                        sb.appendBuffer(player.lastInitData);
-
-                        sb.addEventListener('updateend', () => {
-                            log('success', 'Append do init funcionou no teste!');
-
-                            if (player.lastFragmentData) {
-                                log('info', 'Tentando append do último fragment...');
-                                sb.appendBuffer(player.lastFragmentData);
-
-                                sb.addEventListener('updateend', () => {
-                                    log('success', 'Append do fragment funcionou no teste!');
-                                }, { once: true });
-
-                                sb.addEventListener('error', (e) => {
-                                    log('error', 'Erro no append do fragment no teste');
-                                }, { once: true });
-                            }
-                        }, { once: true });
-
-                        sb.addEventListener('error', (e) => {
-                            log('error', 'Erro no append do init no teste');
-                        }, { once: true });
-                    }
-
-                } catch (e) {
-                    log('error', `Teste falhou: ${e.message}`);
-                }
-            });
-        }
-
         // Atualizar status periodicamente
-        setInterval(updateStatus, 1000);
+        setInterval(updateStatus, 500);
 
         // Log inicial
-        log('info', 'Debug Player inicializado');
+        log('info', '═══════════════════════════════════════════════════');
+        log('info', 'DASH Debug Player inicializado');
+        log('info', '═══════════════════════════════════════════════════');
         log('info', `Base URL: ${BaseUrl}`);
         log('info', `MediaSource suportado: ${!!window.MediaSource}`);
 

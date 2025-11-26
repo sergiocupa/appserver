@@ -12,13 +12,13 @@
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
-
-
 #include "appserver.h"
 #include "MediaFragmenter.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#define FRAGMENT_DURATION_SECONDS  2.0
 
 
 FrameIndexList* _List;
@@ -132,6 +132,52 @@ char* get_filename_without_ext(const char* filename)
 }
 
 
+int calculate_total_fragments(FrameIndexList* list, double fragment_duration_seconds)
+{
+    if (!list || list->Count == 0) return 0;
+
+    double fps = list->Metadata.Fps;
+    if (fps <= 0) fps = 30.0;
+
+    double total_duration = (double)list->Count / fps;
+    int total_fragments = (int)((total_duration / fragment_duration_seconds) + 0.999);  // Arredonda para cima
+
+    return total_fragments;
+}
+
+void calculate_fragment_frame_range(
+    FrameIndexList* list,
+    int fragment_index,
+    double fragment_duration_seconds,
+    int* start_frame,
+    int* frame_count)
+{
+    double fps = list->Metadata.Fps;
+    if (fps <= 0) fps = 30.0;
+
+    // Calcular frames por fragmento
+    int frames_per_fragment = (int)(fps * fragment_duration_seconds + 0.5);
+
+    // Calcular frame inicial
+    *start_frame = fragment_index * frames_per_fragment;
+
+    // Calcular quantidade de frames (pode ser menor no último fragmento)
+    int remaining_frames = list->Count - *start_frame;
+
+    if (remaining_frames <= 0)
+    {
+        *frame_count = 0;
+    }
+    else if (remaining_frames < frames_per_fragment)
+    {
+        *frame_count = remaining_frames;
+    }
+    else
+    {
+        *frame_count = frames_per_fragment;
+    }
+}
+
 
 void* video_list(Message* message)
 {
@@ -208,6 +254,7 @@ void* init_mp4(Message* message)
 }
 
 
+
 void* fragment_m4s(Message* message)
 {
     if (!_List) return 0;
@@ -222,54 +269,92 @@ void* fragment_m4s(Message* message)
     String* lastr = message->Route.Items[message->Route.Count - 1];
     int     frag_ix = GetFragmentIndex(lastr);
 
-    if (frag_ix >= 0)
+    if (frag_ix < 0)
     {
-        if (frag_ix < _List->Count)
-        {
-            FrameIndex* frame = _List->Frames[frag_ix];
-
-            int range = 60;// Para 2seg
-            double timeline_offset = frag_ix * range;
-
-            MP4FragmentInfo frag_info = {
-            .SequenceNumber = frag_ix,
-            .TrackID = 1,
-            .Timescale = _List->Metadata.Timescale,
-            .BaseMediaDecodeTime = (uint64_t)(timeline_offset * _List->Metadata.Timescale)
-            };
-
-            MediaBuffer fragment = { 0 };
-            int res = mp4builder_create_fragment(f, _List, -1, -1, frag_ix, range, &frag_info, &fragment);
-
-            if (res != 0 || !fragment.Data)
-            {
-                message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Failed to create fragment");
-                return 0;
-            }
-
-
-            //FILE* arq = fopen("E:/AmostraVideo/sample-3_frag_01.m4s", "wb");
-            //fwrite(fragment.Data, fragment.Size, 1, arq);
-            //fclose(arq);
-
-
-            message->Response = message_response_create(HTTP_STATUS_OK, APPLICATION_OCTET_STREAM);
-            message->Response->Content.Data = (char*)fragment.Data;
-            message->Response->Content.Length = fragment.Size;
-
-            message_field_list_add_v(&message->Response->Fields, "Content-Type", "video/mp4");
-            message_field_list_add_v(&message->Response->Fields, "Cache-Control", "public, max-age=31536000");
-            message_field_list_add_v(&message->Response->Fields, "Access-Control-Allow-Origin", "*");
-        }
-        else
-        {
-            message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "The end!");
-        }
-    }
-    else
-    {
+        fclose(f);
         message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Invalid fragment index");
+        return 0;
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CORREÇÃO 1: Calcular o número total de FRAGMENTOS (não frames!)
+    // ═══════════════════════════════════════════════════════════════════════
+    int total_fragments = calculate_total_fragments(_List, FRAGMENT_DURATION_SECONDS);
+
+    if (frag_ix >= total_fragments)
+    {
+        fclose(f);
+        message->Response = message_response_create_text(HTTP_STATUS_NOT_FOUND, "The end!");
+        return 0;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CORREÇÃO 2: Calcular range de frames correto para este fragmento
+    // ═══════════════════════════════════════════════════════════════════════
+    int start_frame, frame_count;
+    calculate_fragment_frame_range(_List, frag_ix, FRAGMENT_DURATION_SECONDS, &start_frame, &frame_count);
+
+    if (frame_count <= 0)
+    {
+        fclose(f);
+        message->Response = message_response_create_text(HTTP_STATUS_NOT_FOUND, "No frames for this fragment");
+        return 0;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CORREÇÃO 3: Calcular BaseMediaDecodeTime corretamente
+    // BaseMediaDecodeTime = posição temporal do fragmento em unidades de timescale
+    // ═══════════════════════════════════════════════════════════════════════
+    double fps = _List->Metadata.Fps;
+    if (fps <= 0) fps = 30.0;
+
+    uint32_t timescale = _List->Metadata.Timescale;
+    if (timescale == 0) timescale = 90000;
+
+    // BaseMediaDecodeTime em unidades de timescale
+    // = (frame inicial / fps) * timescale
+    // = start_frame * timescale / fps
+    uint64_t base_media_decode_time = (uint64_t)((double)start_frame * timescale / fps);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Criar fragmento MP4
+    // ═══════════════════════════════════════════════════════════════════════
+    MP4FragmentInfo frag_info = 
+    {
+        .SequenceNumber = frag_ix + 1,  // Sequence number começa em 1
+        .TrackID = 1,
+        .Timescale = timescale,
+        .BaseMediaDecodeTime = base_media_decode_time
+    };
+
+    MediaBuffer fragment = { 0 };
+    int res = mp4builder_create_fragment(
+        f,
+        _List,
+        -1,                 // timeline_offset (não usado quando frame_offset >= 0)
+        -1,                 // timeline_fragment_duration (não usado)
+        start_frame,        // frame_offset - FRAME INICIAL CORRETO
+        frame_count,        // frame_length - QUANTIDADE CORRETA
+        &frag_info,
+        &fragment
+    );
+
+    fclose(f);
+
+    if (res != 0 || !fragment.Data)
+    {
+        message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Failed to create fragment");
+        return 0;
+    }
+
+    message->Response                 = message_response_create(HTTP_STATUS_OK, APPLICATION_OCTET_STREAM);
+    message->Response->Content.Data   = (char*)fragment.Data;
+    message->Response->Content.Length = fragment.Size;
+
+    message_field_list_add_v(&message->Response->Fields, "Content-Type", "video/mp4");
+    message_field_list_add_v(&message->Response->Fields, "Cache-Control", "public, max-age=31536000");
+    message_field_list_add_v(&message->Response->Fields, "Access-Control-Allow-Origin", "*");
+
     return 0;
 }
 

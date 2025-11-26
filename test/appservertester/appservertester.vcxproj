@@ -51,7 +51,6 @@
     <None Include="web\components\ui\waiting\waiting-box.css" />
     <None Include="web\components\ui\waiting\waiting-box.html" />
     <None Include="web\components\ui\waiting\waiting-box.js" />
-    <None Include="web\SimplePlayer.html" />
     <None Include="web\VideoViewer.css" />
     <None Include="web\VideoViewer.html" />
     <None Include="web\VideoViewer.js" />

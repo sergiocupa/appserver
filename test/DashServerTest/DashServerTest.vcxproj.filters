@@ -3,4 +3,14 @@
   <ItemGroup>
     <ClCompile Include="DashServerTest.c" />
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="web">
+      <UniqueIdentifier>{7eac5225-ea74-43e3-ada4-12e7277ef330}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="web\SimplePlayer.html">
+      <Filter>web</Filter>
+    </None>
+  </ItemGroup>
 </Project>

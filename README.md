@@ -27,9 +27,11 @@ Features to be implemented:
     - [X] Create frame grouping ([moof][mdat]).
     - [X] Create an MP4 file with the initialization header.
     - [X] Create an MP4 file containing video fragment.
-    - 🧩 Implement handshake between client and HTTP server.
-    - [ ] Implement an HTML page for browser-based testing.
-    - [ ] Perform browser tests.
+    - [X] Implement handshake between client and HTTP server.
+    - [X] Implement an HTML page for browser-based testing.
+    - 🧩 Perform browser tests.
+       <br/>
+       <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/914032f7-2b74-4ccc-b4f6-48d3729e6578"/>
     
     **MP4 creator**
     - [ ] Allow creation of a single file, header-only file, or fragment-only files.

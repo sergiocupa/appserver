@@ -40,7 +40,6 @@ Features to be implemented:
     - [ ] Allow video creation from raw RGB or YUV frame input.
     
     **Compatibility**
-    - [ ] Make all features compatible with the H.265 codec.
     - [ ] Test with videos extracted from YouTube, online samples, and an external camera.
     - [ ] After completing the implementations and tests, transfer the fragmenter to https://github.com/sergiocupa/MediaFragmenter
 - [ ] Integrate the stream preparer for use in real-time streaming, for UDP or WebSocket.

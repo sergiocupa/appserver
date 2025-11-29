@@ -29,9 +29,11 @@ Features to be implemented:
     - [X] Create an MP4 file containing video fragment.
     - [X] Implement handshake between client and HTTP server.
     - [X] Implement an HTML page for browser-based testing.
-    - 🧩 Perform browser tests.
+    - [X] Perform browser tests.
        <br/>
        <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/914032f7-2b74-4ccc-b4f6-48d3729e6578"/>
+    - 🧩 Implementação para uso do decoder H265. Codec Wrapper para generalizar o suporte a H.264 e H.265.
+    - [ ] Revisão do código. Bibliotecas auxiliares externas implementadas precisam ser revisadas e refatoradas.
     
     **MP4 creator**
     - [ ] Allow creation of a single file, header-only file, or fragment-only files.

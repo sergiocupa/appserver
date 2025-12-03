@@ -403,24 +403,54 @@ FrameIndexList* mp4builder_get_frames(const char* path)
         uint32_t size = stsz.sizes[i];
         FrameIndex* frame = mframe_new(offset);
         frame->Size = size;
-        // Parse NALs dentro do sample (formato AVCC: length-prefixed, focado em H.264)
+
+
+
+
+
+        // Parse NALs dentro do sample (formato AVCC/HVCC: length-prefixed)
         fseek(f, offset, SEEK_SET);
         uint64_t pos = 0;
         while (pos < size)
         {
-            // Corrigido: Lê nal_len dinamicamente com base em length_size (em vez de fixo read32)
+            // Ler tamanho do NAL (length_size bytes)
             uint8_t nal_len_buf[4] = { 0 };
             if (fread(nal_len_buf, 1, length_size, f) != (size_t)length_size) break;
             uint32_t nal_len = read_n(nal_len_buf, length_size);
-            if (nal_len == 0 || pos + nal_len + length_size > size) break;  // Corrigido: Usa length_size no check de overflow
-            uint8_t nal_header = read8(f);
-            uint8_t nal_type = nal_header & 0x1F; // Para H.264
+            if (nal_len == 0 || pos + nal_len + length_size > size) break;
+
+            uint8_t nal_type = 0;
+
+            if (meta.Codec == 265)
+            {
+                // H.265/HEVC: NAL header tem 2 bytes
+                // [forbidden_zero_bit(1) | nal_unit_type(6) | nuh_layer_id(6) | nuh_temporal_id_plus1(3)]
+                uint8_t nal_header[2];
+                if (fread(nal_header, 1, 2, f) != 2) break;
+                nal_type = (nal_header[0] >> 1) & 0x3F;
+
+                // Pular resto do NAL (2 bytes do header já lidos)
+                fseek(f, nal_len - 2, SEEK_CUR);
+            }
+            else
+            {
+                // H.264/AVC: NAL header tem 1 byte
+                // [forbidden_zero_bit(1) | nal_ref_idc(2) | nal_unit_type(5)]
+                uint8_t nal_header = read8(f);
+                nal_type = nal_header & 0x1F;
+
+                // Pular resto do NAL (1 byte do header já lido)
+                fseek(f, nal_len - 1, SEEK_CUR);
+            }
 
             mnalu_list_add(&frame->Nals, offset + pos + length_size, nal_len, nal_type);
 
-            fseek(f, nal_len - 1, SEEK_CUR); // Pula resto (header lido)
-            pos += nal_len + length_size;  // Corrigido: Atualiza pos com length_size dinâmico (em vez de fixo +4)
+            pos += nal_len + length_size;
         }
+
+
+
+
         // Adicionado: Verificação de depuração para garantir que todo o sample foi parseado
         if (pos != size)
         {

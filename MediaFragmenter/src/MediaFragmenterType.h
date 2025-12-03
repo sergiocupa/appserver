@@ -20,12 +20,15 @@
 extern "C" {
 #endif
     #include "codec_api.h"
+    #include "de265.h"
     #define SDL_MAIN_HANDLED
     #include "SDL2/SDL.h"
-    #include "codec_api.h"
     #include <wtypes.h>
     #include <stdint.h>
     #include <stdio.h>
+
+    #define LIST_INIT_COUNT 100
+
 
     #define HDOT_H264 264
     #define HDOT_H265 265
@@ -33,6 +36,46 @@ extern "C" {
     #define NAL_TYPE(nal) ((nal) & 0x1F)             // Para H.264
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
     
+
+    typedef enum
+    {
+        MEDIA_TYPE_NONE  = 0,
+        MEDIA_TYPE_AUDIO = 1,
+        MEDIA_TYPE_VIDEO = 2
+    }
+    MediaType;
+
+
+    typedef struct
+    {
+        int       ID;
+        int       Initialized;
+        int       Type;
+        MediaType Media;
+        void*     Instance;
+    }
+    DecoderInstance;
+
+
+    typedef struct
+    {
+        int           Width;
+        int           Height;
+        uint64_t      Size;
+        uint64_t      Sizes[3];
+        int           Strides[3];
+        uint_fast8_t* Planes[3];
+    }
+    ImagePlane;
+
+    typedef struct
+    {
+        int          Max;
+        int          Count;
+        ImagePlane** Items;
+    }
+    ImagePlaneList;
+
 
 
     typedef struct MP4FragmentInfo 
@@ -112,6 +155,7 @@ extern "C" {
     {
         MediaBuffer Sps;
         MediaBuffer Pps;
+        MediaBuffer Vps;
         int         Width;
         int         Height;
         int         Codec;// 264 ou 265
@@ -265,10 +309,8 @@ extern "C" {
 
     typedef struct _MediaSourceSession
     {
-        VideoOutput* Output;
-        ISVCDecoder* Decoder;
-
-
+        VideoOutput*     Output;
+        DecoderInstance* Decoder;
     }
     MediaSourceSession;
 
@@ -282,6 +324,12 @@ extern "C" {
     FrameList* frame_list_new(int initial_count);
     void frame_list_add(FrameList* frames, uint8_t* data, uint32_t size, int is_key_frame);
     void frame_list_release(FrameList** frames);
+
+
+    void imagep_list_add(ImagePlaneList* nalus, ImagePlane* image);
+    void imagep_list_init(ImagePlaneList* nalus, int init_count);
+    ImagePlaneList* imagep_list_new(int init_count);
+    void imagep_list_release(ImagePlaneList** nalus, int is_release_items);
 
 
     void mbuffer_append_by_file(MediaBuffer* buffer, FILE* src, uint64_t file_offset, uint64_t size);

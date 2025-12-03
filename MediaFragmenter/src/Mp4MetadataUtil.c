@@ -3,6 +3,12 @@
 #include "FileUtil.h"
 
 
+// Tipos de NAL para H.265
+#define HEVC_NAL_VPS 32
+#define HEVC_NAL_SPS 33
+#define HEVC_NAL_PPS 34
+
+
 static void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen)
 {
     if (!haystack || !needle || needlelen == 0 || haystacklen < needlelen) return NULL;
@@ -16,6 +22,209 @@ static void* memmem(const void* haystack, size_t haystacklen, const void* needle
             return (void*)(h + i);
     }
     return NULL;
+}
+
+
+static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t** sps, int* sps_len, uint8_t** pps, int* pps_len, int* length_size)
+{
+    uint8_t name[5] = { 0 };
+    long file_size;
+
+    // Inicializa os ponteiros
+    *vps = NULL;
+    *sps = NULL;
+    *pps = NULL;
+    *vps_len = 0;
+    *sps_len = 0;
+    *pps_len = 0;
+    *length_size = 0;
+
+    // Obter tamanho do arquivo
+    fseek(f, 0, SEEK_END);
+    file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    while (ftell(f) < file_size)
+    {
+        long box_start = ftell(f);
+        uint32_t size = read32(f);
+        if (fread(name, 1, 4, f) != 4) break;
+
+        uint64_t box_size = size;
+        if (size == 1) {
+            box_size = read64(f);
+        }
+        else if (size == 0) {
+            box_size = file_size - box_start;
+        }
+
+        if (box_size < 8) {
+            fseek(f, box_start + 8, SEEK_SET);
+            continue;
+        }
+
+        uint64_t next = box_start + box_size;
+
+        // Procurar recursivamente em containers
+        if (!memcmp(name, "moov", 4) || !memcmp(name, "trak", 4) ||
+            !memcmp(name, "mdia", 4) || !memcmp(name, "minf", 4) ||
+            !memcmp(name, "stbl", 4))
+        {
+            continue;
+        }
+
+        // Encontrar stsd
+        if (!memcmp(name, "stsd", 4))
+        {
+            uint8_t version = fgetc(f);
+            fseek(f, 3, SEEK_CUR); // flags
+            uint32_t entry_count = read32(f);
+
+            for (uint32_t i = 0; i < entry_count; i++)
+            {
+                long entry_start = ftell(f);
+                uint32_t entry_size = read32(f);
+
+                if (entry_size < 8) break;
+
+                uint8_t codec[5] = { 0 };
+                if (fread(codec, 1, 4, f) != 4) break;
+
+                // Verificar se é H.265/HEVC
+                if (!memcmp(codec, "hvc1", 4) || !memcmp(codec, "hev1", 4))
+                {
+                    // Pular campos fixos do hvc1/hev1 até achar hvcC
+                    // VisualSampleEntry tem 78 bytes de header antes dos sub-boxes
+                    fseek(f, entry_start + 8 + 78, SEEK_SET);
+
+                    // Procurar hvcC dentro do entry
+                    while (ftell(f) < entry_start + entry_size - 8)
+                    {
+                        long sub_start = ftell(f);
+                        uint32_t sub_size = read32(f);
+
+                        if (sub_size < 8 || sub_size > entry_size) break;
+
+                        uint8_t sub_name[5] = { 0 };
+                        if (fread(sub_name, 1, 4, f) != 4) break;
+
+                        if (!memcmp(sub_name, "hvcC", 4))
+                        {
+                            int hvcc_size = sub_size - 8;
+                            if (hvcc_size > 4096 || hvcc_size < 23) {
+                                fseek(f, sub_start + sub_size, SEEK_SET);
+                                continue;
+                            }
+
+                            uint8_t* conf = malloc(hvcc_size);
+                            if (!conf) break;
+
+                            if (fread(conf, 1, hvcc_size, f) != hvcc_size) {
+                                free(conf);
+                                break;
+                            }
+
+                            // Parsear hvcC
+                            // conf[0] = configurationVersion (deve ser 1)
+                            if (conf[0] != 1) {
+                                free(conf);
+                                fseek(f, sub_start + sub_size, SEEK_SET);
+                                continue;
+                            }
+
+                            // Offset 21: constantFrameRate(2) + numTemporalLayers(3) + 
+                            //            temporalIdNested(1) + lengthSizeMinusOne(2)
+                            *length_size = (conf[21] & 0x03) + 1;
+
+                            // Offset 22: numOfArrays
+                            int num_arrays = conf[22];
+                            int off = 23;
+
+                            // Parsear cada array de NALs
+                            for (int arr = 0; arr < num_arrays && off < hvcc_size; arr++)
+                            {
+                                if (off >= hvcc_size) break;
+
+                                // array_completeness(1) + reserved(1) + NAL_unit_type(6)
+                                uint8_t nal_type = conf[off++] & 0x3F;
+
+                                if (off + 2 > hvcc_size) break;
+
+                                // numNalus (2 bytes, big-endian)
+                                int num_nalus = (conf[off] << 8) | conf[off + 1];
+                                off += 2;
+
+                                for (int n = 0; n < num_nalus && off < hvcc_size; n++)
+                                {
+                                    if (off + 2 > hvcc_size) break;
+
+                                    // nalUnitLength (2 bytes, big-endian)
+                                    int nal_len = (conf[off] << 8) | conf[off + 1];
+                                    off += 2;
+
+                                    if (off + nal_len > hvcc_size) break;
+
+                                    // Copiar NAL baseado no tipo
+                                    uint8_t** dest = NULL;
+                                    int* dest_len = NULL;
+
+                                    if (nal_type == HEVC_NAL_VPS) {
+                                        dest = vps;
+                                        dest_len = vps_len;
+                                    }
+                                    else if (nal_type == HEVC_NAL_SPS) {
+                                        dest = sps;
+                                        dest_len = sps_len;
+                                    }
+                                    else if (nal_type == HEVC_NAL_PPS) {
+                                        dest = pps;
+                                        dest_len = pps_len;
+                                    }
+
+                                    // Apenas copia o primeiro NAL de cada tipo
+                                    if (dest && !*dest && nal_len > 0)
+                                    {
+                                        *dest = malloc(nal_len);
+                                        if (*dest)
+                                        {
+                                            memcpy(*dest, &conf[off], nal_len);
+                                            *dest_len = nal_len;
+                                        }
+                                    }
+
+                                    off += nal_len;
+                                }
+                            }
+
+                            free(conf);
+
+                            // Verificar se encontramos pelo menos SPS e PPS
+                            if (*sps && *sps_len > 0 && *pps && *pps_len > 0)
+                            {
+                                return 0;  // Sucesso
+                            }
+
+                            // Limpar em caso de falha parcial
+                            if (*vps) { free(*vps); *vps = NULL; *vps_len = 0; }
+                            if (*sps) { free(*sps); *sps = NULL; *sps_len = 0; }
+                            if (*pps) { free(*pps); *pps = NULL; *pps_len = 0; }
+
+                            return -3;  // hvcC incompleto
+                        }
+
+                        fseek(f, sub_start + sub_size, SEEK_SET);
+                    }
+                }
+
+                fseek(f, entry_start + entry_size, SEEK_SET);
+            }
+        }
+
+        if (next > file_size) break;
+        fseek(f, next, SEEK_SET);
+    }
+
+    return -1;  // hvcC não encontrado
 }
 
 
@@ -592,19 +801,76 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
     }
 
     fseek(f, 0, SEEK_SET);
-    uint8_t* sps = 0; uint8_t* pps = 0; int sps_len = 0, pps_len = 0, length_size = 0;
-    ret = load_sps_pps(f, &sps, &sps_len, &pps, &pps_len, &length_size);
-    if (ret != 0)
+
+
+    if (codec == 264)
     {
-        printf("SPS/PPS not found.\n");
-        return ret;
+        // H.264: Carregar SPS/PPS do avcC
+        uint8_t* sps = NULL;
+        uint8_t* pps = NULL;
+        int sps_len = 0, pps_len = 0, length_size = 0;
+
+        ret = load_sps_pps(f, &sps, &sps_len, &pps, &pps_len, &length_size);
+        if (ret != 0)
+        {
+            printf("SPS/PPS not found for H.264.\n");
+            return ret;
+        }
+
+        meta->LengthSize = length_size;
+        meta->Sps.Size = sps_len;
+        meta->Sps.Data = sps;
+        meta->Pps.Size = pps_len;
+        meta->Pps.Data = pps;
+        meta->Vps.Size = 0;
+        meta->Vps.Data = NULL;
+
+        // Validar SPS/PPS para H.264
+        ret = mp4diag_validate_sps_pps(&meta->Sps, &meta->Pps);
+        if (ret != 0)
+        {
+            return ret;
+        }
+    }
+    else if (codec == 265)
+    {
+        // H.265: Carregar VPS/SPS/PPS do hvcC
+        uint8_t* vps = NULL;
+        uint8_t* sps = NULL;
+        uint8_t* pps = NULL;
+        int vps_len = 0, sps_len = 0, pps_len = 0, length_size = 0;
+
+        ret = load_vps_sps_pps_hevc(f, &vps, &vps_len, &sps, &sps_len, &pps, &pps_len, &length_size);
+        if (ret != 0)
+        {
+            printf("VPS/SPS/PPS not found for H.265.\n");
+            return ret;
+        }
+
+        meta->LengthSize = length_size;
+        meta->Vps.Size = vps_len;
+        meta->Vps.Data = vps;
+        meta->Sps.Size = sps_len;
+        meta->Sps.Data = sps;
+        meta->Pps.Size = pps_len;
+        meta->Pps.Data = pps;
+
+        // Nota: Criar mp4diag_validate_vps_sps_pps() se necessário
+        // Por enquanto, apenas verificar se existem
+        if (!meta->Sps.Data || meta->Sps.Size == 0 ||
+            !meta->Pps.Data || meta->Pps.Size == 0)
+        {
+            printf("H.265 SPS or PPS is empty.\n");
+            return -4;
+        }
+    }
+    else
+    {
+        printf("Unsupported codec: %d\n", codec);
+        return -5;
     }
 
-    meta->LengthSize = length_size;
-    meta->Sps.Size   = sps_len;
-    meta->Sps.Data   = sps;
-    meta->Pps.Size   = pps_len;
-    meta->Pps.Data   = pps;
+
     meta->Codec      = codec;
     meta->Fps        = fps_out;
     meta->Timescale  = timescale;

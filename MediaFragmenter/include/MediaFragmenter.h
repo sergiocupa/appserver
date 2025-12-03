@@ -27,19 +27,26 @@ extern "C" {
 	int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h);
 	int rgb_to_yuv(uint8_t* rgb_pixels, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v, int* stride_y, int* stride_u, int* stride_v);
 
-	// Manipuladores de H264 ou H265
-	uint8_t* h26x_create_annexb(VideoMetadata* meta, int* length);
-	int h26x_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output);
-	int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, int include_sps_pps, H264FragmentFormat format, MediaBuffer* output);
+
+
+	int h26x_decode_frames(DecoderInstance* codec, MediaBuffer* input, ImagePlaneList* images);
+	int h26x_decoder_release(DecoderInstance** decode);
+	DecoderInstance* h26x_decoder_create(int codec);
+	int h26x_create_annexb(VideoMetadata* meta, MediaBuffer* output);
+	int h26x_put_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* meta, MediaBuffer* output);
+	int h26x_put_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, int include_sps_pps, H264FragmentFormat format, MediaBuffer* output);
+
+
 
 	// Manipuladores de MP4
 	FrameIndexList* mp4builder_get_frames(const char* path);
 	int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, MediaBuffer* output);
 	int mp4builder_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_offset, double timeline_fragment_duration, int frame_offset, int frame_length, MP4FragmentInfo* frag_info, MediaBuffer* output);
 
+
+
 	// Visualizador
-	MediaSourceSession* media_sim_create(int width, int height);
-	int media_sim_init_segment(MediaSourceSession* source, MediaBuffer* data);
+	MediaSourceSession* media_sim_create(int width, int height, int codec);
 	int media_sim_feed(MediaSourceSession* source, MediaBuffer* data);
 	void media_sim_release(MediaSourceSession** source);
 	void medias_waiting(VideoOutput* v);

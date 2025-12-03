@@ -45,6 +45,15 @@
     <ClInclude Include="src\DashBuilder.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="deps\libde265\include\de265.h">
+      <Filter>deps</Filter>
+    </ClInclude>
+    <ClInclude Include="src\H264Builder.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\H265Builder.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c">
@@ -74,7 +83,7 @@
     <ClCompile Include="src\Mp4MetadataUtil.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\H26XBuilder.c">
+    <ClCompile Include="src\H264Builder.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\BufferUtil.c">
@@ -84,6 +93,15 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\DashDiag.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\H265Builder.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mp4H265MetadataUtil.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VideoCodecWrapper.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

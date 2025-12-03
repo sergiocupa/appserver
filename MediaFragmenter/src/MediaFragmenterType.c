@@ -29,6 +29,66 @@ void mbuffer_resize(MediaBuffer* buffer, int length)
 
 
 
+
+
+void imagep_list_add(ImagePlaneList* nalus, ImagePlane* image)
+{
+    int sz = nalus->Count + 1;
+    if (sz >= nalus->Max)
+    {
+        nalus->Max   *= 2;
+        nalus->Items  = (ImagePlane**)realloc((ImagePlane**)nalus->Items, nalus->Max * sizeof(NAL*));
+    }
+
+    nalus->Items[nalus->Count] = image;
+    nalus->Count++;
+}
+
+void imagep_list_init(ImagePlaneList* nalus, int init_count)
+{
+    nalus->Max = init_count < 0 ? LIST_INIT_COUNT : init_count;
+    nalus->Count = 0;
+    nalus->Items = (ImagePlane**)malloc(nalus->Max * sizeof(ImagePlane*));
+}
+
+ImagePlaneList* imagep_list_new(int init_count)
+{
+    ImagePlaneList* nalus = malloc(sizeof(FrameList));
+    nalus->Max   = init_count < 0 ? LIST_INIT_COUNT : init_count;
+    nalus->Count = 0;
+    nalus->Items = (ImagePlane**)malloc(nalus->Max * sizeof(ImagePlane*));
+    return nalus;
+}
+
+void imagep_list_release(ImagePlaneList** nalus, int is_release_items)
+{
+    if (is_release_items)
+    {
+        int ix = 0;
+        while (ix < (*nalus)->Count)
+        {
+            int im = 0;
+            while (im < 3)
+            {
+                if ((*nalus)->Items[ix]->Planes[im])
+                {
+                    free((*nalus)->Items[ix]->Planes[im]);
+                }
+                im++;
+            }
+            free((*nalus)->Items[ix]);
+            ix++;
+        }
+    }
+    free((*nalus)->Items);
+    free((*nalus));
+    (*nalus) = 0;
+}
+
+
+
+
+
 void frame_list_init(FrameList* nalus, int initial_count)
 {
     nalus->Max   = initial_count;

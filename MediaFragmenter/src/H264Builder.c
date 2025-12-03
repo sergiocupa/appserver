@@ -1,4 +1,20 @@
-﻿#include "../include/MediaFragmenter.h"
+﻿//  MIT License – Modified for Mandatory Attribution
+//  
+//  Copyright(c) 2025 Sergio Paludo
+//
+//  github.com/sergiocupa
+//  
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
+//  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
+//  
+//     01. The original author’s credit is retained in all copies of the source code;
+//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//  
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+
+
+#include "../include/MediaFragmenter.h"
 
 
 // contra próximo start code (00 00 00 01 ou 00 00 01)
@@ -23,7 +39,7 @@ static size_t find_next_start_code(uint8_t* data, size_t size, size_t offset)
 }
 
 
-uint8_t* h26x_create_annexb(VideoMetadata* meta, int* length)
+uint8_t* h264_create_annexb(VideoMetadata* meta, int* length)
 {
     *length = meta->Pps.Size + meta->Sps.Size + 8;
     uint8_t* annexb = malloc(*length);
@@ -47,7 +63,7 @@ uint8_t* h26x_create_annexb(VideoMetadata* meta, int* length)
 }
 
 
-int h26x_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output)
+int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata, MediaBuffer* output)
 {
     if (!frame || frame->Nals.Count == 0)
     {

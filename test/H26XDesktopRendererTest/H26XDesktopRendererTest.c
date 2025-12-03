@@ -30,8 +30,7 @@ int main()
         return;
     }
 
-    MediaSourceSession* session = media_sim_create(list->Metadata.Width / 2, list->Metadata.Height / 2);
-    //MediaSourceSession* session = media_sim_create(list->Metadata.Width, list->Metadata.Height);
+    MediaSourceSession* session = media_sim_create(list->Metadata.Width / 2, list->Metadata.Height / 2, list->Metadata.Codec);
 
 
     MediaBuffer mi;
@@ -47,7 +46,7 @@ int main()
         FrameIndex* frame = list->Frames[i];
 
         MediaBuffer mb;
-        res = h26x_create_single_frame(file, frame, &list->Metadata, &mb);
+        res = h26x_put_single_frame(file, frame, &list->Metadata, &mb);
 
         if (!res)
         {

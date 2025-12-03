@@ -1,6 +1,5 @@
 ﻿#include "../include/MediaFragmenter.h"
 #include "MediaSourceSim.h"
-#include "MediaFragmenterType.h"
 
 
 
@@ -73,28 +72,27 @@ static VideoOutput* video_output_create(int w, int h)
 
 
 
-static void video_output_show(VideoOutput* v, unsigned char** planes, SBufferInfo* info)
+static int video_output_show(VideoOutput* v, ImagePlane* image)
 {
-    if (!planes[0] || !planes[1] || !planes[2]) return;
+    if (!image) return -1;
 
-    int video_w = info->UsrData.sSystemBuffer.iWidth;
-    int video_h = info->UsrData.sSystemBuffer.iHeight;
-    int stride_y = info->UsrData.sSystemBuffer.iStride[0];
-    int stride_u = info->UsrData.sSystemBuffer.iStride[1];
-    int stride_v = info->UsrData.sSystemBuffer.iStride[1];
+    int video_w  = image->Width;
+    int video_h  = image->Height;
+    int stride_y = image->Strides[0];
+    int stride_u = image->Strides[1];
+    int stride_v = image->Strides[1];
 
     // === Apenas na primeira vez ou quando a resolução do VÍDEO muda ===
     if (video_w != v->Width || video_h != v->Height || !v->tex)
     {
         if (v->tex) SDL_DestroyTexture(v->tex);
 
-        v->tex = SDL_CreateTexture(v->ren, SDL_PIXELFORMAT_IYUV,
-            SDL_TEXTUREACCESS_STREAMING,
-            video_w, video_h);   // <<<<< SEMPRE tamanho do vídeo
+        v->tex = SDL_CreateTexture(v->ren, SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, video_w, video_h);   // <<<<< SEMPRE tamanho do vídeo
 
-        if (!v->tex) {
+        if (!v->tex)
+        {
             fprintf(stderr, "Erro textura: %s\n", SDL_GetError());
-            return;
+            return -2;
         }
 
         v->Width = video_w;   // Width/Height agora = tamanho real do vídeo
@@ -102,10 +100,7 @@ static void video_output_show(VideoOutput* v, unsigned char** planes, SBufferInf
     }
 
     // Atualiza textura (sempre com strides do vídeo original)
-    SDL_UpdateYUVTexture(v->tex, NULL,
-        planes[0], stride_y,
-        planes[1], stride_u,
-        planes[2], stride_v);
+    SDL_UpdateYUVTexture(v->tex, NULL, image->Planes[0], stride_y, image->Planes[1], stride_u, image->Planes[2], stride_v);
 
     // === Render com letterbox (agora o dst muda a cada frame) ===
     SDL_SetRenderDrawColor(v->ren, 0, 0, 0, 255);
@@ -120,13 +115,15 @@ static void video_output_show(VideoOutput* v, unsigned char** planes, SBufferInf
     float win_aspect = (float)win_w / (float)win_h;
 
     SDL_Rect dst;
-    if (win_aspect > video_aspect) {
+    if (win_aspect > video_aspect) 
+    {
         dst.h = win_h;
         dst.w = (int)(win_h * video_aspect + 0.5f);
         dst.x = (win_w - dst.w) / 2;
         dst.y = 0;
     }
-    else {
+    else 
+    {
         dst.w = win_w;
         dst.h = (int)(win_w / video_aspect + 0.5f);
         dst.x = 0;
@@ -150,117 +147,45 @@ static void video_output_destroy(VideoOutput* v)
 
 
 
-static ISVCDecoder* h264_decoder_create()
+
+int media_sim_feed(MediaSourceSession* source, MediaBuffer* input)
 {
-    ISVCDecoder* decoder = NULL;
+    if (!source) return -1;
 
-    int rv = WelsCreateDecoder(&decoder);
-    if (rv != 0 || !decoder)
+    ImagePlaneList* images = imagep_list_new(1);
+    int res = h26x_decode_frames(source->Decoder, input, images);
+    if (!res)
     {
-        free(decoder);
-        return NULL;
+        // erro
     }
 
-    SDecodingParam param;
-    memset(&param, 0, sizeof(SDecodingParam));
-    param.uiTargetDqLayer = 0xFF;      // Todas as camadas
-    param.eEcActiveIdc = ERROR_CON_DISABLE;
-    param.bParseOnly = false;
-    param.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_AVC;
-
-    int rsv = (*decoder)->Initialize(decoder,&param);
-    if (rsv != 0) 
+    int ix = 0;
+    while (ix < images->Count)
     {
-        (*decoder)->Uninitialize(decoder);
-        WelsDestroyDecoder(decoder);
-        free(decoder);
-        return NULL;
+        ImagePlane* image = images->Items[ix];
+        video_output_show(source->Output, image);
+        ix++;
     }
-
-    return decoder;
+    imagep_list_release(&images, 1);
+    return 0;
 }
 
 
-static int h264_decoder_feed(ISVCDecoder* decoder, unsigned char* data, int len, VideoOutput* out)
-{
-    unsigned char* planes[3] = { NULL, NULL, NULL };
-    SBufferInfo info;
-    memset(&info, 0, sizeof(info));
 
-    DECODING_STATE state = (*decoder)->DecodeFrame2(decoder, data, len, planes, &info);
-    //if (state != 0)
-    //{
-    //    //fprintf(stderr, "AVISO: DecodeFrame2 retornou estado %d (não é erro necessariamente)\n", state);
-    //}
-
-    if (state == dsErrorFree || state == dsFramePending)
-    {
-        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2])
-        {
-            video_output_show(out, planes, &info);
-            return;
-        }
-
-        memset(&info, 0, sizeof(info));
-        memset(planes, 0, sizeof(planes));
-
-        state = (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
-
-        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2]) // Verificar se flush liberou o frame
-        {
-            video_output_show(out, planes, &info);
-        }
-        else
-        {
-            printf("Nenhum frame disponível (normal para SPS/PPS ou frames B)\n");
-        }
-    }
-    else
-    {
-        // Tentar flush mesmo com erro (pode ter frames válidos no buffer)
-        memset(&info, 0, sizeof(info));
-        memset(planes, 0, sizeof(planes));
-
-        (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
-
-        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2])
-        {
-            video_output_show(out, planes, &info);
-        }
-    }
-}
-
-static void h264_decoder_destroy(ISVCDecoder* decoder)
-{
-    (*decoder)->Uninitialize(decoder);
-    WelsDestroyDecoder(decoder);
-    free(decoder);
-}
-
-
-MediaSourceSession* media_sim_create(int width, int height)
+MediaSourceSession* media_sim_create(int width, int height, int codec)
 {
     MediaSourceSession* source = malloc(sizeof(MediaSourceSession));
-    source->Decoder = h264_decoder_create();
+    source->Decoder = h26x_decoder_create(codec);
     source->Output  = video_output_create(width, height);
     return source;
 }
 
-int media_sim_init_segment(MediaSourceSession* source, MediaBuffer* data)
-{
-    return h264_decoder_feed(source->Decoder, data->Data, data->Size, source->Output);
-}
-
-int media_sim_feed(MediaSourceSession* source, MediaBuffer* data)
-{
-    return h264_decoder_feed(source->Decoder, data->Data, data->Size, source->Output);
-}
 
 void media_sim_release(MediaSourceSession** source)
 {
     if (*source)
     {
-        h264_decoder_destroy((*source)->Decoder);
+        h26x_decoder_release((*source)->Decoder);
         video_output_destroy((*source)->Output);
         free(*source);
         *source = 0;

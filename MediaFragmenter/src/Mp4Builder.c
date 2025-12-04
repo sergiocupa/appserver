@@ -364,6 +364,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     FrameIndexList* list = mframe_list_new(stsz.count);
     list->Metadata.Pps.Data = meta.Pps.Data; list->Metadata.Pps.Size = meta.Pps.Size;
     list->Metadata.Sps.Data = meta.Sps.Data; list->Metadata.Sps.Size = meta.Sps.Size;
+    list->Metadata.Vps.Data = meta.Vps.Data; list->Metadata.Vps.Size = meta.Vps.Size;
     list->Metadata.LengthSize = meta.LengthSize;
     list->Metadata.Codec = meta.Codec; list->Metadata.Fps = meta.Fps; list->Metadata.Timescale = meta.Timescale;
     list->Metadata.Width = meta.Width; list->Metadata.Height = meta.Height;

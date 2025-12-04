@@ -152,7 +152,7 @@ int media_sim_feed(MediaSourceSession* source, MediaBuffer* input)
 {
     if (!source) return -1;
 
-    ImagePlaneList* images = imagep_list_new(1);
+    ImagePlaneList* images = imagep_list_new(2);
     int res = h26x_decode_frames(source->Decoder, input, images);
     if (!res)
     {
@@ -166,7 +166,7 @@ int media_sim_feed(MediaSourceSession* source, MediaBuffer* input)
         video_output_show(source->Output, image);
         ix++;
     }
-    imagep_list_release(&images, 1);
+    imagep_list_release(&images,1);
     return 0;
 }
 

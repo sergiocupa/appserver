@@ -37,7 +37,7 @@ void imagep_list_add(ImagePlaneList* nalus, ImagePlane* image)
     if (sz >= nalus->Max)
     {
         nalus->Max   *= 2;
-        nalus->Items  = (ImagePlane**)realloc((ImagePlane**)nalus->Items, nalus->Max * sizeof(NAL*));
+        nalus->Items  = (ImagePlane**)realloc((ImagePlane**)nalus->Items, nalus->Max * sizeof(ImagePlane*));
     }
 
     nalus->Items[nalus->Count] = image;
@@ -64,7 +64,7 @@ void imagep_list_release(ImagePlaneList** nalus, int is_release_items)
 {
     if (is_release_items)
     {
-        int ix = 0;
+        /*int ix = 0;
         while (ix < (*nalus)->Count)
         {
             int im = 0;
@@ -72,13 +72,14 @@ void imagep_list_release(ImagePlaneList** nalus, int is_release_items)
             {
                 if ((*nalus)->Items[ix]->Planes[im])
                 {
-                    free((*nalus)->Items[ix]->Planes[im]);
+                    uint_fast8_t* da = (*nalus)->Items[ix]->Planes[im];
+                    free(da);
                 }
                 im++;
             }
             free((*nalus)->Items[ix]);
             ix++;
-        }
+        }*/
     }
     free((*nalus)->Items);
     free((*nalus));

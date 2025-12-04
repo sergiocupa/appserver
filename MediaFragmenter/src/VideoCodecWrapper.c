@@ -74,7 +74,7 @@ static void populate_from_h264_image(SBufferInfo* info, unsigned char* planes[3]
     output->Planes[2]  = planes[2];
     output->Strides[0] = info->UsrData.sSystemBuffer.iStride[0];
     output->Strides[1] = info->UsrData.sSystemBuffer.iStride[1];
-    output->Strides[2] = info->UsrData.sSystemBuffer.iStride[2];
+    output->Strides[2] = info->UsrData.sSystemBuffer.iStride[1];
     output->Width      = info->UsrData.sSystemBuffer.iWidth;
     output->Height     = info->UsrData.sSystemBuffer.iHeight;
     output->Sizes[0]   = output->Strides[0] * output->Height;
@@ -124,11 +124,9 @@ static int put_decode_h265(de265_decoder_context* deco, uint_fast8_t* data, int 
             enum de265_chroma chroma = de265_get_chroma_format(img);
             if (chroma == de265_chroma_420)
             {
-                ImagePlane* image = malloc(sizeof(ImagePlane*));
+                ImagePlane* image = malloc(sizeof(ImagePlane));
                 populate_from_h265_image(img,image);
                 imagep_list_add(images, image);
-
-                //h265_video_output_show(out, img);
             }
             else
             {
@@ -146,38 +144,86 @@ static int put_decode_h264(ISVCDecoder* decoder, uint_fast8_t* data, int len, Im
     int frames_decoded = 0;
     unsigned char* planes[3] = { NULL, NULL, NULL };
     SBufferInfo info;
+    memset(&info, 0, sizeof(SBufferInfo));
+
+    // Feed inicial com dados reais
     DECODING_STATE state = (*decoder)->DecodeFrame2(decoder, data, len, planes, &info);
 
-    while (1) 
+    if (state != dsErrorFree && state != dsFramePending)
     {
-        if (state != dsErrorFree)
+        return -1;
+    }
+
+    while (1)
+    {
+        // Se tem frame disponível, salva
+        if (info.iBufferStatus == 1 && planes[0] && planes[1] && planes[2])
         {
-            if (frames_decoded == 0)
+            ImagePlane* image = malloc(sizeof(ImagePlane));
+            if (image)
             {
-                return -1; 
+                populate_from_h264_image(&info, planes, image);
+                imagep_list_add(images, image);
+                frames_decoded++;
             }
-            break;
         }
 
-        if (info.iBufferStatus == 1) // Verifica se tem frame disponível
-        {
-            ImagePlane* image = malloc(sizeof(ImagePlane*));
-            populate_from_h264_image(&info, planes, image);
-            imagep_list_add(images, image);
-
-            frames_decoded++;
-        }
-
+        // Flush para buscar próximo frame
         memset(&info, 0, sizeof(SBufferInfo));
         planes[0] = planes[1] = planes[2] = NULL;
-
         state = (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
 
-        if (info.iBufferStatus != 1 && state == dsErrorFree) 
+        // Condição de saída: não há mais frames E não houve erro
+        if (info.iBufferStatus == 0)
+        {
+            break;  // Buffer vazio, nada mais para extrair
+        }
+
+        // Se erro, também sai
+        if (state != dsErrorFree)
         {
             break;
         }
     }
+
+    return frames_decoded;
+
+
+
+
+
+
+
+    //while (1) 
+    //{
+    //    if (state != dsErrorFree)
+    //    {
+    //        if (frames_decoded == 0)
+    //        {
+    //            return -1; 
+    //        }
+    //        break;
+    //    }
+
+    //    if (info.iBufferStatus == 1) // Verifica se tem frame disponível
+    //    {
+    //        ImagePlane* image = malloc(sizeof(ImagePlane*));
+    //        populate_from_h264_image(&info, planes, image);
+    //        imagep_list_add(images, image);
+
+    //        frames_decoded++;
+    //    }
+
+    //    memset(&info, 0, sizeof(SBufferInfo));
+    //    planes[0] = planes[1] = planes[2] = NULL;
+
+    //    state = (*decoder)->DecodeFrame2(decoder, NULL, 0, planes, &info);
+
+    //    if (info.iBufferStatus != 1 && state == dsErrorFree) 
+    //    {
+    //        break;
+    //    }
+    //}
 
 
 }
@@ -275,12 +321,12 @@ int h26x_create_annexb(VideoMetadata* meta, MediaBuffer* output)
     {
     case 264:
     {
-        output->Data = h264_create_annexb(meta, output->Size);
+        output->Data = h264_create_annexb(meta, &output->Size);
     }
     break;
     case 265:
     {
-        output->Data = h265_create_annexb(meta, output->Size);
+        output->Data = h265_create_annexb(meta, &output->Size);
     }
     break;
     default:

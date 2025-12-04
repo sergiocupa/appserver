@@ -18,13 +18,14 @@
 
 int main()
 {
-	const char* path = "e:/AmostraVideo/sample-3.mp4";
+	const char* path1 = "e:/AmostraVideo/sample-3.mp4";
+    const char* path2 = "e:/AmostraVideo/BigH265.mp4";
 
-    FrameIndexList* list = mp4builder_get_frames(path);
+    FrameIndexList* list = mp4builder_get_frames(path2);
     if (!list) return;
 
 
-    FILE* file = fopen(path, "rb");
+    FILE* file = fopen(path2, "rb");
     if (!file) {
         perror("Erro ao abrir arquivo");
         return;
@@ -34,7 +35,7 @@ int main()
 
 
     MediaBuffer mi;
-    mi.Data = h26x_create_annexb(&list->Metadata, &mi.Size);
+    h26x_create_annexb(&list->Metadata, &mi);
     media_sim_feed(session, &mi);
     free(mi.Data);
 

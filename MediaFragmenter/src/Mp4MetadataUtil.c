@@ -877,11 +877,11 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
     meta->Width      = w;
     meta->Height     = h;
 
-    ret = mp4diag_validate_sps_pps(&meta->Sps, &meta->Pps);
+    /*ret = mp4diag_validate_sps_pps(&meta->Sps, &meta->Pps);
     if (ret != 0)
     {
         return ret;
-    }
+    }*/
 
     return 0; // avcC não encontrado
 }

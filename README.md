@@ -34,6 +34,7 @@ Features to be implemented:
        <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/914032f7-2b74-4ccc-b4f6-48d3729e6578"/>
     - [X] Implement the use of the H.265 decoder. Codec Wrapper to generalize support for H.264 and H.265.
     - 🧩 Code review. Implemented external auxiliary libraries need to be reviewed and refactored.
+        - Abstractions for this step can be found at https://github.com/sergiocupa/xplatbase 
     
     **MP4 creator**
     - [ ] Allow creation of a single file, header-only file, or fragment-only files.

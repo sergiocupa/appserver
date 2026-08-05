@@ -37,7 +37,7 @@ Features to be implemented:
         - Abstractions for this step can be found at https://github.com/sergiocupa/xplatbase 
     
     **MP4 creator**
-    - 🧩 Allow creation of a single file, header-only file, or fragment-only files.
+    🧩 Allow creation of a single file, header-only file, or fragment-only files.
     - [ ] Allow video creation from raw RGB or YUV frame input.
     
     **Compatibility**

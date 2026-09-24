@@ -1,4 +1,6 @@
-﻿//  MIT License – Modified for Mandatory Attribution
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+//  MIT License – Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -140,18 +142,18 @@ static int load_hvcc_data(FILE* f, uint8_t** vps, int* vps_len, uint8_t** sps, i
                                 continue;
                             }
 
-                            uint8_t* conf = malloc(hvcc_size);
+                            uint8_t* conf = memop_alloc_raw(hvcc_size);
                             if (!conf) break;
 
                             if (fread(conf, 1, hvcc_size, f) != hvcc_size) {
-                                free(conf);
+                                memop_free_raw(conf);
                                 break;
                             }
 
                             // Parsear hvcC
                             // conf[0] = configurationVersion (deve ser 1)
                             if (conf[0] != 1) {
-                                free(conf);
+                                memop_free_raw(conf);
                                 fseek(f, sub_start + sub_size, SEEK_SET);
                                 continue;
                             }
@@ -207,10 +209,10 @@ static int load_hvcc_data(FILE* f, uint8_t** vps, int* vps_len, uint8_t** sps, i
                                     // Apenas copia o primeiro NAL de cada tipo
                                     if (dest && !*dest && nal_len > 0)
                                     {
-                                        *dest = malloc(nal_len);
+                                        *dest = memop_alloc_raw(nal_len);
                                         if (*dest)
                                         {
-                                            memcpy(*dest, &conf[off], nal_len);
+                                            memop_copy_raw(*dest, &conf[off], nal_len);
                                             *dest_len = nal_len;
                                         }
                                     }
@@ -219,7 +221,7 @@ static int load_hvcc_data(FILE* f, uint8_t** vps, int* vps_len, uint8_t** sps, i
                                 }
                             }
 
-                            free(conf);
+                            memop_free_raw(conf);
 
                             // Verificar se encontramos pelo menos SPS e PPS
                             if (*sps && *sps_len > 0 && *pps && *pps_len > 0)
@@ -228,9 +230,9 @@ static int load_hvcc_data(FILE* f, uint8_t** vps, int* vps_len, uint8_t** sps, i
                             }
 
                             // Limpar em caso de falha parcial
-                            if (*vps) { free(*vps); *vps = NULL; *vps_len = 0; }
-                            if (*sps) { free(*sps); *sps = NULL; *sps_len = 0; }
-                            if (*pps) { free(*pps); *pps = NULL; *pps_len = 0; }
+                            if (*vps) { memop_free_raw(*vps); *vps = NULL; *vps_len = 0; }
+                            if (*sps) { memop_free_raw(*sps); *sps = NULL; *sps_len = 0; }
+                            if (*pps) { memop_free_raw(*pps); *pps = NULL; *pps_len = 0; }
 
                             return -3;  // hvcC incompleto
                         }

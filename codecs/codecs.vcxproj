@@ -1,0 +1,793 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><ProjectGuid>{C0DEC001-0000-4000-8000-000000000001}</ProjectGuid>
+    <RootNamespace>codecs</RootNamespace><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Saida deterministica: sempre codecs\x64\<Config>, tanto via solution quanto via build-codecs.bat.
+         O appservertester procura codecs.lib exatamente aqui. -->
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <!-- StaticLibrary: sem Link/.def. SvtAv1Enc.lib e x265-static.lib sao linkados
+         pelos CONSUMIDORES (appservertester/MediaGateway), nao embutidos aqui. -->
+  </ItemDefinitionGroup>
+  <!-- Adaptadores MediaEncoder/MediaDecoder + interface (structs de codec). -->
+  <ItemGroup>
+    <ClCompile Include="media/media_codec.c" />
+    <ClCompile Include="media/codec_opus.c" />
+    <ClCompile Include="media/codec_vp9.c" />
+    <ClCompile Include="media/codec_av1.c" />
+    <ClCompile Include="dav1d/src/cdf.c" />
+    <ClCompile Include="dav1d/src/cpu.c" />
+    <ClCompile Include="dav1d/src/ctx.c" />
+    <ClCompile Include="dav1d/src/data.c" />
+    <ClCompile Include="dav1d/src/decode.c" />
+    <ClCompile Include="dav1d/src/dequant_tables.c" />
+    <ClCompile Include="dav1d/src/getbits.c" />
+    <ClCompile Include="dav1d/src/intra_edge.c" />
+    <ClCompile Include="dav1d/src/itx_1d.c" />
+    <ClCompile Include="dav1d/src/lf_mask.c" />
+    <ClCompile Include="dav1d/src/lib.c" />
+    <ClCompile Include="dav1d/src/log.c" />
+    <ClCompile Include="dav1d/src/mem.c" />
+    <ClCompile Include="dav1d/src/msac.c" />
+    <ClCompile Include="dav1d/src/obu.c" />
+    <ClCompile Include="dav1d/src/pal.c" />
+    <ClCompile Include="dav1d/src/picture.c" />
+    <ClCompile Include="dav1d/src/qm.c" />
+    <ClCompile Include="dav1d/src/ref.c" />
+    <ClCompile Include="dav1d/src/refmvs.c" />
+    <ClCompile Include="dav1d/src/scan.c" />
+    <ClCompile Include="dav1d/src/tables.c" />
+    <ClCompile Include="dav1d/src/thread_task.c" />
+    <ClCompile Include="dav1d/src/warpmv.c" />
+    <ClCompile Include="dav1d/src/wedge.c" />
+    <ClCompile Include="dav1d/src/win32/thread.c" />
+    <ClCompile Include="dav1d/src/x86/cpu.c">
+      <!-- dav1d/src/cpu.c tem o mesmo nome: sem objeto proprio os dois viram cpu.obj e um
+           apaga o outro (MSB8027); sumiam dav1d_init_cpu e dav1d_cpu_flags no link. -->
+      <ObjectFileName>$(IntDir)dav1d_x86_cpu.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="dav1d/build/bitdepth/cdef_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/fg_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/fg_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/filmgrain_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/filmgrain_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_prepare_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_prepare_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/itx_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/itx_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lf_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lf_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/loopfilter_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/loopfilter_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/looprestoration_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/looprestoration_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lr_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lr_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/mc_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/mc_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/recon_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/recon_tmpl_16bpc.c" />
+    <ClCompile Include="media/codec_h264.c" />
+    <ClCompile Include="media/codec_h265.c" />
+    <ClCompile Include="media/image_plane.c" />
+    <ClCompile Include="media/dec_select.c" />
+    <ClCompile Include="media/codec_h264_dec.c" />
+    <ClCompile Include="media/codec_h265_dec.c" />
+    <ClCompile Include="media/enc_select.c" />
+    <ClCompile Include="media/cpu_features.c" />
+    <ClCompile Include="media/hw_mf.c" />
+    <ClCompile Include="media/hw_dec_mf.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="opus/celt/bands.c" />
+    <ClCompile Include="opus/celt/celt.c" />
+    <ClCompile Include="opus/celt/celt_decoder.c" />
+    <ClCompile Include="opus/celt/celt_encoder.c" />
+    <ClCompile Include="opus/celt/celt_lpc.c" />
+    <ClCompile Include="opus/celt/cwrs.c" />
+    <ClCompile Include="opus/celt/entcode.c" />
+    <ClCompile Include="opus/celt/entdec.c" />
+    <ClCompile Include="opus/celt/entenc.c" />
+    <ClCompile Include="opus/celt/kiss_fft.c" />
+    <ClCompile Include="opus/celt/laplace.c" />
+    <ClCompile Include="opus/celt/mathops.c" />
+    <ClCompile Include="opus/celt/mdct.c" />
+    <ClCompile Include="opus/celt/modes.c" />
+    <ClCompile Include="opus/celt/pitch.c" />
+    <ClCompile Include="opus/celt/quant_bands.c" />
+    <ClCompile Include="opus/celt/rate.c" />
+    <ClCompile Include="opus/celt/vq.c" />
+    <ClCompile Include="opus/silk/A2NLSF.c" />
+    <ClCompile Include="opus/silk/CNG.c" />
+    <ClCompile Include="opus/silk/HP_variable_cutoff.c" />
+    <ClCompile Include="opus/silk/LPC_analysis_filter.c" />
+    <ClCompile Include="opus/silk/LPC_fit.c" />
+    <ClCompile Include="opus/silk/LPC_inv_pred_gain.c" />
+    <ClCompile Include="opus/silk/LP_variable_cutoff.c" />
+    <ClCompile Include="opus/silk/NLSF2A.c" />
+    <ClCompile Include="opus/silk/NLSF_VQ.c" />
+    <ClCompile Include="opus/silk/NLSF_VQ_weights_laroia.c" />
+    <ClCompile Include="opus/silk/NLSF_decode.c" />
+    <ClCompile Include="opus/silk/NLSF_del_dec_quant.c" />
+    <ClCompile Include="opus/silk/NLSF_encode.c" />
+    <ClCompile Include="opus/silk/NLSF_stabilize.c" />
+    <ClCompile Include="opus/silk/NLSF_unpack.c" />
+    <ClCompile Include="opus/silk/NSQ.c" />
+    <ClCompile Include="opus/silk/NSQ_del_dec.c" />
+    <ClCompile Include="opus/silk/PLC.c" />
+    <ClCompile Include="opus/silk/VAD.c" />
+    <ClCompile Include="opus/silk/VQ_WMat_EC.c" />
+    <ClCompile Include="opus/silk/ana_filt_bank_1.c" />
+    <ClCompile Include="opus/silk/biquad_alt.c" />
+    <ClCompile Include="opus/silk/bwexpander.c" />
+    <ClCompile Include="opus/silk/bwexpander_32.c" />
+    <ClCompile Include="opus/silk/check_control_input.c" />
+    <ClCompile Include="opus/silk/code_signs.c" />
+    <ClCompile Include="opus/silk/control_SNR.c" />
+    <ClCompile Include="opus/silk/control_audio_bandwidth.c" />
+    <ClCompile Include="opus/silk/control_codec.c" />
+    <ClCompile Include="opus/silk/debug.c" />
+    <ClCompile Include="opus/silk/dec_API.c" />
+    <ClCompile Include="opus/silk/decode_core.c" />
+    <ClCompile Include="opus/silk/decode_frame.c" />
+    <ClCompile Include="opus/silk/decode_indices.c" />
+    <ClCompile Include="opus/silk/decode_parameters.c" />
+    <ClCompile Include="opus/silk/decode_pitch.c" />
+    <ClCompile Include="opus/silk/decode_pulses.c" />
+    <ClCompile Include="opus/silk/decoder_set_fs.c" />
+    <ClCompile Include="opus/silk/enc_API.c" />
+    <ClCompile Include="opus/silk/encode_indices.c" />
+    <ClCompile Include="opus/silk/encode_pulses.c" />
+    <ClCompile Include="opus/silk/float/LPC_analysis_filter_FLP.c" />
+    <ClCompile Include="opus/silk/float/LPC_inv_pred_gain_FLP.c" />
+    <ClCompile Include="opus/silk/float/LTP_analysis_filter_FLP.c" />
+    <ClCompile Include="opus/silk/float/LTP_scale_ctrl_FLP.c" />
+    <ClCompile Include="opus/silk/float/apply_sine_window_FLP.c" />
+    <ClCompile Include="opus/silk/float/autocorrelation_FLP.c" />
+    <ClCompile Include="opus/silk/float/burg_modified_FLP.c" />
+    <ClCompile Include="opus/silk/float/bwexpander_FLP.c" />
+    <ClCompile Include="opus/silk/float/corrMatrix_FLP.c" />
+    <ClCompile Include="opus/silk/float/encode_frame_FLP.c" />
+    <ClCompile Include="opus/silk/float/energy_FLP.c" />
+    <ClCompile Include="opus/silk/float/find_LPC_FLP.c" />
+    <ClCompile Include="opus/silk/float/find_LTP_FLP.c" />
+    <ClCompile Include="opus/silk/float/find_pitch_lags_FLP.c" />
+    <ClCompile Include="opus/silk/float/find_pred_coefs_FLP.c" />
+    <ClCompile Include="opus/silk/float/inner_product_FLP.c" />
+    <ClCompile Include="opus/silk/float/k2a_FLP.c" />
+    <ClCompile Include="opus/silk/float/noise_shape_analysis_FLP.c" />
+    <ClCompile Include="opus/silk/float/pitch_analysis_core_FLP.c" />
+    <ClCompile Include="opus/silk/float/process_gains_FLP.c" />
+    <ClCompile Include="opus/silk/float/regularize_correlations_FLP.c" />
+    <ClCompile Include="opus/silk/float/residual_energy_FLP.c" />
+    <ClCompile Include="opus/silk/float/scale_copy_vector_FLP.c" />
+    <ClCompile Include="opus/silk/float/scale_vector_FLP.c" />
+    <ClCompile Include="opus/silk/float/schur_FLP.c" />
+    <ClCompile Include="opus/silk/float/sort_FLP.c" />
+    <ClCompile Include="opus/silk/float/warped_autocorrelation_FLP.c" />
+    <ClCompile Include="opus/silk/float/wrappers_FLP.c" />
+    <ClCompile Include="opus/silk/gain_quant.c" />
+    <ClCompile Include="opus/silk/init_decoder.c" />
+    <ClCompile Include="opus/silk/init_encoder.c" />
+    <ClCompile Include="opus/silk/inner_prod_aligned.c" />
+    <ClCompile Include="opus/silk/interpolate.c" />
+    <ClCompile Include="opus/silk/lin2log.c" />
+    <ClCompile Include="opus/silk/log2lin.c" />
+    <ClCompile Include="opus/silk/pitch_est_tables.c" />
+    <ClCompile Include="opus/silk/process_NLSFs.c" />
+    <ClCompile Include="opus/silk/quant_LTP_gains.c" />
+    <ClCompile Include="opus/silk/resampler.c" />
+    <ClCompile Include="opus/silk/resampler_down2.c" />
+    <ClCompile Include="opus/silk/resampler_down2_3.c" />
+    <ClCompile Include="opus/silk/resampler_private_AR2.c" />
+    <ClCompile Include="opus/silk/resampler_private_IIR_FIR.c" />
+    <ClCompile Include="opus/silk/resampler_private_down_FIR.c" />
+    <ClCompile Include="opus/silk/resampler_private_up2_HQ.c" />
+    <ClCompile Include="opus/silk/resampler_rom.c" />
+    <ClCompile Include="opus/silk/shell_coder.c" />
+    <ClCompile Include="opus/silk/sigm_Q15.c" />
+    <ClCompile Include="opus/silk/sort.c" />
+    <ClCompile Include="opus/silk/stereo_LR_to_MS.c" />
+    <ClCompile Include="opus/silk/stereo_MS_to_LR.c" />
+    <ClCompile Include="opus/silk/stereo_decode_pred.c" />
+    <ClCompile Include="opus/silk/stereo_encode_pred.c" />
+    <ClCompile Include="opus/silk/stereo_find_predictor.c" />
+    <ClCompile Include="opus/silk/stereo_quant_pred.c" />
+    <ClCompile Include="opus/silk/sum_sqr_shift.c" />
+    <ClCompile Include="opus/silk/table_LSF_cos.c" />
+    <ClCompile Include="opus/silk/tables_LTP.c" />
+    <ClCompile Include="opus/silk/tables_NLSF_CB_NB_MB.c" />
+    <ClCompile Include="opus/silk/tables_NLSF_CB_WB.c" />
+    <ClCompile Include="opus/silk/tables_gain.c" />
+    <ClCompile Include="opus/silk/tables_other.c" />
+    <ClCompile Include="opus/silk/tables_pitch_lag.c" />
+    <ClCompile Include="opus/silk/tables_pulses_per_block.c" />
+    <ClCompile Include="opus/src/analysis.c" />
+    <ClCompile Include="opus/src/extensions.c" />
+    <ClCompile Include="opus/src/mapping_matrix.c" />
+    <ClCompile Include="opus/src/mlp.c" />
+    <ClCompile Include="opus/src/mlp_data.c" />
+    <ClCompile Include="opus/src/opus.c" />
+    <ClCompile Include="opus/src/opus_decoder.c" />
+    <ClCompile Include="opus/src/opus_encoder.c" />
+    <ClCompile Include="opus/src/opus_multistream.c" />
+    <ClCompile Include="opus/src/opus_multistream_decoder.c" />
+    <ClCompile Include="opus/src/opus_multistream_encoder.c" />
+    <ClCompile Include="opus/src/opus_projection_decoder.c" />
+    <ClCompile Include="opus/src/opus_projection_encoder.c" />
+    <ClCompile Include="opus/src/repacketizer.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_alloccommon.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_blockd.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_common_data.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_debugmodes.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_entropy.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_entropymode.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_entropymv.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_filter.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_frame_buffers.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_idct.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_loopfilter.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_mvref_common.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_pred_common.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_quant_common.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_reconinter.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_reconintra.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_rtcd.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_scale.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_scan.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_seg_common.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_thread_common.c" />
+    <ClCompile Include="vpx/vp9/common/vp9_tile_common.c" />
+    <ClCompile Include="vpx/vp9/common/x86/vp9_idct_intrin_sse2.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_decodeframe.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_decodemv.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_decoder.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_detokenize.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_dsubexp.c" />
+    <ClCompile Include="vpx/vp9/decoder/vp9_job_queue.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_alt_ref_aq.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_aq_360.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_aq_complexity.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_aq_cyclicrefresh.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_aq_variance.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_bitstream.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_context_tree.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_cost.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_dct.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_encodeframe.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_encodemb.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_encodemv.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_encoder.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_ethread.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_ext_ratectrl.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_extend.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_firstpass.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_frame_scale.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_lookahead.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_mbgraph.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_mcomp.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_multi_thread.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_noise_estimate.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_picklpf.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_pickmode.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_quantize.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_ratectrl.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_rd.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_rdopt.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_resize.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_segmentation.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_skin_detection.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_speed_features.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_subexp.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_svc_layercontext.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_temporal_filter.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_tokenize.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_tpl_model.c" />
+    <ClCompile Include="vpx/vp9/encoder/vp9_treewriter.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/temporal_filter_sse4.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_dct_intrin_sse2.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_error_avx2.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_frame_scale_ssse3.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_quantize_avx2.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_quantize_sse2.c" />
+    <ClCompile Include="vpx/vp9/encoder/x86/vp9_quantize_ssse3.c" />
+    <ClCompile Include="vpx/vp9/vp9_cx_iface.c" />
+    <ClCompile Include="vpx/vp9/vp9_dx_iface.c" />
+    <ClCompile Include="vpx/vp9/vp9_iface_common.c" />
+    <ClCompile Include="vpx/vpx/src/vpx_codec.c" />
+    <ClCompile Include="vpx/vpx/src/vpx_decoder.c" />
+    <ClCompile Include="vpx/vpx/src/vpx_encoder.c" />
+    <ClCompile Include="vpx/vpx/src/vpx_image.c" />
+    <ClCompile Include="vpx/vpx/src/vpx_tpl.c" />
+    <ClCompile Include="vpx/vpx_config.c" />
+    <ClCompile Include="vpx/vpx_dsp/add_noise.c" />
+    <ClCompile Include="vpx/vpx_dsp/avg.c" />
+    <ClCompile Include="vpx/vpx_dsp/bitreader.c" />
+    <ClCompile Include="vpx/vpx_dsp/bitreader_buffer.c" />
+    <ClCompile Include="vpx/vpx_dsp/bitwriter.c" />
+    <ClCompile Include="vpx/vpx_dsp/bitwriter_buffer.c" />
+    <ClCompile Include="vpx/vpx_dsp/deblock.c" />
+    <ClCompile Include="vpx/vpx_dsp/fwd_txfm.c" />
+    <ClCompile Include="vpx/vpx_dsp/intrapred.c" />
+    <ClCompile Include="vpx/vpx_dsp/inv_txfm.c" />
+    <ClCompile Include="vpx/vpx_dsp/loopfilter.c" />
+    <ClCompile Include="vpx/vpx_dsp/prob.c" />
+    <ClCompile Include="vpx/vpx_dsp/psnr.c" />
+    <ClCompile Include="vpx/vpx_dsp/quantize.c" />
+    <ClCompile Include="vpx/vpx_dsp/sad.c" />
+    <ClCompile Include="vpx/vpx_dsp/skin_detection.c" />
+    <ClCompile Include="vpx/vpx_dsp/sse.c" />
+    <ClCompile Include="vpx/vpx_dsp/subtract.c" />
+    <ClCompile Include="vpx/vpx_dsp/sum_squares.c" />
+    <ClCompile Include="vpx/vpx_dsp/variance.c" />
+    <ClCompile Include="vpx/vpx_dsp/vpx_convolve.c" />
+    <ClCompile Include="vpx/vpx_dsp/vpx_dsp_rtcd.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/avg_intrin_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/avg_intrin_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/avg_pred_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/avg_pred_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/fwd_txfm_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/fwd_txfm_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/inv_txfm_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/inv_txfm_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/inv_txfm_ssse3.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/loopfilter_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/loopfilter_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/post_proc_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/quantize_avx.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/quantize_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/quantize_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/quantize_ssse3.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sad4d_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sad4d_avx512.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sad_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sse_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sse_sse4.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/subtract_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/sum_squares_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/variance_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/variance_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/vpx_subpixel_4t_intrin_sse2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/vpx_subpixel_8t_intrin_avx2.c" />
+    <ClCompile Include="vpx/vpx_dsp/x86/vpx_subpixel_8t_intrin_ssse3.c" />
+    <ClCompile Include="vpx/vpx_mem/vpx_mem.c" />
+    <ClCompile Include="vpx/vpx_scale/generic/yv12config.c" />
+    <ClCompile Include="vpx/vpx_scale/generic/yv12extend.c" />
+    <ClCompile Include="vpx/vpx_scale/vpx_scale_rtcd.c" />
+    <ClCompile Include="vpx/vpx_util/vpx_thread.c" />
+    <ClCompile Include="vpx/vpx_util/vpx_write_yuv_frame.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="vpx/vp9/common/x86/vp9_mfqe_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vp9_mfqe_sse2.obj&quot; &quot;$(ProjectDir)vpx/vp9/common/x86/vp9_mfqe_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vp9_mfqe_sse2.obj</Outputs>
+      <Message>nasm vp9_mfqe_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vp9/encoder/x86/vp9_dct_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vp9_dct_sse2.obj&quot; &quot;$(ProjectDir)vpx/vp9/encoder/x86/vp9_dct_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vp9_dct_sse2.obj</Outputs>
+      <Message>nasm vp9_dct_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vp9/encoder/x86/vp9_error_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vp9_error_sse2.obj&quot; &quot;$(ProjectDir)vpx/vp9/encoder/x86/vp9_error_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vp9_error_sse2.obj</Outputs>
+      <Message>nasm vp9_error_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/add_noise_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)add_noise_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/add_noise_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)add_noise_sse2.obj</Outputs>
+      <Message>nasm add_noise_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/avg_ssse3_x86_64.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)avg_ssse3_x86_64.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/avg_ssse3_x86_64.asm&quot;</Command>
+      <Outputs>$(IntDir)avg_ssse3_x86_64.obj</Outputs>
+      <Message>nasm avg_ssse3_x86_64.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/deblock_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)deblock_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/deblock_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)deblock_sse2.obj</Outputs>
+      <Message>nasm deblock_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/fwd_txfm_ssse3_x86_64.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)fwd_txfm_ssse3_x86_64.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/fwd_txfm_ssse3_x86_64.asm&quot;</Command>
+      <Outputs>$(IntDir)fwd_txfm_ssse3_x86_64.obj</Outputs>
+      <Message>nasm fwd_txfm_ssse3_x86_64.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/intrapred_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)intrapred_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/intrapred_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)intrapred_sse2.obj</Outputs>
+      <Message>nasm intrapred_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/intrapred_ssse3.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)intrapred_ssse3.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/intrapred_ssse3.asm&quot;</Command>
+      <Outputs>$(IntDir)intrapred_ssse3.obj</Outputs>
+      <Message>nasm intrapred_ssse3.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/inv_wht_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)inv_wht_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/inv_wht_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)inv_wht_sse2.obj</Outputs>
+      <Message>nasm inv_wht_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/sad4d_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)sad4d_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/sad4d_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)sad4d_sse2.obj</Outputs>
+      <Message>nasm sad4d_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/sad_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)sad_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/sad_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)sad_sse2.obj</Outputs>
+      <Message>nasm sad_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/ssim_opt_x86_64.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)ssim_opt_x86_64.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/ssim_opt_x86_64.asm&quot;</Command>
+      <Outputs>$(IntDir)ssim_opt_x86_64.obj</Outputs>
+      <Message>nasm ssim_opt_x86_64.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/subpel_variance_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)subpel_variance_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/subpel_variance_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)subpel_variance_sse2.obj</Outputs>
+      <Message>nasm subpel_variance_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/subtract_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)subtract_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/subtract_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)subtract_sse2.obj</Outputs>
+      <Message>nasm subtract_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_convolve_copy_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_convolve_copy_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_convolve_copy_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_convolve_copy_sse2.obj</Outputs>
+      <Message>nasm vpx_convolve_copy_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_high_subpixel_8t_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_high_subpixel_8t_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_high_subpixel_8t_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_high_subpixel_8t_sse2.obj</Outputs>
+      <Message>nasm vpx_high_subpixel_8t_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_high_subpixel_bilinear_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_high_subpixel_bilinear_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_high_subpixel_bilinear_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_high_subpixel_bilinear_sse2.obj</Outputs>
+      <Message>nasm vpx_high_subpixel_bilinear_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_subpixel_8t_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_subpixel_8t_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_subpixel_8t_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_subpixel_8t_sse2.obj</Outputs>
+      <Message>nasm vpx_subpixel_8t_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_subpixel_8t_ssse3.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_subpixel_8t_ssse3.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_subpixel_8t_ssse3.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_subpixel_8t_ssse3.obj</Outputs>
+      <Message>nasm vpx_subpixel_8t_ssse3.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_subpixel_bilinear_sse2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_subpixel_bilinear_sse2.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_subpixel_bilinear_sse2.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_subpixel_bilinear_sse2.obj</Outputs>
+      <Message>nasm vpx_subpixel_bilinear_sse2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_dsp/x86/vpx_subpixel_bilinear_ssse3.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)vpx_subpixel_bilinear_ssse3.obj&quot; &quot;$(ProjectDir)vpx/vpx_dsp/x86/vpx_subpixel_bilinear_ssse3.asm&quot;</Command>
+      <Outputs>$(IntDir)vpx_subpixel_bilinear_ssse3.obj</Outputs>
+      <Message>nasm vpx_subpixel_bilinear_ssse3.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_ports/emms_mmx.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)emms_mmx.obj&quot; &quot;$(ProjectDir)vpx/vpx_ports/emms_mmx.asm&quot;</Command>
+      <Outputs>$(IntDir)emms_mmx.obj</Outputs>
+      <Message>nasm emms_mmx.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="vpx/vpx_ports/float_control_word.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)vpx/&quot; -o &quot;$(IntDir)float_control_word.obj&quot; &quot;$(ProjectDir)vpx/vpx_ports/float_control_word.asm&quot;</Command>
+      <Outputs>$(IntDir)float_control_word.obj</Outputs>
+      <Message>nasm float_control_word.asm</Message>
+    </CustomBuild>
+      <CustomBuild Include="dav1d/src/x86/cpuid.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cpuid.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cpuid.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cpuid.obj</Outputs>
+      <Message>nasm dav1d cpuid.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/msac.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_msac.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/msac.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_msac.obj</Outputs>
+      <Message>nasm dav1d msac.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/pal.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_pal.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/pal.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_pal.obj</Outputs>
+      <Message>nasm dav1d pal.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/refmvs.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_refmvs.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/refmvs.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_refmvs.obj</Outputs>
+      <Message>nasm dav1d refmvs.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_avx512.obj</Outputs>
+      <Message>nasm dav1d itx_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_avx2.obj</Outputs>
+      <Message>nasm dav1d cdef_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_avx2.obj</Outputs>
+      <Message>nasm dav1d itx_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_sse.obj</Outputs>
+      <Message>nasm dav1d cdef_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_sse.obj</Outputs>
+      <Message>nasm dav1d itx_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_avx512.obj</Outputs>
+      <Message>nasm dav1d cdef_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_avx512.obj</Outputs>
+      <Message>nasm dav1d filmgrain_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_avx512.obj</Outputs>
+      <Message>nasm dav1d ipred_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_avx512.obj</Outputs>
+      <Message>nasm dav1d loopfilter_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_avx512.obj</Outputs>
+      <Message>nasm dav1d looprestoration_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_avx512.obj</Outputs>
+      <Message>nasm dav1d mc_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_avx2.obj</Outputs>
+      <Message>nasm dav1d filmgrain_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_avx2.obj</Outputs>
+      <Message>nasm dav1d ipred_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_avx2.obj</Outputs>
+      <Message>nasm dav1d loopfilter_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_avx2.obj</Outputs>
+      <Message>nasm dav1d looprestoration_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_avx2.obj</Outputs>
+      <Message>nasm dav1d mc_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_sse.obj</Outputs>
+      <Message>nasm dav1d filmgrain_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_sse.obj</Outputs>
+      <Message>nasm dav1d ipred_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_sse.obj</Outputs>
+      <Message>nasm dav1d loopfilter_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_sse.obj</Outputs>
+      <Message>nasm dav1d looprestoration_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_sse.obj</Outputs>
+      <Message>nasm dav1d mc_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_avx512.obj</Outputs>
+      <Message>nasm dav1d cdef16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_avx512.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_avx512.obj</Outputs>
+      <Message>nasm dav1d ipred16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_avx512.obj</Outputs>
+      <Message>nasm dav1d itx16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_avx512.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_avx512.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_avx512.obj</Outputs>
+      <Message>nasm dav1d mc16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_avx2.obj</Outputs>
+      <Message>nasm dav1d cdef16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_avx2.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_avx2.obj</Outputs>
+      <Message>nasm dav1d ipred16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_avx2.obj</Outputs>
+      <Message>nasm dav1d itx16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_avx2.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_avx2.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_avx2.obj</Outputs>
+      <Message>nasm dav1d mc16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_sse.obj</Outputs>
+      <Message>nasm dav1d cdef16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_sse.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_sse.obj</Outputs>
+      <Message>nasm dav1d ipred16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_sse.obj</Outputs>
+      <Message>nasm dav1d itx16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_sse.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_sse.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_sse.obj</Outputs>
+      <Message>nasm dav1d mc16_sse.asm</Message>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<BuildType Name="Release"/>
+		<BuildType Name="MinSizeRel"/>
+		<BuildType Name="RelWithDebInfo"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="079d2311-cd31-339b-b26e-f6100e491536" DefaultStartup="true">
+		<BuildDependency Project="Source/Lib/ASM_AVX2/ASM_AVX2.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_AVX512/ASM_AVX512.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSE2/ASM_SSE2.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSE4_1/ASM_SSE4_1.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSSE3/ASM_SSSE3.vcxproj"/>
+		<BuildDependency Project="Source/Lib/Codec/CODEC.vcxproj"/>
+		<BuildDependency Project="Source/Lib/C_DEFAULT/C_DEFAULT.vcxproj"/>
+		<BuildDependency Project="third_party/fastfeat/FASTFEAT.vcxproj"/>
+		<BuildDependency Project="Source/Lib/Globals/GLOBALS.vcxproj"/>
+		<BuildDependency Project="Source/Lib/SvtAv1Enc.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="third_party/cpuinfo/deps/clog/clog.vcxproj"/>
+		<BuildDependency Project="third_party/cpuinfo/cpuinfo.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/ASM_AVX2/ASM_AVX2.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="72318682-bb0b-3489-ad87-abf1e45a41ac">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/ASM_AVX512/ASM_AVX512.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8c0ab3d7-f779-32e1-8634-8a91a7baccce">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/ASM_SSE2/ASM_SSE2.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="8263332b-539e-34b0-b39c-875cf254e44e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/ASM_SSE4_1/ASM_SSE4_1.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="69a386ec-2515-3e98-b520-10023ff81fbc">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/ASM_SSSE3/ASM_SSSE3.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="933f3f4d-ded9-39d4-a2d5-7fdd81dc80f0">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/Codec/CODEC.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="64e55394-2bc0-31fe-b9b1-a365cf8d620b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/C_DEFAULT/C_DEFAULT.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="a5d079ab-be98-30d8-a5f0-a0385155c34b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/Codec/EbVersionHeaderGen.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="ec68e948-27dc-3666-8f19-1bf831994028">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="third_party/fastfeat/FASTFEAT.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="b2c73c65-d72e-3535-9917-f5cdd0a87e0a">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="Source/Lib/Globals/GLOBALS.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="dea11063-c561-38f7-a697-8c6a261536a1">
+		<BuildDependency Project="Source/Lib/Codec/EbVersionHeaderGen.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="INSTALL.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="caa2723f-dd5c-36d2-9384-918fd61958f6">
+		<BuildDependency Project="ALL_BUILD.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="Source/Lib/SvtAv1Enc.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="7a6cce8d-90e0-32a0-bdda-1c9e42ddf9ac">
+		<BuildDependency Project="Source/Lib/ASM_AVX2/ASM_AVX2.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_AVX512/ASM_AVX512.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSE2/ASM_SSE2.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSE4_1/ASM_SSE4_1.vcxproj"/>
+		<BuildDependency Project="Source/Lib/ASM_SSSE3/ASM_SSSE3.vcxproj"/>
+		<BuildDependency Project="Source/Lib/Codec/CODEC.vcxproj"/>
+		<BuildDependency Project="Source/Lib/C_DEFAULT/C_DEFAULT.vcxproj"/>
+		<BuildDependency Project="third_party/fastfeat/FASTFEAT.vcxproj"/>
+		<BuildDependency Project="Source/Lib/Globals/GLOBALS.vcxproj"/>
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="third_party/cpuinfo/deps/clog/clog.vcxproj"/>
+		<BuildDependency Project="third_party/cpuinfo/cpuinfo.vcxproj"/>
+	</Project>
+	<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="361ba879-e149-39e3-a35e-60f638adf168"/>
+	<Project Path="third_party/cpuinfo/deps/clog/clog.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="541fe7c2-46ef-34c7-ba3a-0d32f1b41113">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="third_party/cpuinfo/cpuinfo.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="4ead7b4f-82fb-35a9-b104-f1cfa9d76d0b">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+</Solution>

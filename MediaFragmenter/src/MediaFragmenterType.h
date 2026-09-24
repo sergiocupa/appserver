@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -21,9 +21,13 @@ extern "C" {
 #endif
     #include "codec_api.h"
     #include "de265.h"
+    #ifdef _WIN32
+    // Simulador de player (MediaSourceSim.c): SDL + eventos Win32. So existe no Windows; o
+    // nucleo do fragmentador nao depende dele.
     #define SDL_MAIN_HANDLED
     #include "SDL2/SDL.h"
     #include <wtypes.h>
+    #endif
     #include <stdint.h>
     #include <stdio.h>
 
@@ -37,50 +41,15 @@ extern "C" {
     #define NAL_TYPE_HEVC(nal) (((nal) >> 1) & 0x3F) // Para H.265
     
 
-    typedef enum
-    {
-        MEDIA_TYPE_NONE  = 0,
-        MEDIA_TYPE_AUDIO = 1,
-        MEDIA_TYPE_VIDEO = 2
-    }
-    MediaType;
-
-
-    typedef struct
-    {
-        int       ID;
-        int       Initialized;
-        int       Type;
-        MediaType Media;
-        void*     Instance;
-    }
-    DecoderInstance;
-
-
-    typedef struct
-    {
-        int           Width;
-        int           Height;
-        uint64_t      Size;
-        uint64_t      Sizes[3];
-        int           Strides[3];
-        uint_fast8_t* Planes[3];
-    }
-    ImagePlane;
-
-    typedef struct
-    {
-        int          Max;
-        int          Count;
-        ImagePlane** Items;
-    }
-    ImagePlaneList;
+    // MediaType/DecoderInstance/ImagePlane/ImagePlaneList/MediaBuffer + decode H26x
+    // ficam na camada de CODECS (quebra a dependencia circular):
+    #include "codec_video.h"
 
 
 
     typedef struct MP4FragmentInfo 
     {
-        uint32_t SequenceNumber;      // Número de sequência do fragmento
+        uint32_t SequenceNumber;      // Nï¿½mero de sequï¿½ncia do fragmento
         uint64_t BaseMediaDecodeTime; // Timestamp base (em timescale units)
         uint32_t Timescale;           // Timescale (ex: 90000)
         uint32_t TrackID;             // ID da track (geralmente 1)
@@ -91,12 +60,12 @@ extern "C" {
 
     typedef struct MP4InitConfig {
         uint32_t TrackID;             // ID da track (geralmente 1)
-        uint64_t FragmentDuration;    // Duração típica de fragmento (para mvex)
+        uint64_t FragmentDuration;    // Duraï¿½ï¿½o tï¿½pica de fragmento (para mvex)
 
     } MP4InitConfig;
 
 
-    // Formato de saída do fragmento H.264
+    // Formato de saï¿½da do fragmento H.264
     typedef enum H264FragmentFormat
     {
         H264_FORMAT_ANNEXB,    // [00 00 00 01][NAL][00 00 00 01][NAL]...
@@ -107,13 +76,7 @@ extern "C" {
 
 
 
-    typedef struct _MediaBuffer
-    {
-        int           Max;
-        int           Size;
-        uint_fast8_t* Data;
-    }
-    MediaBuffer;
+    // MediaBuffer -> codec_video.h (camada de codecs)
 
 
 
@@ -195,6 +158,7 @@ extern "C" {
     H264Decoder;*/
 
 
+    #ifdef _WIN32   // tipos do simulador (ver acima)
     typedef void (*KeyDownEvent)(SDL_KeyCode key);
     typedef void (*QuitEvent)();
     typedef void (*WaitEvent)();
@@ -217,6 +181,12 @@ extern "C" {
         HANDLE        WaitShow;
     } 
     VideoOutput;
+    #else
+    // Fora do Windows o simulador nao existe, mas MediaSourceSession e os prototipos dele
+    // (MediaFragmenter.h) usam VideoOutput por ponteiro: um tipo opaco basta para compilar.
+    typedef struct VideoOutputSim VideoOutput;
+    #endif
+
 
 
     typedef struct
@@ -239,8 +209,8 @@ extern "C" {
 
     typedef struct H26XFrame 
     {
-        int IsKeyframe;      // Se é IDR
-        int Index;           // Índice do frame
+        int IsKeyframe;      // Se ï¿½ IDR
+        int Index;           // ï¿½ndice do frame
         MediaBuffer AnnexB;  // Frame completo em Annex-B
     } 
     H26XFrame;
@@ -340,6 +310,12 @@ extern "C" {
     void mframe_list_add(FrameIndexList* list, FrameIndex* frame);
     void mframe_list_release(FrameIndexList** list);
     void mbuffer_resize(MediaBuffer* buffer, int length);
+    // Garante capacidade >= 'need' PRESERVANDO o ponteiro quando ja cabe.
+    // Existe porque os builders faziam `output->Data = memop_alloc_raw(...)` a cada
+    // frame, trocando o ponteiro e vazando o buffer anterior: os chamadores reusam um
+    // MediaBuffer no laco e so liberam UM no fim. Retorna 1 = ok, 0 = sem memoria.
+    int  mbuffer_ensure(MediaBuffer* buffer, size_t need);
+
     void mbuffer_init(MediaBuffer* buffer);
     void mbuffer_prepare(MediaBuffer* buffer, uint64_t size);
     MediaBuffer* mbuffer_new();
@@ -350,7 +326,7 @@ extern "C" {
     void mbuffer_append_uint8(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint16(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint32(MediaBuffer* buffer, uint32_t value);
-    void mbuffer_append_uint64(MediaBuffer* buffer, uint32_t value);
+    void mbuffer_append_uint64(MediaBuffer* buffer, uint64_t value);
     void mbuffer_box_from_buf(MediaBuffer* db, const char* type, MediaBuffer* content);
     void mbuffer_append_uint32_string(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint64_string(MediaBuffer* buffer, uint64_t value);

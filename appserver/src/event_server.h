@@ -22,11 +22,11 @@ extern "C" {
 
     #include "server_type.h"
 
-    void event_sender(ResourceBuffer* object, MessageMatchReceiverCalback callback);
+    void event_sender(ResourceBuffer* object, MessageResultCallback callback);
     void appserver_received_aotp(Message* request);
 
 
-    void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client);
+    void event_sender_server(ResourceBuffer* object, MessageResultCallback callback, AppClientInfo* client);
 
 
 #ifdef __cplusplus

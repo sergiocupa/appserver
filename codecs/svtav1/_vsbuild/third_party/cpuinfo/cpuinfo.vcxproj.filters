@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\api.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\x86\x86_init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\x86\vendor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\x86\isa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\src\x86\windows\init.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\svtav1\third_party\cpuinfo\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{EFB02D43-80A2-3293-9186-FE0A5FB42DF8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

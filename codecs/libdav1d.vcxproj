@@ -1,0 +1,379 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><ProjectGuid>{102BDA33-5EE9-48B4-8719-0C8E0824799D}</ProjectGuid>
+    <RootNamespace>libdav1d</RootNamespace><ProjectName>libdav1d</ProjectName><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Saida deterministica: sempre codecs\x64\<Config>, tanto via solution quanto via build-codecs.bat.
+         O appservertester procura codecs.lib exatamente aqui. -->
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\obj\libdav1d\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <!-- StaticLibrary: sem Link/.def. SvtAv1Enc.lib e x265-static.lib sao linkados
+         pelos CONSUMIDORES (appservertester/MediaGateway), nao embutidos aqui. -->
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="dav1d/src/cdf.c" />
+    <ClCompile Include="dav1d/src/cpu.c" />
+    <ClCompile Include="dav1d/src/ctx.c" />
+    <ClCompile Include="dav1d/src/data.c" />
+    <ClCompile Include="dav1d/src/decode.c" />
+    <ClCompile Include="dav1d/src/dequant_tables.c" />
+    <ClCompile Include="dav1d/src/getbits.c" />
+    <ClCompile Include="dav1d/src/intra_edge.c" />
+    <ClCompile Include="dav1d/src/itx_1d.c" />
+    <ClCompile Include="dav1d/src/lf_mask.c" />
+    <ClCompile Include="dav1d/src/lib.c" />
+    <ClCompile Include="dav1d/src/log.c" />
+    <ClCompile Include="dav1d/src/mem.c" />
+    <ClCompile Include="dav1d/src/msac.c" />
+    <ClCompile Include="dav1d/src/obu.c" />
+    <ClCompile Include="dav1d/src/pal.c" />
+    <ClCompile Include="dav1d/src/picture.c" />
+    <ClCompile Include="dav1d/src/qm.c" />
+    <ClCompile Include="dav1d/src/ref.c" />
+    <ClCompile Include="dav1d/src/refmvs.c" />
+    <ClCompile Include="dav1d/src/scan.c" />
+    <ClCompile Include="dav1d/src/tables.c" />
+    <ClCompile Include="dav1d/src/thread_task.c" />
+    <ClCompile Include="dav1d/src/warpmv.c" />
+    <ClCompile Include="dav1d/src/wedge.c" />
+    <ClCompile Include="dav1d/src/win32/thread.c" />
+    <ClCompile Include="dav1d/src/x86/cpu.c">
+      <!-- dav1d/src/cpu.c tem o mesmo nome: sem objeto proprio os dois viram cpu.obj e um
+           apaga o outro (MSB8027); sumiam dav1d_init_cpu e dav1d_cpu_flags no link. -->
+      <ObjectFileName>$(IntDir)dav1d_x86_cpu.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="dav1d/build/bitdepth/cdef_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/cdef_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/fg_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/fg_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/filmgrain_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/filmgrain_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_prepare_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_prepare_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/ipred_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/itx_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/itx_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lf_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lf_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/loopfilter_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/loopfilter_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/looprestoration_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/looprestoration_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lr_apply_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/lr_apply_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/mc_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/mc_tmpl_16bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/recon_tmpl_8bpc.c" />
+    <ClCompile Include="dav1d/build/bitdepth/recon_tmpl_16bpc.c" />
+  </ItemGroup>
+  <ItemGroup>
+      <CustomBuild Include="dav1d/src/x86/cpuid.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cpuid.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cpuid.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cpuid.obj</Outputs>
+      <Message>nasm dav1d cpuid.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/msac.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_msac.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/msac.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_msac.obj</Outputs>
+      <Message>nasm dav1d msac.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/pal.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_pal.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/pal.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_pal.obj</Outputs>
+      <Message>nasm dav1d pal.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/refmvs.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_refmvs.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/refmvs.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_refmvs.obj</Outputs>
+      <Message>nasm dav1d refmvs.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_avx512.obj</Outputs>
+      <Message>nasm dav1d itx_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_avx2.obj</Outputs>
+      <Message>nasm dav1d cdef_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_avx2.obj</Outputs>
+      <Message>nasm dav1d itx_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_sse.obj</Outputs>
+      <Message>nasm dav1d cdef_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx_sse.obj</Outputs>
+      <Message>nasm dav1d itx_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef_avx512.obj</Outputs>
+      <Message>nasm dav1d cdef_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_avx512.obj</Outputs>
+      <Message>nasm dav1d filmgrain_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_avx512.obj</Outputs>
+      <Message>nasm dav1d ipred_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_avx512.obj</Outputs>
+      <Message>nasm dav1d loopfilter_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_avx512.obj</Outputs>
+      <Message>nasm dav1d looprestoration_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_avx512.obj</Outputs>
+      <Message>nasm dav1d mc_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_avx2.obj</Outputs>
+      <Message>nasm dav1d filmgrain_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_avx2.obj</Outputs>
+      <Message>nasm dav1d ipred_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_avx2.obj</Outputs>
+      <Message>nasm dav1d loopfilter_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_avx2.obj</Outputs>
+      <Message>nasm dav1d looprestoration_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_avx2.obj</Outputs>
+      <Message>nasm dav1d mc_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain_sse.obj</Outputs>
+      <Message>nasm dav1d filmgrain_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred_sse.obj</Outputs>
+      <Message>nasm dav1d ipred_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter_sse.obj</Outputs>
+      <Message>nasm dav1d loopfilter_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration_sse.obj</Outputs>
+      <Message>nasm dav1d looprestoration_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc_sse.obj</Outputs>
+      <Message>nasm dav1d mc_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_avx512.obj</Outputs>
+      <Message>nasm dav1d cdef16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_avx512.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_avx512.obj</Outputs>
+      <Message>nasm dav1d ipred16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_avx512.obj</Outputs>
+      <Message>nasm dav1d itx16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_avx512.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_avx512.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_avx512.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_avx512.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_avx512.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_avx512.obj</Outputs>
+      <Message>nasm dav1d mc16_avx512.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_avx2.obj</Outputs>
+      <Message>nasm dav1d cdef16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_avx2.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_avx2.obj</Outputs>
+      <Message>nasm dav1d ipred16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_avx2.obj</Outputs>
+      <Message>nasm dav1d itx16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_avx2.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_avx2.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_avx2.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_avx2.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_avx2.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_avx2.obj</Outputs>
+      <Message>nasm dav1d mc16_avx2.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/cdef16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_cdef16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/cdef16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_cdef16_sse.obj</Outputs>
+      <Message>nasm dav1d cdef16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/filmgrain16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_filmgrain16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/filmgrain16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_filmgrain16_sse.obj</Outputs>
+      <Message>nasm dav1d filmgrain16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/ipred16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_ipred16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/ipred16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_ipred16_sse.obj</Outputs>
+      <Message>nasm dav1d ipred16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/itx16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_itx16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/itx16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_itx16_sse.obj</Outputs>
+      <Message>nasm dav1d itx16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/loopfilter16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_loopfilter16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/loopfilter16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_loopfilter16_sse.obj</Outputs>
+      <Message>nasm dav1d loopfilter16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/looprestoration16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_looprestoration16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/looprestoration16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_looprestoration16_sse.obj</Outputs>
+      <Message>nasm dav1d looprestoration16_sse.asm</Message>
+    </CustomBuild>
+    <CustomBuild Include="dav1d/src/x86/mc16_sse.asm">
+      <Command>&quot;$(ProjectDir)tools/nasm.exe&quot; -f win64 -I &quot;$(ProjectDir)dav1d/src/&quot; -I &quot;$(ProjectDir)dav1d/build/&quot; -o &quot;$(IntDir)dav1d_mc16_sse.obj&quot; &quot;$(ProjectDir)dav1d/src/x86/mc16_sse.asm&quot;</Command>
+      <AdditionalInputs>$(ProjectDir)dav1d/build/config.asm;$(ProjectDir)dav1d/src/ext/x86/x86inc.asm</AdditionalInputs>
+      <Outputs>$(IntDir)dav1d_mc16_sse.obj</Outputs>
+      <Message>nasm dav1d mc16_sse.asm</Message>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,4 +1,6 @@
-﻿//  MIT License – Modified for Mandatory Attribution
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+//  MIT License – Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -42,14 +44,14 @@ static size_t find_next_start_code(uint8_t* data, size_t size, size_t offset)
 uint8_t* h264_create_annexb(VideoMetadata* meta, int* length)
 {
     *length = meta->Pps.Size + meta->Sps.Size + 8;
-    uint8_t* annexb = malloc(*length);
+    uint8_t* annexb = memop_alloc_raw(*length);
     annexb[0] = 0;
     annexb[1] = 0;
     annexb[2] = 0;
     annexb[3] = 1;
     int pos = 4;
 
-    memcpy(annexb + pos, meta->Sps.Data, meta->Sps.Size);
+    memop_copy_raw(annexb + pos, meta->Sps.Data, meta->Sps.Size);
     pos += meta->Sps.Size;
 
     annexb[pos] = 0;
@@ -58,7 +60,7 @@ uint8_t* h264_create_annexb(VideoMetadata* meta, int* length)
     annexb[pos + 3] = 1;
     pos += 4;
 
-    memcpy(annexb + pos, meta->Pps.Data, meta->Pps.Size);
+    memop_copy_raw(annexb + pos, meta->Pps.Data, meta->Pps.Size);
     return annexb;
 }
 
@@ -113,8 +115,9 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         total_size += 4 + frame->Nals.Items[i]->Size;
     }
 
-    output->Data = (uint8_t*)malloc(total_size);
-    if (!output->Data)
+    // Reusa o buffer do chamador (cresce se preciso). Trocar o ponteiro aqui vazava
+    // um buffer POR FRAME: os 6 chamadores reusam um MediaBuffer no laco e liberam um so.
+    if (!mbuffer_ensure(output, total_size))
     {
         fprintf(stderr, "Falha na alocação de memória (%zu bytes).\n", total_size);
         return -3;
@@ -129,7 +132,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         output->Data[pos++] = 0x00;
         output->Data[pos++] = 0x00;
         output->Data[pos++] = 0x01;
-        memcpy(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
+        memop_copy_raw(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
         pos += metadata->Sps.Size;
 
 #ifdef DEBUG_NALS
@@ -144,7 +147,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         output->Data[pos++] = 0x00;
         output->Data[pos++] = 0x00;
         output->Data[pos++] = 0x01;
-        memcpy(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
+        memop_copy_raw(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
         pos += metadata->Pps.Size;
 
 #ifdef DEBUG_NALS
@@ -160,7 +163,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         // Adiciona start code Annex B: 00 00 00 01
         if (pos + 4 > total_size)
         {
-            free(output->Data);
+            memop_free_raw(output->Data);
             fprintf(stderr, "Overflow no buffer Annex B (start code).\n");
             return -4;
         }
@@ -173,7 +176,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         // nal->Offset já aponta para o início do NAL (sem o prefixo de tamanho)
         if (fseek(f, nal->Offset, SEEK_SET) != 0)
         {
-            free(output->Data);
+            memop_free_raw(output->Data);
             fprintf(stderr, "Erro no fseek para NAL %d (offset=%llu).\n", j, nal->Offset);
             return -5;
         }
@@ -183,7 +186,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
 
         if (pos + nal_data_size > total_size)
         {
-            free(output->Data);
+            memop_free_raw(output->Data);
             fprintf(stderr, "NAL %d size (%zu) excede buffer alocado (pos=%zu, total=%zu).\n", j, nal_data_size, pos, total_size);
             return -6;
         }
@@ -192,7 +195,7 @@ int h264_create_single_frame(FILE* f, FrameIndex* frame, VideoMetadata* metadata
         size_t bytes_read = fread(output->Data + pos, 1, nal_data_size, f);
         if (bytes_read != nal_data_size)
         {
-            free(output->Data);
+            memop_free_raw(output->Data);
             fprintf(stderr, "Falha ao ler NAL %d: esperado %zu bytes, lido %zu bytes.\n", j, nal_data_size, bytes_read);
             return -7;
         }
@@ -361,8 +364,7 @@ int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_of
     // ALOCAR BUFFER
     // ───────────────────────────────────────────────────────────────
 
-    output->Data = (uint8_t*)malloc(total_size);
-    if (!output->Data)
+    if (!mbuffer_ensure(output, total_size))   // reusa o buffer do chamador (ver acima)
     {
         fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", total_size);
         return -8;
@@ -394,7 +396,7 @@ int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_of
             output->Data[pos++] = size & 0xFF;
         }
 
-        memcpy(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
+        memop_copy_raw(output->Data + pos, metadata->Sps.Data, metadata->Sps.Size);
         pos += metadata->Sps.Size;
     }
 
@@ -416,7 +418,7 @@ int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_of
             output->Data[pos++] = size & 0xFF;
         }
 
-        memcpy(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
+        memop_copy_raw(output->Data + pos, metadata->Pps.Data, metadata->Pps.Size);
         pos += metadata->Pps.Size;
     }
 
@@ -454,7 +456,7 @@ int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_of
             // Posicionar e ler NAL do arquivo
             if (fseek(f, nal->Offset, SEEK_SET) != 0)
             {
-                free(output->Data);
+                memop_free_raw(output->Data);
                 fprintf(stderr, "ERRO: fseek falhou (frame %d, NAL %d)\n", i, j);
                 return -9;
             }
@@ -464,7 +466,7 @@ int h264_create_fragment(FILE* f, FrameIndexList* frame_list, double timeline_of
 
             if (bytes_read != nal_size)
             {
-                free(output->Data);
+                memop_free_raw(output->Data);
                 fprintf(stderr, "ERRO: Leitura falhou (frame %d, NAL %d)\n", i, j);
                 return -10;
             }

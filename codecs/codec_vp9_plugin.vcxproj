@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><ProjectGuid>{87F034BA-D487-43D9-A2FE-D8E93730CB0D}</ProjectGuid>
+    <RootNamespace>codec_vp9_plugin</RootNamespace><ProjectName>codec_vp9_plugin</ProjectName><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Saida deterministica: sempre codecs\x64\<Config>, tanto via solution quanto via build-codecs.bat.
+         O appservertester procura codecs.lib exatamente aqui. -->
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\obj\codec_vp9_plugin\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>CODEC_VP9_PLUGIN;CODEC_PLUGIN_BUILD;XPLATBASE_USE_SHARED;_DEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll;$(ProjectDir)x64\$(Configuration);$(SolutionDir)codecs\svtav1\Bin\$(Configuration);$(SolutionDir)codecs\x265\_vsbuild\$(Configuration);$(SolutionDir)codecs\openh264;$(SolutionDir)codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libvpx.lib;Xplatbase.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>CODEC_VP9_PLUGIN;CODEC_PLUGIN_BUILD;XPLATBASE_USE_SHARED;NDEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <!-- StaticLibrary: sem Link/.def. SvtAv1Enc.lib e x265-static.lib sao linkados
+         pelos CONSUMIDORES (appservertester/MediaGateway), nao embutidos aqui. -->
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll;$(ProjectDir)x64\$(Configuration);$(SolutionDir)codecs\svtav1\Bin\$(Configuration);$(SolutionDir)codecs\x265\_vsbuild\$(Configuration);$(SolutionDir)codecs\openh264;$(SolutionDir)codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libvpx.lib;Xplatbase.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="media/codec_vp9.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="CopiaParaTestes" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)$(Platform)\$(Configuration)\tests\" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

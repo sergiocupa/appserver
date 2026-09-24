@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\c14ffd7d35153d1412d3bf8d02db4328\uninstall.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\source\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\uninstall" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4BCDC6A5-4437-35AF-9A62-1EE198E5C1AD}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

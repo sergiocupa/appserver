@@ -1,0 +1,1441 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{062D87F6-AB00-3D2E-900C-6ADC2A3ABD67}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>x265-static</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="E:\git\appserver\codecs\x265\_vsbuild\x265-static.dir\nasm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">x265-static.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">x265-static</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">x265-static.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">x265-static</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">x265-static.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">x265-static</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">x265-static.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">x265-static</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\x265\source\.\;E:\git\appserver\codecs\x265\source\common\;E:\git\appserver\codecs\x265\source\encoder\;E:\git\appserver\codecs\x265\_vsbuild\;%(IncludePaths)</IncludePaths>
+      <AdditionalOptions>-f</AdditionalOptions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\x265\source\.\;E:\git\appserver\codecs\x265\source\common\;E:\git\appserver\codecs\x265\source\encoder\;E:\git\appserver\codecs\x265\_vsbuild\;%(IncludePaths)</IncludePaths>
+      <AdditionalOptions>-f</AdditionalOptions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\x265\source\.\;E:\git\appserver\codecs\x265\source\common\;E:\git\appserver\codecs\x265\source\encoder\;E:\git\appserver\codecs\x265\_vsbuild\;%(IncludePaths)</IncludePaths>
+      <AdditionalOptions>-f</AdditionalOptions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\x265\source\.\;E:\git\appserver\codecs\x265\source\common\;E:\git\appserver\codecs\x265\source\encoder\;E:\git\appserver\codecs\x265\_vsbuild\;%(IncludePaths)</IncludePaths>
+      <AdditionalOptions>-f</AdditionalOptions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;X265_ARCH_X86=1;X86_64=1;_CRT_SECURE_NO_WARNINGS;HAVE_INT_TYPES_H=1;ENABLE_ASSEMBLY;HIGH_BIT_DEPTH=0;X265_DEPTH=8;EXPORT_C_API=1;X265_NS=x265;_WIN32_WINNT=_WIN32_WINNT_WIN7;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\x265\source\.;E:\git\appserver\codecs\x265\source\common;E:\git\appserver\codecs\x265\source\encoder;E:\git\appserver\codecs\x265\_vsbuild;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixel-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating pixel-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-a.asm -o pixel-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating pixel-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-a.asm -o pixel-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating pixel-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-a.asm -o pixel-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating pixel-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-a.asm -o pixel-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\const-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating const-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/const-a.asm -o const-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\const-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating const-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/const-a.asm -o const-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\const-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating const-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/const-a.asm -o const-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\const-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating const-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/const-a.asm -o const-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\const-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\cpu-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating cpu-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/cpu-a.asm -o cpu-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\cpu-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating cpu-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/cpu-a.asm -o cpu-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\cpu-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating cpu-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/cpu-a.asm -o cpu-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\cpu-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating cpu-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/cpu-a.asm -o cpu-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\cpu-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\ssd-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating ssd-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ssd-a.asm -o ssd-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\ssd-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating ssd-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ssd-a.asm -o ssd-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\ssd-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating ssd-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ssd-a.asm -o ssd-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\ssd-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating ssd-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ssd-a.asm -o ssd-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\ssd-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\mc-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating mc-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a.asm -o mc-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating mc-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a.asm -o mc-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating mc-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a.asm -o mc-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating mc-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a.asm -o mc-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\mc-a2.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating mc-a2.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a2.asm -o mc-a2.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a2.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating mc-a2.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a2.asm -o mc-a2.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a2.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating mc-a2.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a2.asm -o mc-a2.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a2.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating mc-a2.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/mc-a2.asm -o mc-a2.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\mc-a2.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixel-util8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating pixel-util8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-util8.asm -o pixel-util8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-util8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating pixel-util8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-util8.asm -o pixel-util8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-util8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating pixel-util8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-util8.asm -o pixel-util8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-util8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating pixel-util8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixel-util8.asm -o pixel-util8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixel-util8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\blockcopy8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating blockcopy8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/blockcopy8.asm -o blockcopy8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\blockcopy8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating blockcopy8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/blockcopy8.asm -o blockcopy8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\blockcopy8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating blockcopy8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/blockcopy8.asm -o blockcopy8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\blockcopy8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating blockcopy8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/blockcopy8.asm -o blockcopy8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\blockcopy8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixeladd8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating pixeladd8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixeladd8.asm -o pixeladd8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixeladd8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating pixeladd8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixeladd8.asm -o pixeladd8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixeladd8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating pixeladd8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixeladd8.asm -o pixeladd8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixeladd8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating pixeladd8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/pixeladd8.asm -o pixeladd8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\pixeladd8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\dct8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating dct8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/dct8.asm -o dct8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\dct8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating dct8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/dct8.asm -o dct8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\dct8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating dct8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/dct8.asm -o dct8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\dct8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating dct8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/dct8.asm -o dct8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\dct8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\seaintegral.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating seaintegral.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/seaintegral.asm -o seaintegral.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\seaintegral.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating seaintegral.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/seaintegral.asm -o seaintegral.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\seaintegral.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating seaintegral.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/seaintegral.asm -o seaintegral.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\seaintegral.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating seaintegral.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/seaintegral.asm -o seaintegral.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\seaintegral.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\sad-a.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating sad-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/sad-a.asm -o sad-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\sad-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating sad-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/sad-a.asm -o sad-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\sad-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating sad-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/sad-a.asm -o sad-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\sad-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating sad-a.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/sad-a.asm -o sad-a.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\sad-a.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\intrapred8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating intrapred8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8.asm -o intrapred8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating intrapred8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8.asm -o intrapred8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating intrapred8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8.asm -o intrapred8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating intrapred8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8.asm -o intrapred8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\intrapred8_allangs.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating intrapred8_allangs.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8_allangs.asm -o intrapred8_allangs.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8_allangs.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating intrapred8_allangs.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8_allangs.asm -o intrapred8_allangs.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8_allangs.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating intrapred8_allangs.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8_allangs.asm -o intrapred8_allangs.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8_allangs.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating intrapred8_allangs.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/intrapred8_allangs.asm -o intrapred8_allangs.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\intrapred8_allangs.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\v4-ipfilter8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating v4-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/v4-ipfilter8.asm -o v4-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\v4-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating v4-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/v4-ipfilter8.asm -o v4-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\v4-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating v4-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/v4-ipfilter8.asm -o v4-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\v4-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating v4-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/v4-ipfilter8.asm -o v4-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\v4-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\h-ipfilter8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating h-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/h-ipfilter8.asm -o h-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\h-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating h-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/h-ipfilter8.asm -o h-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\h-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating h-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/h-ipfilter8.asm -o h-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\h-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating h-ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/h-ipfilter8.asm -o h-ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\h-ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\ipfilter8.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ipfilter8.asm -o ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ipfilter8.asm -o ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ipfilter8.asm -o ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating ipfilter8.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/ipfilter8.asm -o ipfilter8.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\ipfilter8.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\loopfilter.asm.obj.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating loopfilter.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/loopfilter.asm -o loopfilter.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\source\common\x86\loopfilter.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating loopfilter.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/loopfilter.asm -o loopfilter.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\source\common\x86\loopfilter.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating loopfilter.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/loopfilter.asm -o loopfilter.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\source\common\x86\loopfilter.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating loopfilter.asm.obj</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+E:\git\appserver\codecs\tools\nasm.exe -f win64 -DARCH_X86_64=1 -I E:/git/appserver/codecs/x265/source/common/../common/x86/ -DHAVE_ALIGNED_STACK=0 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DX265_NS=x265 E:/git/appserver/codecs/x265/source/common/x86/loopfilter.asm -o loopfilter.asm.obj
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\source\common\x86\loopfilter.asm;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\source\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule E:/git/appserver/codecs/x265/source/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/x265/source -BE:/git/appserver/codecs/x265/_vsbuild --check-stamp-file E:/git/appserver/codecs/x265/_vsbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckIncludeFiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckSymbolExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindHg.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;E:\git\appserver\codecs\x265\source\cmake\FindNasm.cmake;E:\git\appserver\codecs\x265\source\cmake\FindVLD.cmake;E:\git\appserver\codecs\x265\source\cmake\Version.cmake;E:\git\appserver\codecs\x265\source\cmake\cmake_uninstall.cmake.in;E:\git\appserver\codecs\x265\source\x265.def.in;E:\git\appserver\codecs\x265\source\x265.pc.in;E:\git\appserver\codecs\x265\source\x265.rc.in;E:\git\appserver\codecs\x265\source\x265_config.h.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule E:/git/appserver/codecs/x265/source/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/x265/source -BE:/git/appserver/codecs/x265/_vsbuild --check-stamp-file E:/git/appserver/codecs/x265/_vsbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckIncludeFiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckSymbolExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindHg.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;E:\git\appserver\codecs\x265\source\cmake\FindNasm.cmake;E:\git\appserver\codecs\x265\source\cmake\FindVLD.cmake;E:\git\appserver\codecs\x265\source\cmake\Version.cmake;E:\git\appserver\codecs\x265\source\cmake\cmake_uninstall.cmake.in;E:\git\appserver\codecs\x265\source\x265.def.in;E:\git\appserver\codecs\x265\source\x265.pc.in;E:\git\appserver\codecs\x265\source\x265.rc.in;E:\git\appserver\codecs\x265\source\x265_config.h.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule E:/git/appserver/codecs/x265/source/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/x265/source -BE:/git/appserver/codecs/x265/_vsbuild --check-stamp-file E:/git/appserver/codecs/x265/_vsbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckIncludeFiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckSymbolExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindHg.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;E:\git\appserver\codecs\x265\source\cmake\FindNasm.cmake;E:\git\appserver\codecs\x265\source\cmake\FindVLD.cmake;E:\git\appserver\codecs\x265\source\cmake\Version.cmake;E:\git\appserver\codecs\x265\source\cmake\cmake_uninstall.cmake.in;E:\git\appserver\codecs\x265\source\x265.def.in;E:\git\appserver\codecs\x265\source\x265.pc.in;E:\git\appserver\codecs\x265\source\x265.rc.in;E:\git\appserver\codecs\x265\source\x265_config.h.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule E:/git/appserver/codecs/x265/source/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/x265/source -BE:/git/appserver/codecs/x265/_vsbuild --check-stamp-file E:/git/appserver/codecs/x265/_vsbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCXXInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCheckCompilerFlagCommonPatterns.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeGenericSystem.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeLanguageInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeRCInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckCXXSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckFunctionExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckIncludeFiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\CheckSymbolExists.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Compiler\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindGit.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindHg.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\FindPackageMessage.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckCompilerFlag.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckFlagCommonConfig.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Internal\CheckSourceCompiles.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Linker\MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\Windows.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Modules\Platform\WindowsPaths.cmake;C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeCXXCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeRCCompiler.cmake;E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\4.3.1-msvc1\CMakeSystem.cmake;E:\git\appserver\codecs\x265\source\cmake\FindNasm.cmake;E:\git\appserver\codecs\x265\source\cmake\FindVLD.cmake;E:\git\appserver\codecs\x265\source\cmake\Version.cmake;E:\git\appserver\codecs\x265\source\cmake\cmake_uninstall.cmake.in;E:\git\appserver\codecs\x265\source\x265.def.in;E:\git\appserver\codecs\x265\source\x265.pc.in;E:\git\appserver\codecs\x265\source\x265.rc.in;E:\git\appserver\codecs\x265\source\x265_config.h.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\analysis.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\search.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\bitcost.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\motion.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\slicetype.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\frameencoder.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\framefilter.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\level.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\nal.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\sei.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\sao.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\entropy.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\dpb.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\ratecontrol.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\reference.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\encoder.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\api.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\weightPrediction.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\asm-primitives.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\vec-primitives.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-sse3.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-ssse3.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-sse41.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\winxp.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\primitives.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\pixel.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\lowpassdct.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\ipfilter.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\intrapred.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\loopfilter.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\constants.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\cpu.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\version.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\threading.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\threadpool.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\wavefront.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\md5.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\bitstream.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\yuv.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\shortyuv.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\picyuv.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\common.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\param.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\frame.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\framedata.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\cudata.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\slice.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\lowres.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\piclist.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\predict.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\scalinglist.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\quant.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\deblock.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\scaler.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\ringmem.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\temporalfilter.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj" />
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="E:\git\appserver\codecs\x265\_vsbuild\ZERO_CHECK.vcxproj">
+      <Project>{E2E778F1-6B64-3CAD-8A55-7A021C1E14CE}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.vcxproj">
+      <Project>{56D3BAB1-8CEF-37C4-96BC-76F014D54F7E}</Project>
+      <Name>common</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.vcxproj">
+      <Project>{DB701E70-3E37-36F6-9C6E-75CBEEF28BA0}</Project>
+      <Name>encoder</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.targets" />
+  </ImportGroup>
+</Project>

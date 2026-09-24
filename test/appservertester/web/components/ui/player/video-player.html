@@ -8,18 +8,36 @@
     </div>
 
     <div class="stage">
-        <video id="player" 
+        <div id="video-stats" class="video-stats" hidden aria-label="Estatisticas do fluxo de video">
+            <div class="video-stats-title">Fluxo do vídeo</div>
+            <dl class="video-stats-grid">
+                <dt>Vídeo</dt><dd id="stat-vcodec">—</dd>
+                <dt>Resolução</dt><dd id="stat-resolution">—</dd>
+                <dt>FPS</dt><dd id="stat-fps">—</dd>
+                <dt>Bitrate</dt><dd id="stat-vbitrate">—</dd>
+                <dt>Pixel</dt><dd id="stat-pixfmt">—</dd>
+                <dt>Áudio</dt><dd id="stat-acodec">—</dd>
+                <dt>Canais</dt><dd id="stat-achannels">—</dd>
+                <dt>Amostragem</dt><dd id="stat-asample">—</dd>
+                <dt>Duração</dt><dd id="stat-duration">—</dd>
+            </dl>
+        </div>
+        <video id="player"
                preload="metadata" 
                playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230a1420'/%3E%3Cstop offset='1' stop-color='%23132131'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Segoe UI, Roboto, Arial' font-size='44' fill='%23a5b4c3' opacity='0.75'%3ESeu vídeo aparecerá aqui%3C/text%3E%3C/svg%3E">
         </video>
+
+        <div id="player-seek" class="player-seek" hidden aria-label="Barra do player">
+            <span id="seek-current" class="seek-time">0:00</span>
+            <div id="seek-bar" class="seek-bar" title="Barra do player — clique ou arraste para navegar">
+                <div id="seek-fill" class="seek-fill"></div>
+                <div id="seek-handle" class="seek-handle"></div>
+            </div>
+            <span id="seek-total" class="seek-time">0:00</span>
+        </div>
     </div>
 
     <div class="controls" aria-label="Controles do player">
-        <input type="text" id="player-source" placeholder="Definir uma fonte..." class="input_default">
-        <button class="btn" id="player-open-file" type="button" aria-label="Avançar 10s" title="Selecionar arquivo">
-            <img id="player-source-img" alt="" class="icon" width="18" height="18">
-        </button>
-
         <button class="btn" id="stop" type="button" aria-label="Voltar 10s" title="Voltar 10s (não implementado)">
             <img id="stop-img" alt="" class="icon" width="18" height="18">
         </button>
@@ -45,7 +63,158 @@
         <button class="btn" id="forward" type="button" aria-label="Avançar 10s" title="Avançar 10s (não implementado)">
             <img id="forward-img" alt="" class="icon" width="18" height="18">
         </button>
+
+        <!-- Qualidade em reproducao: pertence ao player, entao fica na barra dele. -->
+        <select id="hls-resolution" class="input_default player-quality" disabled
+                aria-label="Resolucao do player" title="Resolucao em reproducao (Auto = adaptativa)">
+            <option value="">Envie um video...</option>
+        </select>
     </div>
+
+    <div id="hls-progress" class="hls-progress" hidden>
+        <div id="progress-bar" class="progress-bar" title="Barra de progresso com marcacoes de fragmento">
+            <div id="progress-fill" class="progress-fill"></div>
+            <div id="progress-ticks" class="progress-ticks"></div>
+            <div id="progress-tooltip" class="progress-tooltip" hidden></div>
+        </div>
+        <div id="fragment-counter" class="fragment-counter">0 fragmentos</div>
+    </div>
+
+    <div class="hls-config" aria-label="Configuracao de fragmentacao HLS">
+        <label class="hls-field">
+            <span>Sessao de fragmentacao</span>
+            <select id="session-select" class="input_default"
+                    title="Cada sessao e uma pasta propria com os videos e o arquivo de controle">
+                <option value="">Carregando...</option>
+            </select>
+        </label>
+        <div class="hls-field session-actions">
+            <span>&nbsp;</span>
+            <div class="session-buttons">
+                <input type="text" id="session-name" class="input_default session-name"
+                       placeholder="nome (opcional)" title="Rotulo da nova sessao; em branco usa o proprio id">
+                <button class="btn" id="session-new" type="button" title="Cria uma sessao nova e vazia">Nova sessao</button>
+                <button class="btn" id="session-delete" type="button" title="Remove a sessao e todos os arquivos dela">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENTRADA: tudo vem de /api/media/devices. Para arquivo os campos ficam
+         desabilitados (a resolucao/fps/codec sao os do proprio video). -->
+    <fieldset class="io-group" aria-label="Entrada">
+        <legend>Entrada</legend>
+        <div class="io-row">
+            <div class="hls-field source-field">
+                <span>Fonte</span>
+                <div class="source-pick">
+                    <select id="in-device" class="input_default" title="Arquivo ou camera de captura">
+                        <option value="">Carregando...</option>
+                    </select>
+                    <input type="file" id="player-file" accept="video/*" hidden>
+                    <button class="btn btn-icon" id="player-open-file" type="button" disabled
+                            aria-label="Abrir arquivo" title="Abrir arquivo (selecione Fonte: Arquivo)">
+                        <img id="player-source-img" alt="" class="icon" width="18" height="18">
+                    </button>
+                </div>
+            </div>
+            <label class="hls-field">
+                <span>Codec</span>
+                <select id="in-codec" class="input_default" disabled></select>
+            </label>
+            <label class="hls-field">
+                <span>Resolucao</span>
+                <select id="in-resolution" class="input_default" disabled></select>
+            </label>
+            <label class="hls-field">
+                <span>FPS</span>
+                <select id="in-fps" class="input_default" disabled></select>
+            </label>
+        </div>
+        <div id="in-note" class="io-note"></div>
+    </fieldset>
+
+    <!-- SAIDA: em branco = herda da entrada. Nada escolhido e uma pista so = bypass. -->
+    <fieldset class="io-group" aria-label="Saida">
+        <legend>Saida</legend>
+        <div class="io-row">
+            <label class="hls-field">
+                <span>Formato</span>
+                <select id="protocol" class="input_default" title="Do arquivo: pista unica, sem conversao se nada mudar. DASH/HLS: escada adaptativa">
+                    <option value="auto">(do arquivo)</option>
+                    <option value="file">Arquivo unico (.mp4/.webm)</option>
+                    <option value="dash">DASH · VP9</option>
+                    <option value="dash-av1">DASH · AV1</option>
+                    <option value="hls">HLS · H.264</option>
+                </select>
+            </label>
+            <label class="hls-field">
+                <span>Codec</span>
+                <select id="out-codec" class="input_default" title="Em branco: mantem o codec do formato escolhido">
+                    <option value="">(do formato)</option>
+                    <option value="h264">H.264</option>
+                    <option value="h265">H.265</option>
+                    <option value="vp9">VP9</option>
+                    <option value="av1">AV1</option>
+                </select>
+            </label>
+            <label class="hls-field">
+                <span>Resolucao</span>
+                <select id="out-resolution" class="input_default" title="Em branco: escada adaptativa; escolher uma fixa gera pista unica">
+                    <option value="">(adaptativa)</option>
+                    <option value="1920x1080">1920x1080</option>
+                    <option value="1280x720">1280x720</option>
+                    <option value="854x480">854x480</option>
+                    <option value="640x360">640x360</option>
+                    <option value="426x240">426x240</option>
+                </select>
+            </label>
+            <label class="hls-field">
+                <span>FPS</span>
+                <select id="out-fps" class="input_default" title="Em branco: mantem a taxa da entrada">
+                    <option value="">(da entrada)</option>
+                    <option value="60">60</option>
+                    <option value="30">30</option>
+                    <option value="25">25</option>
+                    <option value="15">15</option>
+                    <option value="10">10</option>
+                    <option value="5">5</option>
+                </select>
+            </label>
+            <label class="hls-field">
+                <span>Bitrate</span>
+                <select id="out-bitrate" class="input_default" title="Em branco: estimado pela resolucao">
+                    <option value="">(automatico)</option>
+                    <option value="8000000">8 Mb/s</option>
+                    <option value="5000000">5 Mb/s</option>
+                    <option value="3000000">3 Mb/s</option>
+                    <option value="1500000">1,5 Mb/s</option>
+                    <option value="800000">800 kb/s</option>
+                    <option value="400000">400 kb/s</option>
+                </select>
+            </label>
+        </div>
+        <div id="out-note" class="io-note">Tudo em branco: sem conversao (bypass).</div>
+    </fieldset>
+
+    <!-- Selecionar o arquivo so envia e le os metadados; a fragmentacao comeca aqui. -->
+    <div class="io-actions">
+        <button class="btn primary" id="frag-start" type="button" disabled
+                title="Fragmenta o arquivo enviado com a configuracao de SAIDA">Fragmentar</button>
+        <a id="convert-link" class="convert-link" hidden download rel="noopener">Baixar resultado</a>
+        <span id="frag-hint" class="io-note">Selecione um arquivo na ENTRADA.</span>
+    </div>
+
+    <div class="session-bar">
+        <div id="session-info" class="session-info">Nenhuma sessao selecionada.</div>
+        <button class="btn" id="session-cancel" type="button" hidden
+                title="Interrompe a fragmentacao em andamento (a saida nao e publicada)">Cancelar</button>
+    </div>
+
+    <div id="processing-status" class="processing-status" hidden></div>
+
+    <div id="track-progress" class="virtual-tracks" aria-label="Progresso da fragmentacao por pista"></div>
+
+    <div id="frag-time" class="frag-time" hidden></div>
 
     <div class="header" style="border-top: 1px solid rgba(255,255,255,0.06); border-bottom: none;">
         <small>

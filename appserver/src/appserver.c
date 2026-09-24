@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -23,15 +23,10 @@
 #include "yason.h"
 #include "utils/websocket_util.h"
 
-#ifndef _WINSOCKAPI_
-#define _WINSOCKAPI_
-#include <ws2tcpip.h>
-#endif
+#include "utils/net_compat.h"   // Winsock no Windows, BSD sockets no Linux
 
 #include <stdio.h>
-#include <process.h>
 
-#pragma comment(lib, "ws2_32.lib")
 
 int ServerInitialized = false;
 MessageField HTTP_HEADER_ALLOW_HEADERS;
@@ -53,7 +48,7 @@ void _ReportRequest(Message* request)
     char* a  = message_command_titule(request->Cmd);
     char* tp = message_assembler_append_content_type(request->ContentType);
 
-    String b;
+    StringX b;
     string_init(&b);
     if (request->Route.Count > 0)
     {
@@ -68,7 +63,7 @@ void _ReportRequest(Message* request)
         string_append_s(&b, request->Route.Items[ix]);
     }
 
-    printf("REQUEST  | Client: %d | Method: %s | Route: '%s' | Type: %s | Content Length: %d\n", (int)request->Client->Handle, a, b.Data, tp, request->ContentLength);
+    printf("REQUEST  | Client: %d | Method: %s | Route: '%s' | Type: %s | Content Length: %d\n", (int)(intptr_t)request->Client->Handle, a, b.Content, tp, request->ContentLength);
     string_release_data(&b);
 }
 
@@ -85,9 +80,10 @@ int WsaInit()
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {
-        printf("Erro na inicialização do Winsock. Código: %d\n", WSAGetLastError());
+        printf("Erro na inicializaï¿½ï¿½o do Winsock. Cï¿½digo: %d\n", WSAGetLastError());
         return 1;
     }
+    return 0;
 }
 
 
@@ -100,13 +96,13 @@ void appserver_create_default_headers()
 
     string_init(&HTTP_HEADER_ALLOW_HEADERS.Name);
     string_init(&HTTP_HEADER_ALLOW_HEADERS.Param.Value);
-    string_append(&HTTP_HEADER_ALLOW_HEADERS.Name, "Access-Control-Allow-Headers");
-    string_append(&HTTP_HEADER_ALLOW_HEADERS.Param.Value, "Content-Type, Authorization");
+    string_appends(&HTTP_HEADER_ALLOW_HEADERS.Name, "Access-Control-Allow-Headers", (int)strlen("Access-Control-Allow-Headers"), 0, (int)strlen("Access-Control-Allow-Headers"));
+    string_appends(&HTTP_HEADER_ALLOW_HEADERS.Param.Value, "Content-Type, Authorization", (int)strlen("Content-Type, Authorization"), 0, (int)strlen("Content-Type, Authorization"));
 
     string_init(&HTTP_HEADER_ALLOW_METHODS.Name);
     string_init(&HTTP_HEADER_ALLOW_METHODS.Param.Value);
-    string_append(&HTTP_HEADER_ALLOW_METHODS.Name, "Access-Control-Allow-Methods");
-    string_append(&HTTP_HEADER_ALLOW_METHODS.Param.Value, "GET, POST, OPTIONS");
+    string_appends(&HTTP_HEADER_ALLOW_METHODS.Name, "Access-Control-Allow-Methods", (int)strlen("Access-Control-Allow-Methods"), 0, (int)strlen("Access-Control-Allow-Methods"));
+    string_appends(&HTTP_HEADER_ALLOW_METHODS.Param.Value, "GET, POST, OPTIONS", (int)strlen("GET, POST, OPTIONS"), 0, (int)strlen("GET, POST, OPTIONS"));
 }
 
 
@@ -139,8 +135,18 @@ void appserver_http_response_send(AppServerInfo* server, Message* request, HttpS
     ResourceBuffer http;
     resource_buffer_init(&http);
 
-    message_assembler_prepare(http_status, server->AgentName.Data, request->Client->LocalHost.Data, header_appender, appender_args, object, &http, (int)request->Client->Handle);
+    message_assembler_prepare(http_status, server->AgentName.Content, request->Client->LocalHost.Content, header_appender, appender_args, object, &http, (int)(intptr_t)request->Client->Handle);
     appclient_send(request->Client, http.Data, http.Length, false);
+}
+
+// Cabecalhos CORS da resposta ao OPTIONS (preflight). O codigo antigo passava o ARRAY de
+// campos onde message_assembler_prepare espera uma FUNCAO (header_appender): o preflight de
+// qualquer cliente de outra origem fazia o servidor saltar para dentro de dados.
+static void append_cors_defaults(void* args, ResourceBuffer* http)
+{
+    (void)args;
+    resource_buffer_append_format(http, "%s: %s\r\n", HTTP_HEADER_ALLOW_METHODS.Name.Content, HTTP_HEADER_ALLOW_METHODS.Param.Value.Content);
+    resource_buffer_append_format(http, "%s: %s\r\n", HTTP_HEADER_ALLOW_HEADERS.Name.Content, HTTP_HEADER_ALLOW_HEADERS.Param.Value.Content);
 }
 
 void appserver_http_default_options(AppServerInfo* server, Message* request)
@@ -148,8 +154,7 @@ void appserver_http_default_options(AppServerInfo* server, Message* request)
     ResourceBuffer http;
     resource_buffer_init(&http);
 
-    MessageField defauts[2] = {HTTP_HEADER_ALLOW_METHODS, HTTP_HEADER_ALLOW_HEADERS};
-    message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Data, request->Client->LocalHost.Data, &defauts, 2, 0, &http, (int)request->Client->Handle);
+    message_assembler_prepare(HTTP_STATUS_OK, server->AgentName.Content, request->Client->LocalHost.Content, append_cors_defaults, 0, 0, &http, (int)(intptr_t)request->Client->Handle);
     appclient_send(request->Client, http.Data, http.Length, false);
 }
 
@@ -158,23 +163,19 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     // busca no bind, para ver se pelo menos um em parte da rota, somente para direcionar pasta com conteudo
     ResourceBuffer buffer;
     memset(&buffer, 0, sizeof(ResourceBuffer));
-    bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, &buffer);
+    bool found = binder_get_web_resource(&request->Route, &server->AbsLocal, &buffer);
     if (found)
     {
         appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, 0,0);
     }
-    else
-    {
-        appserver_http_response_send(server, request, HTTP_STATUS_NOT_FOUND, 0, 0,0);
-    }
-    return false;
+    return found;
 }
 
 bool websocket_handshake_received(AppServerInfo* server, Message* request)
 {
     if (request->SecWebsocketKey && request->SecWebsocketKey->Length > 0)
     {
-        bool found = binder_get_web_resource(server->BindList, server->Prefix, &request->Route, &server->AbsLocal, 0);
+        bool found = binder_route_exist(server->BindList, server->Prefix, &request->Route, &(int){ -1 }) != 0;
         if (found)
         {
             request->Client->IsWebSocketMode = true;
@@ -210,31 +211,59 @@ void appserver_received(Message* request)
         appserver_http_default_options(server, request);
         return;
     }
+    if (request->Cmd == CMD_GET && appserver_web_process(server, request))
+    {
+        return;
+    }
+
 
     int rest = -1;
     FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route, &rest);
     if (bind)
     {
-        if (request->ContentLength > 0 && request->ContentType == APPLICATION_JSON)
+        if (request->ContentLength > 0 && request->Content.Length > 0)
         {
-            request->Object = yason_parse(request->Content.Data, request->Content.Length, TREE_TYPE_JSON);
+            int first = 0;
+            while (first < request->Content.Length &&
+                  (request->Content.Content[first] == ' ' || request->Content.Content[first] == '\t' ||
+                   request->Content.Content[first] == '\r' || request->Content.Content[first] == '\n'))
+            {
+                first++;
+            }
+
+            bool looks_json = first < request->Content.Length &&
+                (request->Content.Content[first] == '{' || request->Content.Content[first] == '[');
+
+            if (request->ContentType == APPLICATION_JSON || looks_json)
+            {
+                request->ContentType = APPLICATION_JSON;
+                request->Object = yason_parse(request->Content.Content, request->Content.Length, TREE_TYPE_JSON);
+            }
         }
 
         MessageMatchReceiverCalback func = bind->CallbackFunc;
         Element* result = func(request);
 
+        // O handler pode ter transmitido a resposta ele mesmo (ex.: SSE).
+        if (request->StreamHandled)
+        {
+            return;
+        }
+
         if (result)
         {
-            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
-            String* json = yason_render(result, 1);
-            buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
+            ResourceBuffer* buffer = memop_alloc_raw(sizeof(ResourceBuffer));
+            StringX* json = yason_render(result, 1);
+            size_t json_len = 0;   // string_utf8_to_bytes grava size_t; Length e int
+            buffer->Data = string_utf8_to_bytes(json->Content, &json_len);
+            buffer->Length = (int)json_len;
             buffer->Type = APPLICATION_JSON;
             appserver_http_response_send(server, request, HTTP_STATUS_OK, buffer, 0, 0);
             return;
         }
         else if (request->Response)
         {
-            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+            ResourceBuffer* buffer = memop_alloc_raw(sizeof(ResourceBuffer));
 
             if (request->Response->ContentType != CONTENT_TYPE_NONE)
             {
@@ -242,7 +271,13 @@ void appserver_received(Message* request)
                 rb.Data   = request->Response->Content.Data;
                 rb.Length = request->Response->Content.Length;
                 rb.Type   = request->Response->ContentType;
-                appserver_http_response_send(server, request, HTTP_STATUS_OK, &rb, 0, 0);
+                // O STATUS e' o que o handler gravou na resposta. Estava chumbado em 200:
+                // todo 400/404/500 dos controllers chegava ao cliente como sucesso, com o
+                // erro escondido no corpo -- o front chegou a contornar isso adivinhando
+                // pelo texto, e um player HLS nao tem como adivinhar.
+                HttpStatusCode status = request->Response->Status > 0
+                                      ? (HttpStatusCode)request->Response->Status : HTTP_STATUS_OK;
+                appserver_http_response_send(server, request, status, &rb, 0, 0);
             }
             else
             {
@@ -272,19 +307,19 @@ void accept_client_proc(void* ptr)
     while (server->IsRunning)
     {
         struct sockaddr_in client;
-        int client_size = sizeof(client);
+        socklen_t client_size = sizeof(client);
 
-        SOCKET client_socket = accept(server->Handle, (struct sockaddr*)&client, &client_size);
+        SOCKET client_socket = accept(NET_HANDLE_TO_SOCKET(server->Handle), (struct sockaddr*)&client, &client_size);
 
         if (client_socket == INVALID_SOCKET)
         {
-            printf("Erro ao aceitar conexão. Código: %d\n", WSAGetLastError());
+            printf("Erro ao aceitar conexï¿½o. Cï¿½digo: %d\n", WSAGetLastError());
             //closesocket(server->Handle);
             WSACleanup();
-            return 1;
+            return;   // funcao void: o "return 1" nao tinha para onde ir
         }
 
-        AppClientInfo* cli = appclient_create(client_socket, server, appserver_received);
+        AppClientInfo* cli = appclient_create(NET_SOCKET_TO_HANDLE(client_socket), server, appserver_received);
         appclient_list_add(server->Clients, cli);
     }
 }
@@ -292,7 +327,7 @@ void accept_client_proc(void* ptr)
 
 
 
-AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, FunctionBindList* bind_list)
+AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, const char* web_content_path, FunctionBindList* bind_list)
 {
     appserver_init();
 
@@ -301,7 +336,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     info->IsRunning = true;
 	info->Events    = event_list_create();
 
-    // TO-DO: somente para teste. depois que gerenciador de sesseao pronto, nao precisa este loop de atribuição de client
+    // TO-DO: somente para teste. depois que gerenciador de sesseao pronto, nao precisa este loop de atribuiï¿½ï¿½o de client
     // Passar referencia do servidor
     if (info->BindList)
     {
@@ -311,7 +346,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 			FunctionBind* bind = info->BindList->Items[ix];
 
             // TO-DO: somente para teste, para nao gerar erro, depois tem que remover.
-            bind->Thung.Client = (AppClientInfo*)calloc(1, sizeof(AppClientInfo));
+            bind->Thung.Client = (AppClientInfo*)memop_calloc_raw(1, sizeof(AppClientInfo));
             bind->Thung.Client->Server = info;
 
            // bind->Function
@@ -322,7 +357,7 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
 		}
     }
 
-    string_append(&info->AgentName, agent_name);
+    string_appends(&info->AgentName, agent_name, (int)strlen(agent_name), 0, (int)strlen(agent_name));
 
     struct sockaddr_in server, client;
 
@@ -331,39 +366,45 @@ AppServerInfo* appserver_create(const char* agent_name, const int port, const ch
     SOCKET server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == INVALID_SOCKET)
     {
-        printf("Erro ao criar o socket. Código: %d\n", WSAGetLastError());
+        printf("Erro ao criar o socket. Cï¿½digo: %d\n", WSAGetLastError());
         WSACleanup();
-        return 1;
+        return NULL;
     }
 
     server.sin_family      = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port        = htons(port);
 
-    // Associa o socket à porta
+    // Associa o socket ï¿½ porta
     if (bind(server_socket, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR) 
     {
-        printf("Erro no bind da porta para servidor. Porta: %d. Código: %d\n", port, WSAGetLastError());
+        printf("Erro no bind da porta para servidor. Porta: %d. Cï¿½digo: %d\n", port, WSAGetLastError());
         closesocket(server_socket);
         WSACleanup();
-        return 1;
+        return NULL;
     }
 
     // Coloca o socket em modo de escuta
     if (listen(server_socket, SOMAXCONN) == SOCKET_ERROR)
     {
-        printf("Erro ao colocar em escuta. Código: %d\n", WSAGetLastError());
+        printf("Erro ao colocar em escuta. Cï¿½digo: %d\n", WSAGetLastError());
         closesocket(server_socket);
         WSACleanup();
-        return 1;
+        return NULL;
     }
 
-    info->AcceptThread       = _beginthread(accept_client_proc, 0, (void*)info);
-    info->Handle             = server_socket;
+    // Handle ANTES da thread: ela usa server->Handle no accept(). Na ordem antiga a thread
+    // podia chegar ao accept com o Handle ainda vazio -- no Windows o accept falhava e a
+    // thread de accept morria em silencio; no Linux o descritor 0 e o stdin.
+    info->Handle             = NET_SOCKET_TO_HANDLE(server_socket);
+    info->AcceptThread       = (void*)_beginthread(accept_client_proc, 0, (void*)info);
 
-    info->Prefix = string_split(prefix, strlen(prefix), "/", 1, true);
+    info->Prefix = string_split_cstr(prefix, (int)strlen(prefix), (char)0x2F);
 
-    binder_get_web_content_path(info->BindList, info->Prefix, &info->AbsLocal);
+    if (web_content_path && web_content_path[0] != '\0')
+    {
+        string_appends(&info->AbsLocal, web_content_path, (int)strlen(web_content_path), 0, (int)strlen(web_content_path));
+    }
 
     serverinfo_list_add(&Servers, info);       
 

@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,15 +7,14 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
 #include "message_parser.h"
 #include "websocket_util.h"
-#include <process.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,29 +40,29 @@ const char* message_command_titule(MessageCommand cmd)
 	case CMD_ACKNOWLEDGMENT: return "ACKNOWLEDGMENT";
 	}
 }
-const MessageCommand message_command_enum(String* cmd)
+const MessageCommand message_command_enum(StringX* cmd)
 {
-	if (string_equals(cmd, "ACTION"))
+	if (string_equals_c(cmd, "ACTION"))
 	{
 		return CMD_ACTION;
 	}
-	else if(string_equals(cmd, "CALLBACK"))
+	else if(string_equals_c(cmd, "CALLBACK"))
 	{
 		return CMD_CALLBACK;
 	}
-	else if (string_equals(cmd, "ACKNOWLEDGMENT"))
+	else if (string_equals_c(cmd, "ACKNOWLEDGMENT"))
 	{
 		return CMD_ACKNOWLEDGMENT;
 	}
-	else if (string_equals(cmd, "GET"))
+	else if (string_equals_c(cmd, "GET"))
 	{
 		return CMD_GET;
 	}
-	else if (string_equals(cmd, "POST"))
+	else if (string_equals_c(cmd, "POST"))
 	{
 		return CMD_POST;
 	}
-	else if (string_equals(cmd, "OPTIONS"))
+	else if (string_equals_c(cmd, "OPTIONS"))
 	{
 		return CMD_OPTIONS;
 	}
@@ -85,12 +84,21 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 		end = string_index_of(data, length, "\r\n", 2, p);
 		if (end >= p)
 		{
-			int r = string_index_first_string(data, length, p, (char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, &m);
+			int r = string_index_first_string(data, length, p, (const char* []) { ":", "\r\n" }, (int[]) { 1, 2 }, 2, &m);
 
 			if (r == 0)
 			{ 
 				MessageField* field = message_field_create(true);
 				string_sub(data, length, p, m - p, false, &field->Name);
+
+				// Valor CRU: os parametros abaixo quebram o valor em nome=valor; cabecalhos como
+				// Sec-WebSocket-Key (base64, com "=" de padding) precisam dele intacto.
+				{
+					int vb = m + 1, ve = end;
+					while (vb < ve && (data[vb] == ' ' || data[vb] == '\t')) vb++;
+					while (ve > vb && (data[ve - 1] == ' ' || data[ve - 1] == '\t')) ve--;
+					string_sub(data, length, vb, ve - vb, false, &field->Raw);
+				}
 
 				message_field_param_add(data, (m + 1), end, true, false, &field->Param);
 
@@ -124,67 +132,70 @@ int message_parser_field(byte* data, int length, MessageFieldList* fields, int* 
 }
 
 
-void message_parser_method_param_populate(String* content, int name_begin, int name_end, int value_begin, int value_end, MessageFieldParam* param)
+void message_parser_method_param_populate(StringX* content, int name_begin, int name_end, int value_begin, int value_end, MessageFieldParam* param)
 {
+    int decoded_len = 0;   // string_http_url_decode_s devolve o tamanho em int; Length e uint64
 	if (name_begin >= 0)
 	{
-		param->Name.Data      = string_http_url_decode_s(content->Data + name_begin, name_end - name_begin, &param->Name.Length);
-		param->Name.MaxLength = param->Name.Length;
+		param->Name.Content      = string_http_url_decode_s(content->Content + name_begin, name_end - name_begin, &decoded_len);
+        param->Name.Length = (uint64)decoded_len;
+		param->Name.Max = param->Name.Length;
 	}
 	if (value_begin > name_begin)
 	{
-		param->Value.Data      = string_http_url_decode_s(content->Data + value_begin, value_end- value_begin, &param->Value.Length);
-		param->Value.MaxLength = param->Value.Length;
+		param->Value.Content      = string_http_url_decode_s(content->Content + value_begin, value_end- value_begin, &decoded_len);
+        param->Value.Length = (uint64)decoded_len;
+		param->Value.Max = param->Value.Length;
 	}
 }
 
 
-void message_parser_method_param_rec(String* content, int start, MessageFieldParam* param)
+void message_parser_method_param_rec(StringX* content, int start, MessageFieldParam* param)
 {
 	int m = 0;
-	int r = string_index_first(content->Data, content->Length, "=&[", 3, start, &m);
+	int r = string_index_first(content->Content, content->Length, "=&[", 3, start, &m);
 
 	if (r == 0)
 	{
-		int n = string_index_of_char(content->Data, content->Length, '&', m + 1, content->Length);
+		int n = string_index_of_char(content->Content, content->Length, '&', m + 1, content->Length);
 
 		if (n > m) 
 		{
-			message_parser_method_param_populate(content->Data, start, m, m+1, n-1, param);
+			message_parser_method_param_populate(content, start, m, m+1, n-1, param);
 
-			param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+			param->Next = (MessageFieldParam*)memop_calloc_raw(1, sizeof(MessageFieldParam));
 			message_parser_method_param_rec(content, n + 1, param->Next);
 		}
 		else// last
 		{
-			message_parser_method_param_populate(content->Data, start, m, m + 1, content->Length-1, param);
+			message_parser_method_param_populate(content, start, m, m + 1, content->Length-1, param);
 		}
 	}
 	else if (r == 1)
 	{
-		string_sub(content->Data, content->Length, start, m, false, &param->Value);
+		string_sub(content->Content, content->Length, start, m, false, &param->Value);
 
-		param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+		param->Next = (MessageFieldParam*)memop_calloc_raw(1, sizeof(MessageFieldParam));
 		message_parser_method_param_rec(content, m + 1, param->Next);
 	}
 	else if (r == 2)
 	{
 		if ((m + 4) < content->Length)
 		{
-			if (content->Data[m+1] == ']' && content->Data[m + 2] == '=')
+			if (content->Content[m+1] == ']' && content->Content[m + 2] == '=')
 			{
-				int o = string_index_of_char(content->Data, content->Length, '&', m + 3, content->Length);
+				int o = string_index_of_char(content->Content, content->Length, '&', m + 3, content->Length);
 
 				if (o > m + 3)
 				{
-					message_parser_method_param_populate(content->Data, start, m, m + 3, o-1, param);
+					message_parser_method_param_populate(content, start, m, m + 3, o-1, param);
 
-					param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+					param->Next = (MessageFieldParam*)memop_calloc_raw(1, sizeof(MessageFieldParam));
 					message_parser_method_param_rec(content, o + 1, param->Next);
 				}
 				else// last
 				{
-					message_parser_method_param_populate(content->Data, start, m, m + 3, content->Length-1, param);
+					message_parser_method_param_populate(content, start, m, m + 3, content->Length-1, param);
 				}
 			}
 		}
@@ -196,15 +207,15 @@ void message_parser_method_param(Message* message)
 {
 	if (message->Route.Count > 0)
 	{
-		String* data = message->Route.Items[message->Route.Count - 1];
-		int start = string_index_of_char(data->Data, data->Length, '?', 0, data->Length);
+		StringX* data = message->Route.Items[message->Route.Count - 1];
+		int start = string_index_of_char(data->Content, data->Length, '?', 0, data->Length);
 		if (start > 0)
 		{
 			// TO-DO: erro em message_parser_method_param_rec
-			//message->Param = (MessageFieldParam*)calloc(1,sizeof(MessageFieldParam));
+			//message->Param = (MessageFieldParam*)memop_calloc_raw(1,sizeof(MessageFieldParam));
 			//message_parser_method_param_rec(data->Data, start+1, message->Param);
 
-			data->Data[start] = '\0';
+			data->Content[start] = '\0';
 			data->Length      = start;
 		}
 	}
@@ -218,13 +229,13 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 	int o = string_index_of(data, length, "\r\n", 2, p);
 	if (o >= p)
 	{
-		StringArray* parts = string_split((data + p), (o - p), " ", 1, true);
+		ListX* parts = string_split_cstr((data + p), (o - p), (char)0x20);
 		if (parts->Count >= 3)
 		{
-			String* s0 = parts->Items[0]; String* s1 = parts->Items[1]; String* s2 = parts->Items[2];
+			StringX* s0 = parts->Items[0]; StringX* s1 = parts->Items[1]; StringX* s2 = parts->Items[2];
 
 			int pos  = 0;
-			int cmdp = string_index_first_string(s0->Data, s0->Length, 0, (char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, &pos);
+			int cmdp = string_index_first_string(s0->Content, s0->Length, 0, (const char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, &pos);
 			switch (cmdp)
 			{
 				case 0: message->Cmd = CMD_GET; break;
@@ -232,11 +243,11 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 				case 2: message->Cmd = CMD_OPTIONS; break;
 			}
 
-			string_split_param(s1->Data, s1->Length, "/", 1, true, &message->Route);
+			string_split_param(s1->Content, s1->Length, "/", 1, true, &message->Route);
 
 			message_parser_method_param(message);
 
-			string_append_sub(&message->Version, s2->Data, s2->Length, 0, s2->Length);
+			string_append_sub(&message->Version, s2->Content, s2->Length, 0, s2->Length);
 
 			*position = o + 2;
 			protocol = HTTP;
@@ -245,10 +256,10 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 		else if (parts->Count == 2)
 		{
 			// HTTP sem rota
-			String* s0 = parts->Items[0]; String* s1 = parts->Items[1];
+			StringX* s0 = parts->Items[0]; StringX* s1 = parts->Items[1];
 
 			int pos = 0;
-			int cmdp = string_index_first_string(s0->Data, s0->Length, 0, (char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, & pos);
+			int cmdp = string_index_first_string(s0->Content, s0->Length, 0, (const char* []) { "GET", "POST", "OPTIONS" }, (int[]) { 3, 4, 7 }, 3, & pos);
 			switch (cmdp)
 			{
 			case 0: message->Cmd = CMD_GET; break;
@@ -256,7 +267,7 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 			case 2: message->Cmd = CMD_OPTIONS; break;
 			}
 
-			string_append_sub(&message->Version, s1->Data, s1->Length, 0, s1->Length);
+			string_append_sub(&message->Version, s1->Content, s1->Length, 0, s1->Length);
 			
 			*position = o + 2;
 			protocol = HTTP;
@@ -264,9 +275,9 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 		}
 		else if (parts->Count == 1)
 		{
-			String* s0 = parts->Items[0];
+			StringX* s0 = parts->Items[0];
 
-			if (string_equals(s0, AOTP_HEADER_SIGN))
+			if (string_equals_c(s0, AOTP_HEADER_SIGN))
 			{
 				protocol = AOTP;
 				message->Protocol = protocol;
@@ -279,6 +290,16 @@ MessageProtocol message_parser_start_line(byte* data, int length, int* position,
 }
 
 
+// Os campos de WebSocket do Message sao PONTEIROS. O codigo antigo passava o endereco do
+// ponteiro para string_init_copy, que escrevia uma StringX inteira (32 bytes) em cima dele e
+// dos campos vizinhos. Aqui a string e alocada de verdade; message_release a libera.
+static void message_set_string(StringX** field, char* data, int length)
+{
+    if (*field) { string_release_data(*field); memop_free_raw(*field); }
+    *field = (StringX*)memop_calloc_raw(1, sizeof(StringX));
+    if (*field) string_init_copy(*field, data, length);
+}
+
 void message_get_standard_header(Message* message)
 {
 	int ix = 0;
@@ -287,23 +308,33 @@ void message_get_standard_header(Message* message)
 	{
 		MessageField* field = message->Fields.Items[ix];
 
+		// Sec-WebSocket-Key/Accept pelo valor CRU e ANTES do teste de Param.Value: a quebra em
+		// parametros deixava so o "=" final da chave base64 (e uma chave sem "=" nem entraria).
+		if (field->Raw.Length > 0 && field->Name.Length > 4 && string_equals_range_s2leng(&field->Name, 0, 4, "Sec-", 4))
+		{
+			if (string_equals_range_s2leng(&field->Name, 4, 13, "WebSocket-Key", 13))
+				message_set_string(&message->SecWebsocketKey, field->Raw.Content, (int)field->Raw.Length);
+			else if (string_equals_range_s2leng(&field->Name, 4, 16, "WebSocket-Accept", 16))
+				message_set_string(&message->SecWebsocketAccept, field->Raw.Content, (int)field->Raw.Length);
+		}
+
 		if (field->Name.Length > 0 && field->Param.Value.Length > 0)
 		{
 			if (string_equals_range_s2leng(&field->Name, 0, 8, "Host", 8))
 			{
-				string_init_copy(&message->Host, field->Param.Value.Data, field->Param.Value.Length);
+				string_init_copy(&message->Host, field->Param.Value.Content, field->Param.Value.Length);
 			}
 			else if (string_equals_range_s2leng(&field->Name, 0, 10, "User-Agent", 10))
 			{
-				string_init_copy(&message->UserAgent, field->Param.Value.Data, field->Param.Value.Length);
+				string_init_copy(&message->UserAgent, field->Param.Value.Content, field->Param.Value.Length);
 			}
 			else if (string_equals_range_s2leng(&field->Name, 0, 10, "Connection", 10))
 			{
-				if (string_equals(&field->Param.Value, "keep-alive"))
+				if (string_equals_c(&field->Param.Value, "keep-alive"))
 				{
 					message->ConnectionOption = CONNECTION_KEEP_ALIVE;
 				}
-				else if (string_equals(&field->Param.Value, "close"))
+				else if (string_equals_c(&field->Param.Value, "close"))
 				{
 					message->ConnectionOption = CONNECTION_CLOSE;
 				}
@@ -313,7 +344,7 @@ void message_get_standard_header(Message* message)
 				if (string_equals_range_s2leng(&field->Name, 8, 6, "Length", 6))
 				{
 					int error = 0;
-					int num = numeric_parse_int(field->Param.Value.Data, &error);
+					int num = numeric_parse_int(field->Param.Value.Content, &error);
 
 					if (!error)
 					{
@@ -422,20 +453,9 @@ void message_get_standard_header(Message* message)
 			{
 				message->Cmd = message_command_enum(&field->Param.Value);
 		    }
-			else if (string_equals_range_s2leng(&field->Name, 0, 4, "Sec-", 4))
-			{
-				if (string_equals_range_s2leng(&field->Name, 4, 13, "WebSocket-Key", 13))
-				{
-					string_init_copy(&message->SecWebsocketKey, field->Param.Value.Data, field->Param.Value.Length);
-				}
-				else if (string_equals_range_s2leng(&field->Name, 4, 16, "WebSocket-Accept", 16))
-				{
-					string_init_copy(&message->SecWebsocketAccept, field->Param.Value.Data, field->Param.Value.Length);
-				}
-			}
 			else if (string_equals_range_s2leng(&field->Name, 0, 7, "Upgrade", 7))
 			{
-				string_init_copy(&message->Upgrade, field->Param.Value.Data, field->Param.Value.Length);
+				message_set_string(&message->Upgrade, field->Param.Value.Content, (int)field->Param.Value.Length);
 	        }
 		}
 		ix++;
@@ -448,35 +468,64 @@ void on_message_match(void* ptr)
 	ParseMatch* msg = (ParseMatch*)ptr;
 	msg->Parser->MessageMatch(msg->Msg);
 	message_release(msg->Msg);
-	free(msg);
+	memop_free_raw(msg);
 }
+
+// Wrapper p/ o thread_create do xplatbase (assinatura xthread_func_t). Criar a thread por
+// aqui (e nao por _beginthread) faz o trampolim registrar a lane TLS do memory_pool desta
+// thread (on_created/on_ended), evitando corrupcao de heap ao alocar/liberar via memop.
+static xthread_result_t WINAPI omm_thread(void* p) { on_message_match(p); return 0; }
 
 
 void create_on_message_match(MessageParser* parser, Message* msg, AppClientInfo* client)
 {
 	msg->Client = client;
-	ParseMatch* pmatch = malloc(sizeof(ParseMatch));
+	ParseMatch* pmatch = memop_alloc_raw(sizeof(ParseMatch));
 	pmatch->Parser = parser;
 	pmatch->Msg = msg;
-	msg->MatchThread = _beginthread(on_message_match, 0, (void*)pmatch);
+	int _thst = 0;
+	msg->MatchThread = thread_create(omm_thread, (void*)pmatch, &_thst);
 }
 
 
 void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, int length)
 {
+	/* A partial HTTP body is binary data. Append it directly to the message
+	 * instead of passing it through the header buffer. */
+	if (!client->IsWebSocketMode && parser->Partial != 0)
+	{
+		int remaining = parser->Partial->ContentLength - parser->Partial->Content.Length;
+		int consumed = length < remaining ? length : remaining;
+		string_append_sub(&parser->Partial->Content, data, length, 0, consumed);
+
+		if (parser->Partial->Content.Length == parser->Partial->ContentLength)
+		{
+			Message* complete = parser->Partial;
+			complete->IsMatch = true;
+			parser->Partial = 0;
+			create_on_message_match(parser, complete, client);
+		}
+
+		if (consumed == length)
+			return;
+
+		data += consumed;
+		length -= consumed;
+	}
+
 	if (client->IsWebSocketMode)
 	{
-		byte* op = 0; size_t decoded_leng = 0;
+		byte op = 0; size_t decoded_leng = 0;
 		byte* decoded = websocket_decode_frame(data, length, &op, &decoded_leng);
 
 		if (decoded_leng > 0)
 		{
-			string_append(parser->Buffer, decoded);
+			string_append_sub(parser->Buffer, decoded, (int)decoded_leng, 0, (int)decoded_leng);
 		}
 	}
 	else
 	{
-		string_append(parser->Buffer, data);
+		string_append_sub(parser->Buffer, data, length, 0, length);
 	}
 
 	int pos = 0;
@@ -488,7 +537,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 			{
 				parser->Partial->IsMatch = true;
 
-				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
+				string_sub(parser->Buffer->Content, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
 
 				parser->Position = 0;
 			    string_resize_forward(parser->Buffer, parser->Position + parser->Partial->ContentLength);
@@ -501,7 +550,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 			{
 				parser->Partial->IsMatch = true;
 
-				string_sub(parser->Buffer->Data, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
+				string_sub(parser->Buffer->Content, parser->Buffer->Length, 0, parser->Partial->ContentLength, true, &parser->Partial->Content);
 
 				parser->Position = 0;
 			    string_resize_forward(parser->Buffer, parser->Partial->ContentLength);
@@ -530,7 +579,7 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 					{
 						msg->IsMatch = true;
 
-						string_sub(parser->Buffer->Data, parser->Buffer->Length, parser->Position, msg->ContentLength, true, &msg->Content);
+						string_sub(parser->Buffer->Content, parser->Buffer->Length, parser->Position, msg->ContentLength, true, &msg->Content);
 
 					    string_resize_forward(parser->Buffer, parser->Position + msg->ContentLength);
 						parser->Position = 0;
@@ -540,8 +589,10 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 					else// partial
 					{
 						parser->Partial = msg;
-
-					    string_resize_forward(parser->Buffer, parser->Position);
+						string_sub(parser->Buffer->Content, parser->Buffer->Length,
+							parser->Position, st, true, &msg->Content);
+						parser->Buffer->Length = 0;
+						parser->Buffer->Content[0] = 0;
 						parser->Position = 0;
 						break;
 					}
@@ -565,9 +616,9 @@ void message_buildup(MessageParser* parser, AppClientInfo* client, byte* data, i
 }
 
 
-MessageParser* message_parser_create(MessageMatchReceiverCalback receiver)
+MessageParser* message_parser_create(RequestCallback receiver)
 {
-	MessageParser* parser = (MessageParser*)malloc(sizeof(MessageParser));
+	MessageParser* parser = (MessageParser*)memop_alloc_raw(sizeof(MessageParser));
 	memset(parser, 0, sizeof(MessageParser));
 
 	parser->Buffer        = string_new();
@@ -580,6 +631,6 @@ MessageParser* message_parser_create(MessageMatchReceiverCalback receiver)
 MessageParser* message_parser_release(MessageParser* parser)
 {
 	string_release(parser->Buffer);
-	free(parser);
+	memop_free_raw(parser);
 	return 0;
 }

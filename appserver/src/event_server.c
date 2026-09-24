@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -21,7 +21,7 @@
 
 
 
-void event_sender(ResourceBuffer* object, MessageMatchReceiverCalback callback)
+void event_sender(ResourceBuffer* object, MessageResultCallback callback)
 {
     // Enviar ACTION 
 
@@ -32,7 +32,7 @@ void event_sender(ResourceBuffer* object, MessageMatchReceiverCalback callback)
 
 }
 
-void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client)
+void event_sender_server(ResourceBuffer* object, MessageResultCallback callback, AppClientInfo* client)
 {
     AppServerInfo* server = client->Server;
 
@@ -41,7 +41,7 @@ void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback cal
 	{
 		AppClientInfo* c = server->Clients->Items[ix];
 
-        MessageEvent* item = calloc(1, sizeof(MessageEvent));
+        MessageEvent* item = memop_calloc_raw(1, sizeof(MessageEvent));
         item->Client = c;
 		item->Callback = callback;
        // item->UID = "";
@@ -63,7 +63,7 @@ void event_sender_server(ResourceBuffer* object, MessageMatchReceiverCalback cal
 MessageEvent* event_find(Message* request, bool test_origin)
 {
     AppServerInfo* server = request->Client->Server;
-    String* sevent = test_origin ? request->OriginEventUID : request->EventUID;
+    StringX* sevent = test_origin ? request->OriginEventUID : request->EventUID;
 
     if (sevent)
     {
@@ -87,7 +87,7 @@ void aotp_prepare_send(MessageCommand command, Message* request, ResourceBuffer*
 {
     ResourceBuffer aotp;
     resource_buffer_init(&aotp);
-    message_assembler_prepare_aotp(command, request->Client->LocalHost.Data, request->EventUID, request->OriginEventUID, objects, object_length, &aotp);
+    message_assembler_prepare_aotp(command, request->Client->LocalHost.Content, request->EventUID, request->OriginEventUID, objects, object_length, &aotp);
     appclient_send(request->Client, aotp.Data, aotp.Length, true);
 }
 
@@ -105,10 +105,12 @@ void appserver_aotp_received_event(Message* request, bool is_callback)
 
         if (bind->WithCallback)
         {
-            String* json = yason_render((Element*)result, 1);
-            ResourceBuffer* buffer = malloc(sizeof(ResourceBuffer));
+            StringX* json = yason_render((Element*)result, 1);
+            ResourceBuffer* buffer = memop_alloc_raw(sizeof(ResourceBuffer));
             buffer->Type = APPLICATION_JSON;
-            buffer->Data = string_utf8_to_bytes(json->Data, &buffer->Length);
+            size_t json_len = 0;   // string_utf8_to_bytes grava size_t; Length e int
+            buffer->Data = string_utf8_to_bytes(json->Content, &json_len);
+            buffer->Length = (int)json_len;
 
             aotp_prepare_send(CMD_CALLBACK, request, &buffer, 1);
         }

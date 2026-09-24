@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\aom_subpixel_8t_intrin_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\av1_inv_txfm_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\highbd_convolve_2d_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\highbd_convolve_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\highbd_intrapred_intrin_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\highbd_wiener_convolve_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\intrapred_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\jnt_convolve_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\reconinter_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\variance_impl_ssse3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\av1_inv_txfm_ssse3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <NASM Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\aom_subpixel_bilinear_ssse3.asm" />
+    <NASM Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\aom_subpixel_8t_ssse3.asm" />
+    <NASM Include="E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\subpel_variance_ssse3.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D7EB2FC1-D6A7-3B9F-A7CA-748D859370D2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{EFB02D43-80A2-3293-9186-FE0A5FB42DF8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

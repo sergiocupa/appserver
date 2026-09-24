@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -20,10 +20,10 @@
 extern "C" {
 #endif
 
-    #include "platform.h"
+    #include "xplatbase.h"
     #include <stdio.h>
 
-    #ifdef PLATFORM_WIN
+    #ifdef XPLATBASE_WIN
         #include <windows.h>
 
         CRITICAL_SECTION fileCriticalSection;
@@ -32,21 +32,22 @@ extern "C" {
         #include <unistd.h>
         #include <pthread.h>
         #include <sys/stat.h>
+        #include <limits.h>   // PATH_MAX
 
         pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
     #endif 
 
 
-	static inline bool program_get_exec_path(const char* path)
+	static inline bool program_get_exec_path(char* path)
 	{
-        #ifdef PLATFORM_WIN
+        #ifdef XPLATBASE_WIN
             return GetModuleFileName(NULL, path, MAX_PATH);
         #else 
-            ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+            ssize_t len = readlink("/proc/self/exe", path, PATH_MAX - 1);
             if (len != -1) 
             {
                 path[len] = '\0';
-                retturn true;
+                return true;
             }
             return false;
         #endif 
@@ -54,7 +55,7 @@ extern "C" {
 
     static inline bool program_get_path(char* path)
     {
-        #ifdef PLATFORM_WIN
+        #ifdef XPLATBASE_WIN
             if (GetModuleFileName(NULL, path, MAX_PATH))
             {
                 char* last_backslash = strrchr(path, '\\');
@@ -63,7 +64,7 @@ extern "C" {
             }
             return false;
         #else 
-            ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+            ssize_t len = readlink("/proc/self/exe", path, PATH_MAX - 1);
             if (len != -1)
             {
                 path[len] = '\0';
@@ -71,7 +72,7 @@ extern "C" {
                 char* last_slash = strrchr(path, '/');
                 if (last_slash) { *last_slash = '\0';  }
 
-                retturn true;
+                return true;
             }
             return false;
         #endif 

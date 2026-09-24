@@ -1,0 +1,702 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\adaptive_mv_pred.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\aom_dsp_rtcd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1me.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\bitstream_unit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\blend_a64_mask.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\block_structures.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cabac_context_model.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_loop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_unit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_dsp_rtcd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\convolve.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_detect.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_match.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_filter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dlf_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dwt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_cdef.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_segments.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_tasks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_inter_prediction.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_intra_prediction.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_mode_config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_warped_motion.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encode_context.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\entropy_coding.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\fft.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\firstpass.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\full_loop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_motion.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me_cost.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\grainSynthesis.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash_motion.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_reorder_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inter_prediction.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\intra_prediction.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inv_transforms.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mcomp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_rate_estimation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sad_calculation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mode_decision.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_config_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_estimation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_context.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\neighbor_arrays.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_model.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_reorder_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\palette.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pass2_strategy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_buffer_desc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pcs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_reorder_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_demux_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_operators.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pred_structure.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\product_coding_loop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ransac.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_tasks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rd_cost.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\reference_object.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resize.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_results.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rest_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration_pick.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation_params.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sequence_control_set.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\src_ops_process.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\super_res.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_malloc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_psnr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_threads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_time.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sys_resource_manager.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\temporal_filtering.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\transforms.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\utility.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\vector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\warped_motion.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\adaptive_mv_pred.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\aom_dsp_rtcd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1me.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\bitstream_unit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\block_structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cabac_context_model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_loop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_unit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coefficients.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_dsp_rtcd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\compute_mean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\compute_sad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\convolve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_detect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_match.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\definitions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dlf_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dwt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_cdef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_segments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_tasks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_inter_prediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_intra_prediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_mode_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_warped_motion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encode_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\entropy_coding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\fft_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\filter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\firstpass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\full_loop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_motion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me_cost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\grainSynthesis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash_motion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_reorder_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inter_prediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\intra_prediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inv_transforms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\k_means_template.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\lambda_rate_tables.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mathutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mcomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_rate_estimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sad_calculation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mode_decision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_config_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_estimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sb_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_vector_unit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\neighbor_arrays.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_reorder_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pass2_strategy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_buffer_desc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pcs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_reorder_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_demux_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_operators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pred_structure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\q_matrices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ransac.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_tasks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rd_cost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\reference_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rest_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration_pick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation_params.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sequence_control_set.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\src_ops_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\super_res.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_malloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_psnr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sys_resource_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\temporal_filtering.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\transforms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\warped_motion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D7EB2FC1-D6A7-3B9F-A7CA-748D859370D2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{EFB02D43-80A2-3293-9186-FE0A5FB42DF8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

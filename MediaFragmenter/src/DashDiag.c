@@ -1,4 +1,6 @@
-﻿// ════════════════════════════════════════════════════════════════════════════
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+// ════════════════════════════════════════════════════════════════════════════
 // ANALYZE_INIT_BUFFER.C - Analisador de init.mp4 usando Buffer
 // ════════════════════════════════════════════════════════════════════════════
 //
@@ -76,7 +78,7 @@ static uint64_t buffer_read64(BufferReader* br) {
 // Ler bytes
 static int buffer_read_bytes(BufferReader* br, uint8_t* dest, size_t n) {
     if (!buffer_available(br, n)) return 0;
-    memcpy(dest, br->data + br->pos, n);
+    memop_copy_raw(dest, br->data + br->pos, n);
     br->pos += n;
     return 1;
 }
@@ -133,7 +135,7 @@ void analyze_trex(BufferReader* br, size_t offset) {
     printf("Tamanho: %u bytes\n", size);
     printf("Tipo: %s\n", type);
 
-    if (strcmp(type, "trex") != 0) {
+    if (string_compare_raw(type, "trex") != 0) {
         printf("❌ ERRO: Não é um trex box!\n");
         return;
     }
@@ -392,13 +394,13 @@ void find_and_analyze_boxes(BufferReader* br)
         if (box_size < 8) break;
 
         // Procurar trex
-        if (strcmp(type, "trex") == 0) {
+        if (string_compare_raw(type, "trex") == 0) {
             found_trex = 1;
             analyze_trex(br, box_start);
         }
 
         // Procurar avcC
-        if (strcmp(type, "avcC") == 0) {
+        if (string_compare_raw(type, "avcC") == 0) {
             found_avcc = 1;
             analyze_avcc(br, box_start, size);
         }

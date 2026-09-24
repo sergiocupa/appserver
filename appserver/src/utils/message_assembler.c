@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -35,7 +35,7 @@ const char* message_assembler_append_http_status(HttpStatusCode http_satus)
 	case HTTP_STATUS_SERVICE_UNAVAILABLE: return "Service Unavailable";
 	case HTTP_STATUS_SWITCHING_PROTOCOLS: return "Switching Protocols";
 	}
-	return HTTP_STATUS_INTERNAL_ERROR;
+	return "Internal Server Error";   // era o NUMERO 500 devolvido como ponteiro de string
 }
 
 const char* message_assembler_append_content_type(ContentTypeOption content_type)
@@ -62,6 +62,8 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 	case VIDEO_MP4:                return "video/mp4";
 	case VIDEO_WEBM:               return "video/webm";
 	case MULTIPART_FORMDATA:       return "multipart/form-data";
+	case APPLICATION_MPEGURL:      return "application/vnd.apple.mpegurl";
+	case VIDEO_MP2T:               return "video/mp2t";
 	}
 
 	return "<unknown>";
@@ -82,16 +84,16 @@ const char* message_assembler_append_content_type(ContentTypeOption content_type
 //   Content-Hash-Type: SHA1
 //   Content-Hash: 1234567890, 3343444433, 3343444433
 
-void message_assembler_prepare_aotp(MessageCommand cmd, const char* host, String* event_uid, String* event_origin_uid, ResourceBuffer** objects, int object_length, ResourceBuffer* aotp)
+void message_assembler_prepare_aotp(MessageCommand cmd, const char* host, StringX* event_uid, StringX* event_origin_uid, ResourceBuffer** objects, int object_length, ResourceBuffer* aotp)
 {
 	resource_buffer_append_format(aotp, "%s\r\n", AOTP_HEADER_SIGN);
 	resource_buffer_append_format(aotp, "Cmd: %s\r\n", message_command_titule(cmd));
 	resource_buffer_append_format(aotp, "Host: %s\r\n", host);
-	resource_buffer_append_format(aotp, "Event-ID: %s\r\n", event_uid->Data);
+	resource_buffer_append_format(aotp, "Event-ID: %s\r\n", event_uid->Content);
 
 	if (event_origin_uid && event_origin_uid->Length > 0)
 	{
-		resource_buffer_append_format(aotp, "Origin-Event-ID: %s\r\n", event_origin_uid->Data);
+		resource_buffer_append_format(aotp, "Origin-Event-ID: %s\r\n", event_origin_uid->Content);
 	}
 
 	if (object_length > 0 && objects)
@@ -155,7 +157,7 @@ void message_assembler_prepare(HttpStatusCode http_status, const char* agent, co
 	resource_buffer_append_string(http, "User-Agent: ");
 	resource_buffer_append(http, buffer, leng);
 	resource_buffer_append_string(http, "\r\n");
-	free(buffer);*/
+	memop_free_raw(buffer);*/
 
 	resource_buffer_append_format(http, "User-Agent: %s\r\n", agent);
 	resource_buffer_append_string(http, "Access-Control-Allow-Origin: *\r\n");

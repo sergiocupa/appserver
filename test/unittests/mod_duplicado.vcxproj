@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E0016450-F4AC-4B31-B44A-D2F9B794E442}</ProjectGuid>
+    <RootNamespace>mod_duplicado</RootNamespace>
+    <ProjectName>mod_duplicado</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tests\obj\mod_duplicado\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="mod_duplicado.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\atomics.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\event_handler.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\list_hander.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\mem_leak_watch.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\memory_pool.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\xplat_instance.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\numeric.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\ring_queue.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\string_handler.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\thread_activity_linux.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\thread_activity_win.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\thread_handler.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\thread_pool.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\thread_wait.c" />
+    <ClCompile Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src\xplatbase.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,4 +1,6 @@
-﻿#include "Mp4Diag.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+#include "Mp4Diag.h"
 #include "MediaFragmenterType.h"
 #include "BufferUtil.h"
 
@@ -417,12 +419,12 @@ void mp4diag_video_metadata(const VideoMetadata* meta)
 
 void analyze_ftyp(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
     char major_brand[5] = { 0 };
-    memcpy(major_brand, buffer_current(br), 4);
+    memop_copy_raw(major_brand, buffer_current(br), 4);
     buffer_skip(br, 4);
 
     uint32_t minor_version = buffer_read32(br);
@@ -434,7 +436,7 @@ void analyze_ftyp(BufferReader* br, size_t start, uint32_t size, int depth) {
     int count = 0;
     while (buffer_tell(br) < start + size) {
         char brand[5] = { 0 };
-        memcpy(brand, buffer_current(br), 4);
+        memop_copy_raw(brand, buffer_current(br), 4);
         buffer_skip(br, 4);
         if (count > 0) printf(", ");
         printf("%s", brand);
@@ -445,7 +447,7 @@ void analyze_ftyp(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_mvhd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -474,7 +476,7 @@ void analyze_mvhd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_tkhd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -502,7 +504,7 @@ void analyze_tkhd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_mdhd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -529,7 +531,7 @@ void analyze_mdhd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_hdlr(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -537,7 +539,7 @@ void analyze_hdlr(BufferReader* br, size_t start, uint32_t size, int depth) {
     buffer_skip(br, 4); // pre_defined
 
     char handler[5] = { 0 };
-    memcpy(handler, buffer_current(br), 4);
+    memop_copy_raw(handler, buffer_current(br), 4);
     buffer_skip(br, 4);
 
     printf("%s  handler_type: %s\n", indent, handler);
@@ -545,7 +547,7 @@ void analyze_hdlr(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_trex(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -577,7 +579,7 @@ void analyze_trex(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_mehd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -596,7 +598,7 @@ void analyze_mehd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_avcc(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -653,14 +655,14 @@ int is_container(const char* type) {
     };
 
     for (int i = 0; containers[i]; i++) {
-        if (strcmp(type, containers[i]) == 0) return 1;
+        if (string_compare_raw(type, containers[i]) == 0) return 1;
     }
     return 0;
 }
 
 void analyze_box(BufferReader* br, size_t end, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     while (buffer_tell(br) < end && !buffer_eof(br)) {
         size_t box_start = buffer_tell(br);
@@ -669,7 +671,7 @@ void analyze_box(BufferReader* br, size_t end, int depth) {
 
         uint32_t size32 = buffer_read32(br);
         char type[5] = { 0 };
-        memcpy(type, buffer_current(br), 4);
+        memop_copy_raw(type, buffer_current(br), 4);
         buffer_skip(br, 4);
 
         uint64_t size = size32;
@@ -693,39 +695,39 @@ void analyze_box(BufferReader* br, size_t end, int depth) {
         printf("%s[%s] size=%llu offset=0x%zX", indent, type, size, box_start);
 
         // Análise específica
-        if (strcmp(type, "ftyp") == 0) {
+        if (string_compare_raw(type, "ftyp") == 0) {
             printf("\n");
             analyze_ftyp(br, box_start, size, depth);
         }
-        else if (strcmp(type, "mvhd") == 0) {
+        else if (string_compare_raw(type, "mvhd") == 0) {
             printf("\n");
             analyze_mvhd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "tkhd") == 0) {
+        else if (string_compare_raw(type, "tkhd") == 0) {
             printf("\n");
             analyze_tkhd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "mdhd") == 0) {
+        else if (string_compare_raw(type, "mdhd") == 0) {
             printf(" ← TIMESCALE AQUI!\n");
             analyze_mdhd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "hdlr") == 0) {
+        else if (string_compare_raw(type, "hdlr") == 0) {
             printf("\n");
             analyze_hdlr(br, box_start, size, depth);
         }
-        else if (strcmp(type, "trex") == 0) {
+        else if (string_compare_raw(type, "trex") == 0) {
             printf(" ← CRÍTICO!\n");
             analyze_trex(br, box_start, size, depth);
         }
-        else if (strcmp(type, "mehd") == 0) {
+        else if (string_compare_raw(type, "mehd") == 0) {
             printf("\n");
             analyze_mehd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "avcC") == 0) {
+        else if (string_compare_raw(type, "avcC") == 0) {
             printf(" ← CODEC CONFIG!\n");
             analyze_avcc(br, box_start, size, depth);
         }
-        else if (strcmp(type, "avc1") == 0) {
+        else if (string_compare_raw(type, "avc1") == 0) {
             printf(" ← VIDEO SAMPLE ENTRY\n");
         }
         else {
@@ -771,7 +773,7 @@ void mp4diag_analyze_init(const uint8_t* data, size_t size)
 
 void analyze_mfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -783,7 +785,7 @@ void analyze_mfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_tfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -818,7 +820,7 @@ void analyze_tfhd(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_tfdt(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -839,7 +841,7 @@ void analyze_tfdt(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_trun(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -879,7 +881,7 @@ void analyze_trun(BufferReader* br, size_t start, uint32_t size, int depth) {
 
 void analyze_mdat(BufferReader* br, size_t start, uint32_t size, int depth) {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     buffer_seek(br, start + 8);
 
@@ -938,7 +940,7 @@ int is_frag_container(const char* type)
     };
 
     for (int i = 0; containers[i]; i++) {
-        if (strcmp(type, containers[i]) == 0) return 1;
+        if (string_compare_raw(type, containers[i]) == 0) return 1;
     }
     return 0;
 }
@@ -946,7 +948,7 @@ int is_frag_container(const char* type)
 void analyze_frag_box(BufferReader* br, size_t end, int depth) 
 {
     char indent[100] = { 0 };
-    for (int i = 0; i < depth; i++) strcat(indent, "  ");
+    for (int i = 0; i < depth; i++) string_append_raw(indent, sizeof(indent), "  ");
 
     while (buffer_tell(br) < end && !buffer_eof(br)) {
         size_t box_start = buffer_tell(br);
@@ -955,7 +957,7 @@ void analyze_frag_box(BufferReader* br, size_t end, int depth)
 
         uint32_t size32 = buffer_read32(br);
         char type[5] = { 0 };
-        memcpy(type, buffer_current(br), 4);
+        memop_copy_raw(type, buffer_current(br), 4);
         buffer_skip(br, 4);
 
         uint64_t size = size32;
@@ -979,23 +981,23 @@ void analyze_frag_box(BufferReader* br, size_t end, int depth)
         printf("%s[%s] size=%llu offset=0x%zX", indent, type, size, box_start);
 
         // Análise específica
-        if (strcmp(type, "mfhd") == 0) {
+        if (string_compare_raw(type, "mfhd") == 0) {
             printf("\n");
             analyze_mfhd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "tfhd") == 0) {
+        else if (string_compare_raw(type, "tfhd") == 0) {
             printf("\n");
             analyze_tfhd(br, box_start, size, depth);
         }
-        else if (strcmp(type, "tfdt") == 0) {
+        else if (string_compare_raw(type, "tfdt") == 0) {
             printf("\n");
             analyze_tfdt(br, box_start, size, depth);
         }
-        else if (strcmp(type, "trun") == 0) {
+        else if (string_compare_raw(type, "trun") == 0) {
             printf(" ← CRÍTICO!\n");
             analyze_trun(br, box_start, size, depth);
         }
-        else if (strcmp(type, "mdat") == 0) {
+        else if (string_compare_raw(type, "mdat") == 0) {
             printf(" ← DADOS DE VÍDEO\n");
             analyze_mdat(br, box_start, size, depth);
         }

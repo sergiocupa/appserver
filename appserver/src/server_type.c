@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -41,7 +41,7 @@ void message_field_param_scalar(byte* data, MessageFieldParam* param)
     param->IsEndGroup = true;
     param->IsEndParam = true;
 
-    string_append(&param->Name, data);
+    string_appends(&param->Name, data, (int)strlen(data), 0, (int)strlen(data));
 }
 
 
@@ -76,7 +76,7 @@ void message_field_param_add(byte* data, int begin, int end, bool first, bool is
 
             message_field_param_data(data, end + 1, begin, (m - begin), param);
 
-            param->Next = (MessageFieldParam*)calloc(1, sizeof(MessageFieldParam));
+            param->Next = (MessageFieldParam*)memop_calloc_raw(1, sizeof(MessageFieldParam));
             param->Next->Previus = param;
             param->Next->IsHardware = is_within;
 
@@ -106,16 +106,16 @@ void message_field_param_release(MessageFieldParam* param);
 
 void message_field_param_release(MessageFieldParam* param)
 {
-    if (param->Name.MaxLength > 0)
+    if (param->Name.Max > 0)
     {
         string_release_data(&param->Name);
-        param->Name.MaxLength = 0;
+        param->Name.Max = 0;
         param->Name.Length = 0;
     }
-    if (param->Value.MaxLength > 0)
+    if (param->Value.Max > 0)
     {
         string_release_data(&param->Value);
-        param->Value.MaxLength = 0;
+        param->Value.Max = 0;
         param->Value.Length = 0;
     }
 
@@ -128,7 +128,7 @@ void message_field_param_release(MessageFieldParam* param)
 
 MessageField* message_field_create(bool init_content)
 {
-    MessageField* ins = (MessageField*)calloc(1,sizeof(MessageField));
+    MessageField* ins = (MessageField*)memop_calloc_raw(1,sizeof(MessageField));
 
     if (init_content)
     {
@@ -136,7 +136,7 @@ MessageField* message_field_create(bool init_content)
     }
     else
     {
-        ins->Name.MaxLength = -1;
+        ins->Name.Max = -1;
     }
     return ins;
 }
@@ -146,7 +146,7 @@ void message_field_list_init(MessageFieldList* list)
 {
     list->Count = 0;
     list->MaxCount = 100;
-    list->Items = (void**)malloc(list->MaxCount * sizeof(void*));
+    list->Items = memop_alloc_raw(list->MaxCount * sizeof(void*));
 }
 
 void message_field_list_add(MessageFieldList* list, MessageField* field)
@@ -156,7 +156,7 @@ void message_field_list_add(MessageFieldList* list, MessageField* field)
         if (list->Count >= list->MaxCount)
         {
             list->MaxCount = ((list->Count + sizeof(MessageField)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(MessageField*));
+            list->Items = memop_realloc_raw(list->Items, list->MaxCount * sizeof(MessageField*));
         }
 
         list->Items[list->Count] = field;
@@ -168,7 +168,7 @@ void message_field_list_add_v(MessageFieldList* list, const char* name, const ch
 {
     MessageField* field = message_field_create(true);
 
-    string_append(&field->Name, name);
+    string_appends(&field->Name, name, (int)strlen(name), 0, (int)strlen(name));
     message_field_param_scalar(value, &field->Param);
 
     message_field_list_add(list,field);
@@ -176,15 +176,22 @@ void message_field_list_add_v(MessageFieldList* list, const char* name, const ch
 
 MessageField* message_field_release(MessageField* ins)
 {
-    if (ins->Name.MaxLength > 0)
+    if (ins->Name.Max > 0)
     {
         string_release_data(&ins->Name);
-        ins->Name.MaxLength = 0;
+        ins->Name.Max = 0;
         ins->Name.Length    = 0;
     }
 
+    if (ins->Raw.Max > 0)
+    {
+        string_release_data(&ins->Raw);
+        ins->Raw.Max = 0;
+        ins->Raw.Length = 0;
+    }
+
     message_field_param_release(&ins->Param);
-    free(ins);
+    memop_free_raw(ins);
     return 0;
 }
 
@@ -198,11 +205,11 @@ void message_field_list_release(MessageFieldList* list, bool only_data)
             message_field_release(list->Items[ix]);
             ix++;
         }
-        free(list->Items);
+        memop_free_raw(list->Items);
 
         if (!only_data)
         {
-            free(list);
+            memop_free_raw(list);
         }
     }
     return 0;
@@ -211,7 +218,7 @@ void message_field_list_release(MessageFieldList* list, bool only_data)
 
 Message* message_create()
 {
-    Message* ar = (Message*)malloc(sizeof(Message));
+    Message* ar = (Message*)memop_alloc_raw(sizeof(Message));
     memset(ar,0, sizeof(Message));
     string_array_init(&ar->Route);
     message_field_list_init(&ar->Fields);
@@ -223,32 +230,36 @@ void message_release(Message* m)
 {
     message_field_list_release(&m->Fields, true);
 
-    if (m->Route.MaxCount > 0)
+    if (m->Route.Max > 0)
     {
         string_array_release(&m->Route, true);
     }
 
-    if (m->Version.MaxLength > 0)
+    if (m->Version.Max > 0)
     {
         string_release_data(&m->Version);
     }
 
-    if (m->Host.MaxLength > 0)
+    if (m->Host.Max > 0)
     {
         string_release_data(&m->Host);
     }
 
-    if (m->Content.MaxLength > 0)
+    if (m->Content.Max > 0)
     {
         string_release_data(&m->Content);
     }
+
+    // Campos de WebSocket, alocados em message_parser.c (message_set_string).
+    StringX** ws_fields[3] = { &m->SecWebsocketKey, &m->SecWebsocketAccept, &m->Upgrade };
+    for (int i = 0; i < 3; i++)
+        if (*ws_fields[i]) { string_release_data(*ws_fields[i]); memop_free_raw(*ws_fields[i]); *ws_fields[i] = 0; }
 
     if (m->Param)
     {
         message_field_param_release(m->Param);
     }
-
-    free(m);
+    memop_free_raw(m);
 }
 
 
@@ -263,7 +274,7 @@ void appclient_list_add(AppClientList* list, AppClientInfo* cli)
         if (list->Count >= list->MaxCount)
         {
             list->MaxCount = ((list->Count + sizeof(AppClientInfo)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+            list->Items = memop_realloc_raw(list->Items, list->MaxCount * sizeof(void*));
         }
 
         list->Items[list->Count] = cli;
@@ -278,21 +289,21 @@ AppClientList* appclient_list_release(AppClientList* list)
         int ix = 0;
         while (ix < list->Count)
         {
-            free(list->Items[ix]);
+            memop_free_raw(list->Items[ix]);
             ix++;
         }
-        free(list->Items);
-        free(list);
+        memop_free_raw(list->Items);
+        memop_free_raw(list);
     }
     return 0;
 }
 
 AppClientList* appclient_list_create()
 {
-    AppClientList* ar = (AppClientList*)malloc(sizeof(AppClientList));
+    AppClientList* ar = (AppClientList*)memop_alloc_raw(sizeof(AppClientList));
     ar->Count = 0;
     ar->MaxCount = 100;
-    ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
+    ar->Items = memop_alloc_raw(ar->MaxCount * sizeof(void*));
     return ar;
 }
 
@@ -302,14 +313,14 @@ AppClientList* appclient_list_create()
 //FunctionBind* bind_create(const char* route, bool is_web_application, bool with_callback, bool is_event_emitter)
 FunctionBind* bind_create(const char* route)
 {
-    FunctionBind* ar = (FunctionBind*)calloc(1,sizeof(FunctionBind));
+    FunctionBind* ar = (FunctionBind*)memop_calloc_raw(1,sizeof(FunctionBind));
     string_array_init(&ar->Route);
     string_split_param(route, strlen(route), "/", 1, true, &ar->Route);
     return ar;
 }
 FunctionBind* bind_create_to_extension(const char* extension)
 {
-    FunctionBind* ar = (FunctionBind*)calloc(1, sizeof(FunctionBind));
+    FunctionBind* ar = (FunctionBind*)memop_calloc_raw(1, sizeof(FunctionBind));
     int leng = strlen(extension);
     string_init_copy(&ar->Extension, extension, leng);
     return ar;
@@ -319,8 +330,8 @@ FunctionBind* bind_release(FunctionBind* _this)
 {
     if (_this)
     {
-        string_release_data(&_this->Route);
-        free(_this);
+        string_array_release(&_this->Route, true);   // Route e lista, nao string
+        memop_free_raw(_this);
     }
     return 0;
 }
@@ -334,7 +345,7 @@ void bind_list_add(FunctionBindList* list, FunctionBind* bind)
         if (list->Count >= list->MaxCount)
         {
             list->MaxCount = ((list->Count + sizeof(FunctionBind)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+            list->Items = memop_realloc_raw(list->Items, list->MaxCount * sizeof(void*));
         }
 
         list->Items[list->Count] = bind;
@@ -352,18 +363,18 @@ FunctionBindList* bind_list_release(FunctionBindList* list)
             bind_release(list->Items[ix]);
             ix++;
         }
-        free(list->Items);
-        free(list);
+        memop_free_raw(list->Items);
+        memop_free_raw(list);
     }
     return 0;
 }
 
 FunctionBindList* bind_list_create()
 {
-    FunctionBindList* ar = (FunctionBindList*)malloc(sizeof(FunctionBindList));
+    FunctionBindList* ar = (FunctionBindList*)memop_alloc_raw(sizeof(FunctionBindList));
     ar->Count = 0;
     ar->MaxCount = 100;
-    ar->Items = (void**)malloc(ar->MaxCount * sizeof(void*));
+    ar->Items = memop_alloc_raw(ar->MaxCount * sizeof(void*));
     return ar;
 }
 
@@ -377,7 +388,7 @@ void serverinfo_list_init(AppServerList* list)
 {
     list->Count = 0;
     list->MaxCount = 100;
-    list->Items = (void**)malloc(list->MaxCount * sizeof(void*));
+    list->Items = memop_alloc_raw(list->MaxCount * sizeof(void*));
 }
 
 
@@ -385,8 +396,8 @@ void serverinfo_list_release(AppServerList* list)
 {
     if (list)
     {
-        free(list->Items);
-        free(list);
+        memop_free_raw(list->Items);
+        memop_free_raw(list);
     }
     return 0;
 }
@@ -399,7 +410,7 @@ void serverinfo_list_add(AppServerList* list, AppServerInfo* server)
         if (list->Count >= list->MaxCount)
         {
             list->MaxCount = ((list->Count + sizeof(AppServerInfo)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+            list->Items = memop_realloc_raw(list->Items, list->MaxCount * sizeof(void*));
         }
 
         list->Items[list->Count] = server;
@@ -412,13 +423,13 @@ void serverinfo_release(AppServerInfo* server)
     string_release_data(&server->AbsLocal);
 
     appclient_list_release(server->Clients);
-    free(server);
+    memop_free_raw(server);
 }
 
 AppServerInfo* serverinfo_create()
 {
     AppServerInfo* server;
-    server = (AppServerInfo*)calloc(1, sizeof(AppServerInfo));
+    server = (AppServerInfo*)memop_calloc_raw(1, sizeof(AppServerInfo));
     server->Clients = appclient_list_create();
     server->DefaultWebApiObjectType = APPLICATION_JSON;
 
@@ -437,7 +448,7 @@ void resource_buffer_init(ResourceBuffer* source)
 {
     memset(source, 0, sizeof(ResourceBuffer));
     source->MaxLength = 1024;
-    source->Data      = calloc(1, source->MaxLength);
+    source->Data      = memop_calloc_raw(1, source->MaxLength);
 }
 void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length)
 {
@@ -446,7 +457,7 @@ void resource_buffer_append(ResourceBuffer* buffer, byte* data, int length)
         if ((buffer->Length + length) >= buffer->MaxLength)
         {
             buffer->MaxLength = (int)((double)(buffer->Length + length + buffer->MaxLength) * 1.5);
-            buffer->Data      = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+            buffer->Data      = memop_realloc_raw(buffer->Data, buffer->MaxLength + 1);
         }
 
         memcpy(buffer->Data + buffer->Length, data, length);
@@ -463,7 +474,7 @@ void resource_buffer_append_string(ResourceBuffer* buffer, const char* data)
         if ((buffer->Length + length) >= buffer->MaxLength)
         {
             buffer->MaxLength = (int)((double)(buffer->Length + length + buffer->MaxLength) * 1.5);
-            buffer->Data      = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+            buffer->Data      = memop_realloc_raw(buffer->Data, buffer->MaxLength + 1);
         }
 
         memcpy(buffer->Data + buffer->Length, data, length);
@@ -481,7 +492,7 @@ void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, .
         va_start(ap, format);
         int len = vsnprintf(NULL, 0, format, ap);
         va_end(ap);
-        fstr = (char*)malloc(len + 1);
+        fstr = (char*)memop_alloc_raw(len + 1);
         va_start(ap, format);
         if (fstr) vsnprintf(fstr, len + 1, format, ap);
         va_end(ap);
@@ -491,14 +502,14 @@ void resource_buffer_append_format(ResourceBuffer* buffer, const char* format, .
             if ((buffer->Length + len) >= buffer->MaxLength)
             {
                 buffer->MaxLength = (int)((double)(buffer->Length + len) * 1.5);
-                buffer->Data = (byte**)realloc((byte**)buffer->Data, buffer->MaxLength + 1);
+                buffer->Data = memop_realloc_raw(buffer->Data, buffer->MaxLength + 1);
             }
 
             memcpy(buffer->Data + buffer->Length, fstr, len);
             buffer->Length += len;
             *(buffer->Data + buffer->Length) = 0;
         }
-        free(fstr);
+        memop_free_raw(fstr);
     }
 }
 
@@ -507,7 +518,7 @@ void resource_buffer_copy(ResourceBuffer* source, ResourceBuffer* dest)
     if (source && dest && source->Data && source->Length >= 0)
     {
         dest->Length = source->Length;
-        dest->Data   = malloc(dest->Length);
+        dest->Data   = memop_alloc_raw(dest->Length);
 
         memcpy(dest->Data, source->Data, dest->Length);
     }
@@ -519,11 +530,11 @@ void resource_buffer_release(ResourceBuffer* source, bool only_data)
     {
         if (only_data)
         {
-            free(source->Data);
+            memop_free_raw(source->Data);
             return;
         }
 
-        free(source);
+        memop_free_raw(source);
     }
 }
 
@@ -536,12 +547,12 @@ void event_list_init(MessageEventList* list)
 {
     list->Count = 0;
     list->MaxCount = 100;
-    list->Items = (void**)malloc(list->MaxCount * sizeof(void*));
+    list->Items = memop_alloc_raw(list->MaxCount * sizeof(void*));
 }
 
 MessageEventList* event_list_create()
 {
-    MessageEventList* list = (MessageEventList*)malloc(sizeof(MessageEventList));
+    MessageEventList* list = (MessageEventList*)memop_alloc_raw(sizeof(MessageEventList));
     event_list_init(list);
     return list;
 }
@@ -553,7 +564,7 @@ void event_list_add(MessageEventList* list, MessageEvent* item)
         if (list->Count >= list->MaxCount)
         {
             list->MaxCount = ((list->Count + sizeof(MessageEvent)) + list->MaxCount) * 2;
-            list->Items = (void**)realloc((void**)list->Items, list->MaxCount * sizeof(void*));
+            list->Items = memop_realloc_raw(list->Items, list->MaxCount * sizeof(void*));
         }
 
         list->Items[list->Count] = item;
@@ -595,13 +606,13 @@ MessageEventList* event_list_release(MessageEventList* list, bool only_data)
             int ix = 0;
             while (ix < list->Count)
             {
-                free(list->Items[ix]);
+                memop_free_raw(list->Items[ix]);
                 ix++;
             }
-            free(list->Items);
+            memop_free_raw(list->Items);
             return list;
         }
-        free(list);
+        memop_free_raw(list);
     }
     return 0;
 }
@@ -611,10 +622,10 @@ MessageEventList* event_list_release(MessageEventList* list, bool only_data)
 
 MessageResponseInfo* message_response_create(int status, ContentTypeOption type)
 {
-    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    MessageResponseInfo* ar = (MessageResponseInfo*)memop_alloc_raw(sizeof(MessageResponseInfo));
     memset(ar, 0, sizeof(MessageResponseInfo));
     resource_buffer_init(&ar->Content);
-    event_list_init(&ar->Fields);
+    message_field_list_init(&ar->Fields);
     ar->ContentType = type;
     ar->Status = status;
     return ar;
@@ -622,10 +633,11 @@ MessageResponseInfo* message_response_create(int status, ContentTypeOption type)
 
 MessageResponseInfo* message_response_create_content(int status, ContentTypeOption type, char* content, int size)
 {
-    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    MessageResponseInfo* ar = (MessageResponseInfo*)memop_alloc_raw(sizeof(MessageResponseInfo));
     memset(ar, 0, sizeof(MessageResponseInfo));
     resource_buffer_init(&ar->Content);
-    event_list_init(&ar->Fields);
+    message_field_list_init(&ar->Fields);
+    ar->ContentType = type;
     ar->Content.Type = type;
     ar->Status = status;
     resource_buffer_append(&ar->Content, content, size);
@@ -634,10 +646,11 @@ MessageResponseInfo* message_response_create_content(int status, ContentTypeOpti
 
 MessageResponseInfo* message_response_create_text(int status, char* content)
 {
-    MessageResponseInfo* ar = (MessageResponseInfo*)malloc(sizeof(MessageResponseInfo));
+    MessageResponseInfo* ar = (MessageResponseInfo*)memop_alloc_raw(sizeof(MessageResponseInfo));
     memset(ar, 0, sizeof(MessageResponseInfo));
     resource_buffer_init(&ar->Content);
-    event_list_init(&ar->Fields);
+    message_field_list_init(&ar->Fields);
+    ar->ContentType = TEXT_PLAIN;
     ar->Content.Type = TEXT_PLAIN;
     ar->Status = status;
 

@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,20 +7,22 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
 #include "activity_binder.h"
 #include "program_util.h"
-#include "stringlib.h"
-#include "filelib.h"
+#include "xpb_compat.h"
 #include <stdlib.h>
+#ifndef _WIN32
+#include <sys/stat.h>
+#endif
 
 
-static int string_endsoff_token(String* a, int a_start, int a_leng, String* token, int token_start, int token_leng)
+static int string_endsoff_token(StringX* a, int a_start, int a_leng, StringX* token, int token_start, int token_leng)
 {
     int ia  = a_start;
     int it  = token_start;
@@ -28,7 +30,7 @@ static int string_endsoff_token(String* a, int a_start, int a_leng, String* toke
 
     while (ia < a->Length && it < token->Length)
     {
-        if (a->Data[ia] != token->Data[it])
+        if (a->Content[ia] != token->Content[it])
         {
             return -1;
         }
@@ -38,7 +40,7 @@ static int string_endsoff_token(String* a, int a_start, int a_leng, String* toke
     return token->Length > 0 && ia == val;
 }
 
-static int string_ends_off_s(String* route, String* extension)
+static int string_ends_off_s(StringX* route, StringX* extension)
 {
     if (route && extension)
     {
@@ -48,7 +50,7 @@ static int string_ends_off_s(String* route, String* extension)
             while (ir > 0 && ie > 0)
             {
                 ir--; ie--;
-                if (route->Data[ir] != extension->Data[ie])
+                if (route->Content[ir] != extension->Content[ie])
                 {
                     break;
                 }
@@ -62,6 +64,7 @@ static int string_ends_off_s(String* route, String* extension)
 
 bool _file_exists(const char* path)
 {
+#ifdef _WIN32
     bool result = false;
 
     DWORD file_attr = GetFileAttributes(path);
@@ -75,16 +78,20 @@ bool _file_exists(const char* path)
         result = true;
     }
     return result;
+#else
+    struct stat st;
+    return stat(path, &st) == 0;
+#endif
 }
 
 
-static ContentTypeOption get_type_file(String* path)
+static ContentTypeOption get_type_file(StringX* path)
 {
     int ix = path->Length;
     while (ix > 0)
     {
         ix--;
-        if (path->Data[ix] == '.')
+        if (path->Content[ix] == '.')
         {
             break;
         }
@@ -144,6 +151,14 @@ static ContentTypeOption get_type_file(String* path)
         {
             return VIDEO_WEBM;
         }
+        else if (string_equals_range(path, ix, cnt, ".m3u8"))
+        {
+            return APPLICATION_MPEGURL;
+        }
+        else if (string_equals_range(path, ix, cnt, ".m4s"))
+        {
+            return VIDEO_MP4;
+        }
         else if (string_equals_range(path, ix, cnt, ".pdf"))
         {
             return APPLICATION_PDF;
@@ -184,7 +199,7 @@ ResourceBuffer _file_read_bin(const char* path_file)
         buffer.Length = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        buffer.Data = malloc(buffer.Length);
+        buffer.Data = memop_alloc_raw(buffer.Length);
         size_t bytesRead = fread(buffer.Data, 1, buffer.Length, file);
 
         if (bytesRead != buffer.Length)
@@ -201,7 +216,7 @@ ResourceBuffer _file_read_bin(const char* path_file)
 }
 
 
-void binder_append_route(String* content, StringArray* route, int route_start, bool append_backslash)
+void binder_append_route(StringX* content, ListX* route, int route_start, bool append_backslash)
 {
     if (route && route->Count > route_start)
     {
@@ -220,7 +235,7 @@ void binder_append_route(String* content, StringArray* route, int route_start, b
 }
 
 
-bool binder_prefix_exist(StringArray* prefix, StringArray* route, int* ix)
+bool binder_prefix_exist(ListX* prefix, ListX* route, int* ix)
 {
     int i = (*ix);
     if (prefix && prefix->Count > 0)
@@ -249,7 +264,7 @@ bool binder_prefix_exist(StringArray* prefix, StringArray* route, int* ix)
 
 
 
-FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* prefix, String* extension)
+FunctionBind* binder_extension_exist(FunctionBindList* binders, ListX* prefix, StringX* extension)
 {
     if (extension->Length > 0)
     {
@@ -262,7 +277,7 @@ FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* pre
             {
                 FunctionBind* bind = binders->Items[ax];
                 int found = string_ends_off_s(&bind->Route, extension);
-                if (found) return 1;
+                if (found) return bind;   // era "return 1": ponteiro 0x1 para quem chamasse
                 ax++;
             }
         }
@@ -271,7 +286,7 @@ FunctionBind* binder_extension_exist(FunctionBindList* binders, StringArray* pre
 }
 
 
-FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix, StringArray* route, int* route_rest_index)
+FunctionBind* binder_route_exist(FunctionBindList* binders, ListX* prefix, ListX* route, int* route_rest_index)
 {
     if (route->Count > 0)
     {
@@ -294,8 +309,8 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix,
                     int iu = 0;
                     while (iz < route->Count && iu < bind->Route.Count)
                     {
-                        String* a = bind->Route.Items[iu];
-                        String* b = route->Items[iz];
+                        StringX* a = bind->Route.Items[iu];
+                        StringX* b = route->Items[iz];
 
                         if (!testing && string_equals_s(bind->Route.Items[iu], route->Items[iz]))
                         {
@@ -323,7 +338,7 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix,
                 {
                     if (route->Count > 0) 
                     {
-                        String* tk = route->Items[route->Count - 1];
+                        StringX* tk = route->Items[route->Count - 1];
                         int tp = tk->Length - bind->Extension.Length;
                         if (tp < 0) tp = 0;
 
@@ -341,97 +356,63 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, StringArray* prefix,
 }
 
 
-bool binder_get_web_resource(FunctionBindList* binders, StringArray* prefix, StringArray* route, String* abs_path, ResourceBuffer* buffer)
+bool binder_get_web_resource(ListX* route, StringX* abs_path, ResourceBuffer* buffer)
 {
+    if (!route || !abs_path || abs_path->Length <= 0) return false;
+
+    for (int i = 0; i < route->Count; i++)
+    {
+        StringX* segment = route->Items[i];
+        bool invalid = string_equals_c(segment, "..");
+        for (int c = 0; !invalid && c < segment->Length; c++)
+        {
+            if (segment->Content[c] == '\\' || segment->Content[c] == ':')
+            {
+                invalid = true;
+            }
+        }
+        if (invalid)
+        {
+            return false;
+        }
+    }
+
+    StringX path;
+    string_init(&path);
+    string_append_s(&path, abs_path);
     if (route->Count > 0)
     {
-        int ix = 0;
-        bool found = binder_prefix_exist(prefix, route, &ix);
-        if (found)
+        binder_append_route(&path, route, 0, true);
+    }
+    else
+    {
+        string_appends(&path, "\\index.html", (int)strlen("\\index.html"), 0, (int)strlen("\\index.html"));
+    }
+
+    bool result = false;
+    if (_file_exists(path.Content))
+    {
+        if (!buffer)
         {
-            if (ix < route->Count)
+            result = true;
+        }
+        else
+        {
+            ContentTypeOption type = get_type_file(&path);
+            bool is_text = type == TEXT_HTML || type == TEXT_CSS || type == TEXT_JAVASCRIPT || type == TEXT_PLAIN || type == APPLICATION_JAVASCRIPT || type == APPLICATION_JSON || type == APPLICATION_XML || type == APPLICATION_MPEGURL;
+            byte* data = 0;
+            int length = 0;
+            bool loaded = is_text ? file_read_text(path.Content, (char**)&data, &length) : file_read_bin(path.Content, &data, &length);
+            if (loaded)
             {
-                bool found2 = false;
-                int ax = 0;
-                while (ax < binders->Count)
-                {
-                    FunctionBind* bind = binders->Items[ax];
-
-                    // Pelo menos primeiro nivel
-                    if (bind->Route.Count > 0 && string_equals_s(bind->Route.Items[0], route->Items[ix]))
-                    {
-                        found2 = true;
-                        break;
-                    }
-                    ax++;
-                }
-
-                if (found2)  
-                {
-                    if(!buffer) return true;
-
-                    String amm;
-                    string_init(&amm);
-                    string_append_s(&amm, abs_path);
-                    binder_append_route(&amm, route, ix, true);
-
-                    ContentTypeOption type = get_type_file(&amm);
-                    bool is_text = type == TEXT_HTML || type == TEXT_CSS || type == TEXT_JAVASCRIPT || type == TEXT_PLAIN || type == APPLICATION_JAVASCRIPT || type == APPLICATION_JSON || type == APPLICATION_XML;
-
-                    // TO-DO: corrigir file_exists() na biblioteca 'filelib'
-                    if (_file_exists(amm.Data))
-                    {
-                        byte* data = 0; int length = 0;
-                        bool s = is_text ? file_read_text(amm.Data, (byte**)&data, &length) : file_read_bin(amm.Data, (byte**)&data, &length);
-                        if (s != 0)
-                        {
-                            buffer->Type   = type;
-                            buffer->Length = length;
-                            buffer->Data   = data;
-                            return true;
-                        }
-                    }
-                }
+                buffer->Type = type;
+                buffer->Length = length;
+                buffer->Data = data;
+                result = true;
             }
         }
     }
-    return false;
-}
 
-
-void binder_assemble_local(String* local, const char* abs_path, StringArray* prefix, StringArray* route)
-{
-    int leng = local->Length;
-
-    if (abs_path)
-    {
-        string_append(local, abs_path);
-    }
-
-    binder_append_route(local, prefix, 0, (local->Length > leng));
-    binder_append_route(local, route, 0, (local->Length > leng));
-}
-
-
-void binder_get_web_content_path(FunctionBindList* bind_list, StringArray* prefix, String* local)
-{
-    char path[1024];
-    program_get_path(path);
-
-    if (local)
-    {
-        string_append(local, path);
-        binder_append_route(local, prefix,0, true);
-    }
-
-    int ix = 0;
-    while (ix < bind_list->Count)
-    {
-        FunctionBind* bind = bind_list->Items[ix];
-        if (bind->IsWebApplication && bind->AbsPathWebContent.MaxLength <= 0)
-        {
-            binder_assemble_local(&bind->AbsPathWebContent, path, prefix, &bind->Route);
-        }
-        ix++;
-    }
+    string_release_data(&path);
+    return result;
 }

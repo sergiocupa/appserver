@@ -1,4 +1,6 @@
-﻿#include "../include/MediaFragmenter.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+#include "../include/MediaFragmenter.h"
 #include "MediaSourceSim.h"
 
 
@@ -55,7 +57,7 @@ void* event_loop_thread(void* arg)
 static VideoOutput* video_output_create(int w, int h)
 {
     SDL_Init(SDL_INIT_VIDEO);
-    VideoOutput* v = calloc(1, sizeof(VideoOutput));
+    VideoOutput* v = memop_calloc_raw(1, sizeof(VideoOutput));
     v->Width  = w;
     v->Height = h;
     v->WindowWidth = w;
@@ -142,7 +144,7 @@ static void video_output_destroy(VideoOutput* v)
     SDL_DestroyRenderer(v->ren);
     SDL_DestroyWindow(v->win);
     SDL_Quit();
-    free(v);
+    memop_free_raw(v);
 }
 
 
@@ -174,7 +176,7 @@ int media_sim_feed(MediaSourceSession* source, MediaBuffer* input)
 
 MediaSourceSession* media_sim_create(int width, int height, int codec)
 {
-    MediaSourceSession* source = malloc(sizeof(MediaSourceSession));
+    MediaSourceSession* source = memop_alloc_raw(sizeof(MediaSourceSession));
     source->Decoder = h26x_decoder_create(codec);
     source->Output  = video_output_create(width, height);
     return source;
@@ -187,7 +189,7 @@ void media_sim_release(MediaSourceSession** source)
     {
         h26x_decoder_release((*source)->Decoder);
         video_output_destroy((*source)->Output);
-        free(*source);
+        memop_free_raw(*source);
         *source = 0;
     }
 }

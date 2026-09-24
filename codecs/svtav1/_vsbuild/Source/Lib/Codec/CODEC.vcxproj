@@ -1,0 +1,579 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{64E55394-2BC0-31FE-B9B1-A365CF8D620B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>CODEC</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\nasm.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CODEC.dir\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CODEC.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CODEC</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CODEC.dir\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CODEC.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CODEC</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CODEC.dir\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CODEC.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">CODEC</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.lib</TargetExt>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CODEC.dir\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CODEC.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">CODEC</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\svtav1\.\;E:\git\appserver\codecs\svtav1\Source\API\;E:\git\appserver\codecs\svtav1\Source\Lib\Codec\;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT\;E:\git\appserver\codecs\svtav1\third_party\fastfeat\;E:\git\appserver\codecs\svtav1\Source\Lib\Globals\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512\;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include\;%(IncludePaths)</IncludePaths>
+      <AdditionalOptions>-gcv8</AdditionalOptions>
+      <Outputswitch>1</Outputswitch>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN64</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\svtav1\.\;E:\git\appserver\codecs\svtav1\Source\API\;E:\git\appserver\codecs\svtav1\Source\Lib\Codec\;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT\;E:\git\appserver\codecs\svtav1\third_party\fastfeat\;E:\git\appserver\codecs\svtav1\Source\Lib\Globals\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512\;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include\;%(IncludePaths)</IncludePaths>
+      <Outputswitch>1</Outputswitch>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN64</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\svtav1\.\;E:\git\appserver\codecs\svtav1\Source\API\;E:\git\appserver\codecs\svtav1\Source\Lib\Codec\;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT\;E:\git\appserver\codecs\svtav1\third_party\fastfeat\;E:\git\appserver\codecs\svtav1\Source\Lib\Globals\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512\;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include\;%(IncludePaths)</IncludePaths>
+      <Outputswitch>1</Outputswitch>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN64</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <MinimalRebuild></MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <NASM>
+      <IncludePaths>E:\git\appserver\codecs\svtav1\.\;E:\git\appserver\codecs\svtav1\Source\API\;E:\git\appserver\codecs\svtav1\Source\Lib\Codec\;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT\;E:\git\appserver\codecs\svtav1\third_party\fastfeat\;E:\git\appserver\codecs\svtav1\Source\Lib\Globals\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2\;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512\;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include\;%(IncludePaths)</IncludePaths>
+      <Outputswitch>1</Outputswitch>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN64</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ARCH_X86_64=1;EXCLUDE_HASH=0;REPRODUCIBLE_BUILDS=0;EN_AVX512_SUPPORT=1;SAFECLIB_STR_NULL_SLACK=1;HAVE_STRNLEN_S=1;HAVE_STRNCPY_S=1;HAVE_STRCPY_S=1;_WIN32_WINNT=0x0601;HAVE_VALGRIND_H=0;HAVE_BUILTIN_EXPECT=0;HAVE_ELF_AUX_INFO=0;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+    </NASM>
+    <Midl>
+      <AdditionalIncludeDirectories>E:\git\appserver\codecs\svtav1\.;E:\git\appserver\codecs\svtav1\Source\API;E:\git\appserver\codecs\svtav1\Source\Lib\Codec;E:\git\appserver\codecs\svtav1\Source\Lib\C_DEFAULT;E:\git\appserver\codecs\svtav1\third_party\fastfeat;E:\git\appserver\codecs\svtav1\Source\Lib\Globals;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSSE3;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_SSE4_1;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX2;E:\git\appserver\codecs\svtav1\Source\Lib\ASM_AVX512;E:\git\appserver\codecs\svtav1\third_party\cpuinfo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Lib>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\adaptive_mv_pred.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\adaptive_mv_pred.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\aom_dsp_rtcd.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\aom_dsp_rtcd.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1_common.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1_structs.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1me.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\av1me.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\bitstream_unit.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\bitstream_unit.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\blend_a64_mask.c" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\block_structures.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\block_structures.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cabac_context_model.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cabac_context_model.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\cdef_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_loop.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_loop.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_unit.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coding_unit.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\coefficients.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_dsp_rtcd.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_dsp_rtcd.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\common_utils.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\compute_mean.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\compute_sad.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\convolve.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\convolve.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_detect.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_detect.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_match.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\corner_match.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_common.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_common.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_filter.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\deblocking_filter.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\definitions.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dlf_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dlf_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dwt.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\dwt.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_cdef.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_cdef.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_segments.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_segments.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_tasks.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_dec_tasks.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_inter_prediction.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_inter_prediction.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_intra_prediction.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_intra_prediction.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_mode_config.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_mode_config.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_warped_motion.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\enc_warped_motion.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encode_context.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encode_context.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\encoder.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\entropy_coding.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\entropy_coding.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_object.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ec_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\fft.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\fft_common.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\filter.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\firstpass.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\firstpass.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\full_loop.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\full_loop.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_motion.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_motion.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me_cost.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\global_me_cost.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\grainSynthesis.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\grainSynthesis.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash_motion.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\hash_motion.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_reorder_queue.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_reorder_queue.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\initial_rc_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inter_prediction.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inter_prediction.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\intra_prediction.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\intra_prediction.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inv_transforms.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\inv_transforms.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\k_means_template.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\lambda_rate_tables.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mathutils.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mcomp.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mcomp.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_rate_estimation.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_rate_estimation.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sad_calculation.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sad_calculation.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mode_decision.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mode_decision.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_config_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_config_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\md_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_estimation.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_estimation.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_context.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_context.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_results.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\me_sb_results.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\motion_vector_unit.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\mv.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\neighbor_arrays.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\neighbor_arrays.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_model.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_model.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_util.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\noise_util.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\object.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_reorder_queue.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\packetization_reorder_queue.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\palette.c" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pass2_strategy.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pass2_strategy.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_analysis_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_buffer_desc.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_buffer_desc.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pcs.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pcs.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_queue.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_queue.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_reorder_queue.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_reorder_queue.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pd_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_demux_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_demux_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_queue.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_manager_queue.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_operators.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pic_operators.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pred_structure.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\pred_structure.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\product_coding_loop.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\q_matrices.h" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\random.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ransac.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\ransac.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_tasks.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rc_tasks.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rd_cost.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rd_cost.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\reference_object.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\reference_object.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resize.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resize.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_results.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\resource_coordination_results.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rest_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\rest_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration_pick.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\restoration_pick.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation_params.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\segmentation_params.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sequence_control_set.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sequence_control_set.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\src_ops_process.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\src_ops_process.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\super_res.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\super_res.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_log.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_log.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_malloc.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_malloc.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_psnr.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_psnr.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_threads.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_threads.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_time.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\svt_time.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sys_resource_manager.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\sys_resource_manager.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\temporal_filtering.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\temporal_filtering.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\transforms.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\transforms.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\utility.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\utility.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\vector.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\vector.h" />
+    <ClCompile Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\warped_motion.c" />
+    <ClInclude Include="E:\git\appserver\codecs\svtav1\Source\Lib\Codec\warped_motion.h" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="E:\git\appserver\codecs\svtav1\_vsbuild\ZERO_CHECK.vcxproj">
+      <Project>{361BA879-E149-39E3-A35E-60F638ADF168}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.targets" />
+  </ImportGroup>
+</Project>

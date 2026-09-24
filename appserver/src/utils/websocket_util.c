@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,14 +7,14 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
 
 #include "websocket_util.h"
-#include "shalib.h"
+#include "xpb_compat.h"
 #include "stdlib.h"
 #include "stdio.h"
 
@@ -32,7 +32,7 @@ byte* websocket_encode_frame(const byte* data, size_t data_len, byte opcode, int
     {
 		bsize += 4;
     }
-	byte* buffer = malloc(data_len + bsize +1);
+	byte* buffer = memop_alloc_raw(data_len + bsize +1);
 
     size_t index = 0;
     buffer[index++] = WS_FIN | opcode;
@@ -115,7 +115,7 @@ byte* websocket_decode_frame(const byte* buffer, size_t buffer_len, byte* opcode
 
     if (buffer_len < index + data_len) return 0;
 
-    byte* output = malloc(data_len+1);
+    byte* output = memop_alloc_raw(data_len+1);
     for (size_t i = 0; i < data_len; i++) 
     {
         output[i] = has_mask ? (buffer[index + i] ^ mask[i % 4]) : buffer[index + i];
@@ -136,22 +136,24 @@ byte* websocket_encode_text(const byte* message, size_t* output_length)
 
 void websocket_handshake_prepare(void* args, ResourceBuffer* http)
 {
-	String* web_key = (String*)args;
+	StringX* web_key = (StringX*)args;
 
 	resource_buffer_append_string(http, "Connection: Upgrade\r\n");
 	resource_buffer_append_string(http, "Upgrade: websocket\r\n");
 
-	const char* UID = "56A5421037EA456699D6A7E3EC581DE4";// TO-DO: Implementar um gerador de GUID
+	// GUID FIXO do RFC 6455 (secao 1.3). Nao e para ser gerado: o cliente calcula o mesmo valor
+	// e confere o Sec-WebSocket-Accept. Com qualquer outro GUID todo navegador recusa a conexao.
+	const char* UID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 	char nk[256];
-	snprintf(nk, sizeof(nk), "%s%s", web_key->Data, UID);
+	snprintf(nk, sizeof(nk), "%s%s", web_key->Content, UID);
 
-	int ub_length = 0;
+	size_t ub_length = 0;   // string_utf8_to_bytes grava size_t
 	byte* ub = string_utf8_to_bytes(nk, &ub_length);
 	byte digest[SHA1_BLOCK_SIZE];
-	sha1(ub, ub_length, &digest);
-	free(ub);
+	sha1(ub, ub_length, digest);
+	memop_free_raw(ub);
 	char* base64 = string_base64_encode(digest, SHA1_BLOCK_SIZE);
 
-	resource_buffer_append_format(http, "Sec-WebSocket-Accept: &s\r\n", base64);
-	free(base64);
+	resource_buffer_append_format(http, "Sec-WebSocket-Accept: %s\r\n", base64);
+	memop_free_raw(base64);
 }

@@ -1,3 +1,5 @@
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
 #include "../include/MediaFragmenter.h"
 #include "Mp4Diag.h"
 #include "FileUtil.h"
@@ -9,7 +11,9 @@
 #define HEVC_NAL_PPS 34
 
 
-static void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen)
+// Nome proprio: o glibc ja tem um memmem, e a versao local (criada porque o Windows nao tem)
+// colidia com ele no Linux.
+static void* mp4_memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen)
 {
     if (!haystack || !needle || needlelen == 0 || haystacklen < needlelen) return NULL;
 
@@ -90,10 +94,10 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
                 uint8_t codec[5] = { 0 };
                 if (fread(codec, 1, 4, f) != 4) break;
 
-                // Verificar se È H.265/HEVC
+                // Verificar se √© H.265/HEVC
                 if (!memcmp(codec, "hvc1", 4) || !memcmp(codec, "hev1", 4))
                 {
-                    // Pular campos fixos do hvc1/hev1 atÈ achar hvcC
+                    // Pular campos fixos do hvc1/hev1 at√© achar hvcC
                     // VisualSampleEntry tem 78 bytes de header antes dos sub-boxes
                     fseek(f, entry_start + 8 + 78, SEEK_SET);
 
@@ -116,18 +120,18 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
                                 continue;
                             }
 
-                            uint8_t* conf = malloc(hvcc_size);
+                            uint8_t* conf = memop_alloc_raw(hvcc_size);
                             if (!conf) break;
 
                             if (fread(conf, 1, hvcc_size, f) != hvcc_size) {
-                                free(conf);
+                                memop_free_raw(conf);
                                 break;
                             }
 
                             // Parsear hvcC
                             // conf[0] = configurationVersion (deve ser 1)
                             if (conf[0] != 1) {
-                                free(conf);
+                                memop_free_raw(conf);
                                 fseek(f, sub_start + sub_size, SEEK_SET);
                                 continue;
                             }
@@ -184,10 +188,10 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
                                     // Apenas copia o primeiro NAL de cada tipo
                                     if (dest && !*dest && nal_len > 0)
                                     {
-                                        *dest = malloc(nal_len);
+                                        *dest = memop_alloc_raw(nal_len);
                                         if (*dest)
                                         {
-                                            memcpy(*dest, &conf[off], nal_len);
+                                            memop_copy_raw(*dest, &conf[off], nal_len);
                                             *dest_len = nal_len;
                                         }
                                     }
@@ -196,7 +200,7 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
                                 }
                             }
 
-                            free(conf);
+                            memop_free_raw(conf);
 
                             // Verificar se encontramos pelo menos SPS e PPS
                             if (*sps && *sps_len > 0 && *pps && *pps_len > 0)
@@ -205,9 +209,9 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
                             }
 
                             // Limpar em caso de falha parcial
-                            if (*vps) { free(*vps); *vps = NULL; *vps_len = 0; }
-                            if (*sps) { free(*sps); *sps = NULL; *sps_len = 0; }
-                            if (*pps) { free(*pps); *pps = NULL; *pps_len = 0; }
+                            if (*vps) { memop_free_raw(*vps); *vps = NULL; *vps_len = 0; }
+                            if (*sps) { memop_free_raw(*sps); *sps = NULL; *sps_len = 0; }
+                            if (*pps) { memop_free_raw(*pps); *pps = NULL; *pps_len = 0; }
 
                             return -3;  // hvcC incompleto
                         }
@@ -224,7 +228,7 @@ static int load_vps_sps_pps_hevc(FILE* f, uint8_t** vps, int* vps_len, uint8_t**
         fseek(f, next, SEEK_SET);
     }
 
-    return -1;  // hvcC n„o encontrado
+    return -1;  // hvcC n√£o encontrado
 }
 
 
@@ -414,8 +418,8 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         !memcmp(codec, "hvc1", 4) || !memcmp(codec, "hev1", 4))
                     {
                         // Estrutura VisualSampleEntry:
-                        // 4 bytes: size (j· lido)
-                        // 4 bytes: codec (j· lido)
+                        // 4 bytes: size (j√° lido)
+                        // 4 bytes: codec (j√° lido)
                         // 6 bytes: reserved (0)
                         // 2 bytes: data_reference_index
                         // 2 bytes: pre_defined (0)
@@ -424,7 +428,7 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         // 2 bytes: width
                         // 2 bytes: height
 
-                        // Total offset = 8 + 6 + 2 + 2 + 2 + 12 = 32 bytes do inÌcio da entry
+                        // Total offset = 8 + 6 + 2 + 2 + 2 + 12 = 32 bytes do in√≠cio da entry
                         fseek(f, entry_start + 32, SEEK_SET);
 
                         // Verificar se ainda estamos dentro do entry
@@ -436,7 +440,7 @@ static int load_width_height(FILE* f, int* width_out, int* height_out)
                         *width_out = read16(f);
                         *height_out = read16(f);
 
-                        // Validar dimensıes razo·veis
+                        // Validar dimens√µes razo√°veis
                         if (*width_out > 0 && *width_out < 16384 &&
                             *height_out > 0 && *height_out < 16384)
                         {
@@ -483,7 +487,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
         uint64_t box_size = size;
         if (size == 1) {
-            // Size estendido j· foi tratado em read_box_header
+            // Size estendido j√° foi tratado em read_box_header
             box_size = payload_start - box_start;
         }
         else if (size == 0) {
@@ -525,7 +529,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
             found_timescale = 1;
 
-            // Se j· temos stts, podemos retornar
+            // Se j√° temos stts, podemos retornar
             if (found_stts && timescale > 0 && total_samples > 0)
             {
                 *timescale_out = timescale;
@@ -548,7 +552,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
             {
                 for (uint32_t i = 0; i < entry_count; i++)
                 {
-                    // Verificar se n„o vamos alÈm do box
+                    // Verificar se n√£o vamos al√©m do box
                     if (ftell(f) + 8 > next) break;
 
                     uint32_t sample_count = read32(f);
@@ -561,7 +565,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
 
             found_stts = 1;
 
-            // Se j· temos timescale, podemos retornar
+            // Se j√° temos timescale, podemos retornar
             if (found_timescale && timescale > 0 && total_samples > 0 && total_ticks > 0)
             {
                 *timescale_out = timescale;
@@ -574,7 +578,7 @@ static int load_timescale_and_fps(FILE* f, uint32_t* timescale_out, double* fps_
         fseek(f, next, SEEK_SET);
     }
 
-    // VerificaÁ„o final
+    // Verifica√ß√£o final
     if (timescale == 0 || total_ticks == 0.0 || total_samples == 0)
         return -1;
 
@@ -649,7 +653,7 @@ static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int
 
                 if (!memcmp(codec, "avc1", 4) || !memcmp(codec, "avc3", 4))
                 {
-                    // Pular campos fixos do avc1 atÈ achar avcC
+                    // Pular campos fixos do avc1 at√© achar avcC
                     fseek(f, entry_start + 8 + 78, SEEK_SET);
 
                     // Procurar avcC dentro do avc1
@@ -694,8 +698,8 @@ static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int
 
                                 if (*sps_len > 0 && *sps_len < avcc_size - off)
                                 {
-                                    *sps = malloc(*sps_len);
-                                    memcpy(*sps, &conf[off], *sps_len);
+                                    *sps = memop_alloc_raw(*sps_len);
+                                    memop_copy_raw(*sps, &conf[off], *sps_len);
                                     off += *sps_len;
                                 }
                                 else
@@ -715,16 +719,16 @@ static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int
 
                                     if (*pps_len > 0 && *pps_len <= avcc_size - off)
                                     {
-                                        *pps = malloc(*pps_len);
+                                        *pps = memop_alloc_raw(*pps_len);
                                         if (*pps == NULL)
                                         {
-                                            if (*sps) free(*sps);
+                                            if (*sps) memop_free_raw(*sps);
                                             *sps = NULL;
                                             *sps_len = 0;
                                             return -2;
                                         }
 
-                                        memcpy(*pps, &conf[off], *pps_len);
+                                        memop_copy_raw(*pps, &conf[off], *pps_len);
                                     }
                                     else
                                     {
@@ -741,12 +745,12 @@ static int load_sps_pps(FILE* f, uint8_t** sps, int* sps_len, uint8_t** pps, int
                             // Se chegou aqui, algo deu errado
                             if (*sps)
                             {
-                                free(*sps);
+                                memop_free_raw(*sps);
                                 *sps = NULL;
                             }
                             if (*pps)
                             {
-                                free(*pps);
+                                memop_free_raw(*pps);
                                 *pps = NULL;
                             }
                             return -3;
@@ -772,7 +776,7 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
 {
     if (!f || !meta) return -1;
 
-    memset(meta, 0, sizeof(*meta));
+    memop_zero_raw(meta, sizeof(*meta));
 
     fseek(f, 0, SEEK_SET);
     int codec = load_codec_type(f);
@@ -855,7 +859,7 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
         meta->Pps.Size = pps_len;
         meta->Pps.Data = pps;
 
-        // Nota: Criar mp4diag_validate_vps_sps_pps() se necess·rio
+        // Nota: Criar mp4diag_validate_vps_sps_pps() se necess√°rio
         // Por enquanto, apenas verificar se existem
         if (!meta->Sps.Data || meta->Sps.Size == 0 ||
             !meta->Pps.Data || meta->Pps.Size == 0)
@@ -883,7 +887,7 @@ int mp4meta_load_video_metadata(FILE* f, VideoMetadata* meta)
         return ret;
     }*/
 
-    return 0; // avcC n„o encontrado
+    return 0; // avcC n√£o encontrado
 }
 
 

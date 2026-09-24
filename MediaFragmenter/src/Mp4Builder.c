@@ -1,8 +1,11 @@
-﻿#include "../include/MediaFragmenter.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+#include "../include/MediaFragmenter.h"
 #include "Mp4Builder.h"
 #include "Mp4MetadataUtil.h"
 #include "FileUtil.h"
 #include "BufferUtil.h"
+#include "H264Builder.h"   // h264_create_fragment: era chamada sem prototipo
 
 
 static int extract_sample_sizes(uint8_t* buffer, size_t buffer_size, uint32_t expected_count, uint32_t** sizes_out, uint32_t* actual_count_out)
@@ -11,7 +14,7 @@ static int extract_sample_sizes(uint8_t* buffer, size_t buffer_size, uint32_t ex
         return -1;
     }
 
-    uint32_t* sizes = (uint32_t*)malloc(expected_count * sizeof(uint32_t));
+    uint32_t* sizes = (uint32_t*)memop_alloc_raw(expected_count * sizeof(uint32_t));
     if (!sizes) {
         return -1;
     }
@@ -162,7 +165,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
             if (stts->count > 0 && stts->count < 1000000)
             {  // CORRIGIDO: validação
-                stts->entries = malloc(stts->count * sizeof(struct SttsEntry));
+                stts->entries = memop_alloc_raw(stts->count * sizeof(struct SttsEntry));
                 if (!stts->entries)
                 {
                     stts->count = 0;
@@ -195,7 +198,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
             if (stsc->count > 0 && stsc->count < 1000000)
             {  // CORRIGIDO: validação
-                stsc->entries = malloc(stsc->count * sizeof(struct StscEntry));
+                stsc->entries = memop_alloc_raw(stsc->count * sizeof(struct StscEntry));
                 if (!stsc->entries)
                 {
                     stsc->count = 0;
@@ -231,7 +234,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
             if (stsz->count > 0 && stsz->count < 10000000)
             {  // CORRIGIDO: validação
-                stsz->sizes = malloc(stsz->count * sizeof(uint32_t));
+                stsz->sizes = memop_alloc_raw(stsz->count * sizeof(uint32_t));
                 if (!stsz->sizes)
                 {
                     stsz->count = 0;
@@ -275,7 +278,7 @@ static void parse_video_track_tables(FILE* f, uint64_t end, int is_video, StszDa
 
             if (stco->count > 0 && stco->count < 1000000)
             {  // CORRIGIDO: validação
-                stco->offsets = malloc(stco->count * sizeof(uint64_t));
+                stco->offsets = memop_alloc_raw(stco->count * sizeof(uint64_t));
                 if (!stco->offsets)
                 {
                     stco->count = 0;
@@ -370,7 +373,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     list->Metadata.Width = meta.Width; list->Metadata.Height = meta.Height;
 
     // Calcula offsets absolutos para cada sample usando stsc
-    uint64_t* sample_offsets = malloc(stsz.count * sizeof(uint64_t));
+    uint64_t* sample_offsets = memop_alloc_raw(stsz.count * sizeof(uint64_t));
     uint32_t sample_idx = 0;
     uint32_t chunk_idx = 0;
     uint32_t spc = stsc.count > 0 ? stsc.entries[0].samples_per_chunk : 1;
@@ -460,11 +463,11 @@ FrameIndexList* mp4builder_get_frames(const char* path)
         mframe_list_add(list, frame);
     }
     // Libera recursos
-    free(sample_offsets);
-    free(stsz.sizes);
-    free(stco.offsets);
-    free(stsc.entries);
-    free(stts.entries);
+    memop_free_raw(sample_offsets);
+    memop_free_raw(stsz.sizes);
+    memop_free_raw(stco.offsets);
+    memop_free_raw(stsc.entries);
+    memop_free_raw(stts.entries);
 
     fclose(f);
 
@@ -482,7 +485,7 @@ FrameIndexList* mp4builder_get_frames(const char* path)
 static void create_mfhd_box(uint32_t sequence_number, MediaBuffer* output)
 {
     output->Size = 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -506,7 +509,7 @@ static void create_mfhd_box(uint32_t sequence_number, MediaBuffer* output)
 static void create_tfhd_box(uint32_t track_id, MediaBuffer* output)
 {
     output->Size = 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -533,7 +536,7 @@ static void create_tfdt_box(uint64_t base_media_decode_time, MediaBuffer* output
     int use_v1 = (base_media_decode_time > 0xFFFFFFFF);
 
     output->Size = use_v1 ? 20 : 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -568,7 +571,7 @@ static void create_trun_box(uint32_t sample_count, uint32_t sample_duration, uin
 
     // Tamanho dinâmico
     output->Size = 8 + 4 + 4 + 4 + (sample_count * 8);
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -618,7 +621,7 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
     create_trun_box(sample_count, sample_duration, data_offset, sample_sizes, &trun);
 
     output->Size = 8 + tfhd.Size + tfdt.Size + trun.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -628,17 +631,17 @@ static void create_traf_box(uint32_t track_id, uint64_t base_media_decode_time, 
     write_fourcc(p, "traf");
     p += 4;
 
-    memcpy(p, tfhd.Data, tfhd.Size);
+    memop_copy_raw(p, tfhd.Data, tfhd.Size);
     p += tfhd.Size;
 
-    memcpy(p, tfdt.Data, tfdt.Size);
+    memop_copy_raw(p, tfdt.Data, tfdt.Size);
     p += tfdt.Size;
 
-    memcpy(p, trun.Data, trun.Size);
+    memop_copy_raw(p, trun.Data, trun.Size);
 
-    free(tfhd.Data);
-    free(tfdt.Data);
-    free(trun.Data);
+    memop_free_raw(tfhd.Data);
+    memop_free_raw(tfdt.Data);
+    memop_free_raw(trun.Data);
 }
 
 // Cria box moof (Movie Fragment)
@@ -663,8 +666,8 @@ static void create_moof_box(
     uint32_t trun_size = 8 + 4 + 4 + 4 + (sample_count * 8);
     uint32_t traf_size = 8 + tfhd_temp.Size + tfdt_temp.Size + trun_size;
 
-    free(tfhd_temp.Data);
-    free(tfdt_temp.Data);
+    memop_free_raw(tfhd_temp.Data);
+    memop_free_raw(tfdt_temp.Data);
 
     uint32_t moof_size = 8 + mfhd.Size + traf_size;
 
@@ -677,7 +680,7 @@ static void create_moof_box(
     moof_size = 8 + mfhd.Size + traf.Size;
 
     output->Size = moof_size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -687,20 +690,20 @@ static void create_moof_box(
     write_fourcc(p, "moof");
     p += 4;
 
-    memcpy(p, mfhd.Data, mfhd.Size);
+    memop_copy_raw(p, mfhd.Data, mfhd.Size);
     p += mfhd.Size;
 
-    memcpy(p, traf.Data, traf.Size);
+    memop_copy_raw(p, traf.Data, traf.Size);
 
-    free(mfhd.Data);
-    free(traf.Data);
+    memop_free_raw(mfhd.Data);
+    memop_free_raw(traf.Data);
 }
 
 // Cria box mdat (Media Data)
 static void create_mdat_box(uint8_t* data, size_t data_size, MediaBuffer* output)
 {
     output->Size = 8 + data_size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -713,7 +716,7 @@ static void create_mdat_box(uint8_t* data, size_t data_size, MediaBuffer* output
     p += 4;
 
     // Copiar dados
-    memcpy(p, data, data_size);
+    memop_copy_raw(p, data, data_size);
 }
 
 
@@ -729,7 +732,7 @@ static void create_ftyp_box(MediaBuffer* output)
     // - compatible_brands: 'iso5', 'iso6', 'mp41'
 
     output->Size = 24;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -760,7 +763,7 @@ static void create_ftyp_box(MediaBuffer* output)
 static void create_mvhd_box(uint32_t timescale, uint32_t next_track_id, MediaBuffer* output)
 {
     output->Size = 108;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -801,7 +804,7 @@ static void create_mvhd_box(uint32_t timescale, uint32_t next_track_id, MediaBuf
     p += 2;
 
     // Reserved
-    memset(p, 0, 10);
+    memop_zero_raw(p, 10);
     p += 10;
 
     // Matrix (identity matrix)
@@ -817,7 +820,7 @@ static void create_mvhd_box(uint32_t timescale, uint32_t next_track_id, MediaBuf
     }
 
     // Pre-defined
-    memset(p, 0, 24);
+    memop_zero_raw(p, 24);
     p += 24;
 
     // Next track ID
@@ -832,7 +835,7 @@ static void create_mehd_box(uint64_t fragment_duration, MediaBuffer* output)
     int use_v1 = (fragment_duration > 0xFFFFFFFF);
 
     output->Size = use_v1 ? 20 : 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -863,7 +866,7 @@ static void create_mehd_box(uint64_t fragment_duration, MediaBuffer* output)
 static void create_trex_box(uint32_t track_id, uint32_t default_sample_duration, MediaBuffer* output)
 {
     output->Size = 32;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -912,7 +915,7 @@ static void create_mvex_box(uint32_t track_id, uint64_t fragment_duration, uint3
     create_trex_box(track_id, default_sample_duration, &trex);  // ← Agora passa duração!
 
     output->Size = 8 + mehd.Size + trex.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -922,20 +925,20 @@ static void create_mvex_box(uint32_t track_id, uint64_t fragment_duration, uint3
     p[0] = 'm'; p[1] = 'v'; p[2] = 'e'; p[3] = 'x';
     p += 4;
 
-    memcpy(p, mehd.Data, mehd.Size);
+    memop_copy_raw(p, mehd.Data, mehd.Size);
     p += mehd.Size;
 
-    memcpy(p, trex.Data, trex.Size);
+    memop_copy_raw(p, trex.Data, trex.Size);
 
-    free(mehd.Data);
-    free(trex.Data);
+    memop_free_raw(mehd.Data);
+    memop_free_raw(trex.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > tkhd. Cria box tkhd (Track Header Box)
 static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, MediaBuffer* output)
 {
     output->Size = 92;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -975,7 +978,7 @@ static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, 
     p += 4;
 
     // Reserved
-    memset(p, 0, 8);
+    memop_zero_raw(p, 8);
     p += 8;
 
     // Layer
@@ -1015,7 +1018,7 @@ static void create_tkhd_box(uint32_t track_id, uint32_t width, uint32_t height, 
 static void create_mdhd_box(uint32_t timescale, MediaBuffer* output)
 {
     output->Size = 32;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1059,10 +1062,10 @@ static void create_mdhd_box(uint32_t timescale, MediaBuffer* output)
 static void create_hdlr_box(MediaBuffer* output)
 {
     const char* handler_name = "VideoHandler";
-    size_t name_len = strlen(handler_name);
+    size_t name_len = string_length_raw(handler_name);
 
     output->Size = 32 + name_len + 1;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1087,18 +1090,18 @@ static void create_hdlr_box(MediaBuffer* output)
     p += 4;
 
     // Reserved
-    memset(p, 0, 12);
+    memop_zero_raw(p, 12);
     p += 12;
 
     // Handler name
-    strcpy((char*)p, handler_name);
+    string_copy_raw((char*)p, name_len + 1, handler_name);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > mdia > minf > vmhd. Cria box vmhd (Video Media Header Box)
 static void create_vmhd_box(MediaBuffer* output)
 {
     output->Size = 20;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1130,7 +1133,7 @@ static void create_vmhd_box(MediaBuffer* output)
 static void create_dref_box(MediaBuffer* output)
 {
     output->Size = 28;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1170,7 +1173,7 @@ static void create_dinf_box(MediaBuffer* output)
     create_dref_box(&dref);
 
     output->Size = 8 + dref.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1183,9 +1186,9 @@ static void create_dinf_box(MediaBuffer* output)
     p += 4;
 
     // Copiar dref
-    memcpy(p, dref.Data, dref.Size);
+    memop_copy_raw(p, dref.Data, dref.Size);
 
-    free(dref.Data);
+    memop_free_raw(dref.Data);
 }
 
 // CRIAÇÃO DE BOXES: avcC (AVC Configuration). Cria box avcC (AVC Decoder Configuration Record). Contém SPS e PPS
@@ -1209,7 +1212,7 @@ static void create_avcc_box(VideoMetadata* metadata, MediaBuffer* output)
 
     // Tamanho: header(8) + config(7) + sps_array(3+2+size) + pps_array(3+2+size)
     output->Size = 8 + 7 + 5 + metadata->Sps.Size + 3 + metadata->Pps.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1248,7 +1251,7 @@ static void create_avcc_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 2;
 
     // SPS data
-    memcpy(p, metadata->Sps.Data, metadata->Sps.Size);
+    memop_copy_raw(p, metadata->Sps.Data, metadata->Sps.Size);
     p += metadata->Sps.Size;
 
     // --- PPS Array ---
@@ -1261,7 +1264,7 @@ static void create_avcc_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 2;
 
     // PPS data
-    memcpy(p, metadata->Pps.Data, metadata->Pps.Size);
+    memop_copy_raw(p, metadata->Pps.Data, metadata->Pps.Size);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > mdia > minf > stbl > stsd. Cria box stsd (Sample Description Box). Contém descrição do codec (avc1 + avcC)
@@ -1280,7 +1283,7 @@ static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
 
     // stsd: 16 bytes + avc1 entry (86 bytes base + avcC)
     output->Size = 16 + 86 + avcc.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1311,7 +1314,7 @@ static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 4;
 
     // Reserved (6 bytes)
-    memset(p, 0, 6);
+    memop_zero_raw(p, 6);
     p += 6;
 
     // Data reference index
@@ -1319,7 +1322,7 @@ static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 2;
 
     // Pre-defined + Reserved (16 bytes)
-    memset(p, 0, 16);
+    memop_zero_raw(p, 16);
     p += 16;
 
     // Width
@@ -1347,7 +1350,7 @@ static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 2;
 
     // Compressor name (32 bytes, primeiro byte = length)
-    memset(p, 0, 32);
+    memop_zero_raw(p, 32);
     p += 32;
 
     // Depth (0x0018 = 24-bit color)
@@ -1359,16 +1362,16 @@ static void create_stsd_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 2;
 
     // Copiar avcC
-    memcpy(p, avcc.Data, avcc.Size);
+    memop_copy_raw(p, avcc.Data, avcc.Size);
 
-    free(avcc.Data);
+    memop_free_raw(avcc.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > mdia > minf > stbl (outros). Cria box stts (Time to Sample Box) - vazio para fragmentos
 static void create_stts_box(MediaBuffer* output)
 {
     output->Size = 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1385,7 +1388,7 @@ static void create_stts_box(MediaBuffer* output)
 static void create_stsc_box(MediaBuffer* output)
 {
     output->Size = 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1402,7 +1405,7 @@ static void create_stsc_box(MediaBuffer* output)
 static void create_stsz_box(MediaBuffer* output)
 {
     output->Size = 20;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1421,7 +1424,7 @@ static void create_stsz_box(MediaBuffer* output)
 static void create_stco_box(MediaBuffer* output)
 {
     output->Size = 16;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1455,7 +1458,7 @@ static void create_stbl_box(VideoMetadata* metadata, MediaBuffer* output)
 
     // Calcular tamanho total
     output->Size = 8 + stsd.Size + stts.Size + stsc.Size + stsz.Size + stco.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1468,26 +1471,26 @@ static void create_stbl_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 4;
 
     // Copiar sub-boxes
-    memcpy(p, stsd.Data, stsd.Size);
+    memop_copy_raw(p, stsd.Data, stsd.Size);
     p += stsd.Size;
 
-    memcpy(p, stts.Data, stts.Size);
+    memop_copy_raw(p, stts.Data, stts.Size);
     p += stts.Size;
 
-    memcpy(p, stsc.Data, stsc.Size);
+    memop_copy_raw(p, stsc.Data, stsc.Size);
     p += stsc.Size;
 
-    memcpy(p, stsz.Data, stsz.Size);
+    memop_copy_raw(p, stsz.Data, stsz.Size);
     p += stsz.Size;
 
-    memcpy(p, stco.Data, stco.Size);
+    memop_copy_raw(p, stco.Data, stco.Size);
 
     // Liberar sub-boxes
-    free(stsd.Data);
-    free(stts.Data);
-    free(stsc.Data);
-    free(stsz.Data);
-    free(stco.Data);
+    memop_free_raw(stsd.Data);
+    memop_free_raw(stts.Data);
+    memop_free_raw(stsc.Data);
+    memop_free_raw(stsz.Data);
+    memop_free_raw(stco.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > mdia > minf. Cria box minf (Media Information Box)
@@ -1504,14 +1507,14 @@ static void create_minf_box(VideoMetadata* metadata, MediaBuffer* output)
     {
         output->Size = 0;
         output->Data = NULL;
-        free(vmhd.Data);
-        free(dinf.Data);
+        memop_free_raw(vmhd.Data);
+        memop_free_raw(dinf.Data);
         return;
     }
 
     // Calcular tamanho total
     output->Size = 8 + vmhd.Size + dinf.Size + stbl.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1524,18 +1527,18 @@ static void create_minf_box(VideoMetadata* metadata, MediaBuffer* output)
     p += 4;
 
     // Copiar sub-boxes
-    memcpy(p, vmhd.Data, vmhd.Size);
+    memop_copy_raw(p, vmhd.Data, vmhd.Size);
     p += vmhd.Size;
 
-    memcpy(p, dinf.Data, dinf.Size);
+    memop_copy_raw(p, dinf.Data, dinf.Size);
     p += dinf.Size;
 
-    memcpy(p, stbl.Data, stbl.Size);
+    memop_copy_raw(p, stbl.Data, stbl.Size);
 
     // Liberar sub-boxes
-    free(vmhd.Data);
-    free(dinf.Data);
-    free(stbl.Data);
+    memop_free_raw(vmhd.Data);
+    memop_free_raw(dinf.Data);
+    memop_free_raw(stbl.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak > mdia. Cria box mdia (Media Box)
@@ -1552,14 +1555,14 @@ static void create_mdia_box(VideoMetadata* metadata, uint32_t timescale, MediaBu
     {
         output->Size = 0;
         output->Data = NULL;
-        free(mdhd.Data);
-        free(hdlr.Data);
+        memop_free_raw(mdhd.Data);
+        memop_free_raw(hdlr.Data);
         return;
     }
 
     // Calcular tamanho total
     output->Size = 8 + mdhd.Size + hdlr.Size + minf.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1572,18 +1575,18 @@ static void create_mdia_box(VideoMetadata* metadata, uint32_t timescale, MediaBu
     p += 4;
 
     // Copiar sub-boxes
-    memcpy(p, mdhd.Data, mdhd.Size);
+    memop_copy_raw(p, mdhd.Data, mdhd.Size);
     p += mdhd.Size;
 
-    memcpy(p, hdlr.Data, hdlr.Size);
+    memop_copy_raw(p, hdlr.Data, hdlr.Size);
     p += hdlr.Size;
 
-    memcpy(p, minf.Data, minf.Size);
+    memop_copy_raw(p, minf.Data, minf.Size);
 
     // Liberar sub-boxes
-    free(mdhd.Data);
-    free(hdlr.Data);
-    free(minf.Data);
+    memop_free_raw(mdhd.Data);
+    memop_free_raw(hdlr.Data);
+    memop_free_raw(minf.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov > trak. Cria box trak (Track Box)
@@ -1599,13 +1602,13 @@ static void create_trak_box(VideoMetadata* metadata, uint32_t track_id, uint32_t
     {
         output->Size = 0;
         output->Data = NULL;
-        free(tkhd.Data);
+        memop_free_raw(tkhd.Data);
         return;
     }
 
     // Calcular tamanho total
     output->Size = 8 + tkhd.Size + mdia.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1618,14 +1621,14 @@ static void create_trak_box(VideoMetadata* metadata, uint32_t track_id, uint32_t
     p += 4;
 
     // Copiar sub-boxes
-    memcpy(p, tkhd.Data, tkhd.Size);
+    memop_copy_raw(p, tkhd.Data, tkhd.Size);
     p += tkhd.Size;
 
-    memcpy(p, mdia.Data, mdia.Size);
+    memop_copy_raw(p, mdia.Data, mdia.Size);
 
     // Liberar sub-boxes
-    free(tkhd.Data);
-    free(mdia.Data);
+    memop_free_raw(tkhd.Data);
+    memop_free_raw(mdia.Data);
 }
 
 // CRIAÇÃO DE BOXES: moov. Cria box moov (Movie Box)
@@ -1640,7 +1643,7 @@ static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_
     {
         output->Size = 0;
         output->Data = NULL;
-        free(mvhd.Data);
+        memop_free_raw(mvhd.Data);
         return;
     }
 
@@ -1659,7 +1662,7 @@ static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_
     create_mvex_box(track_id, fragment_duration, default_sample_duration, &mvex);
 
     output->Size = 8 + mvhd.Size + trak.Size + mvex.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     uint8_t* p = output->Data;
 
@@ -1669,17 +1672,17 @@ static void create_moov_box(VideoMetadata* metadata, uint32_t timescale, uint32_
     p[0] = 'm'; p[1] = 'o'; p[2] = 'o'; p[3] = 'v';
     p += 4;
 
-    memcpy(p, mvhd.Data, mvhd.Size);
+    memop_copy_raw(p, mvhd.Data, mvhd.Size);
     p += mvhd.Size;
 
-    memcpy(p, trak.Data, trak.Size);
+    memop_copy_raw(p, trak.Data, trak.Size);
     p += trak.Size;
 
-    memcpy(p, mvex.Data, mvex.Size);
+    memop_copy_raw(p, mvex.Data, mvex.Size);
 
-    free(mvhd.Data);
-    free(trak.Data);
-    free(mvex.Data);
+    memop_free_raw(mvhd.Data);
+    memop_free_raw(trak.Data);
+    memop_free_raw(mvex.Data);
 }
 
 
@@ -1731,7 +1734,7 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     if (!moov.Data)
     {
         fprintf(stderr, "ERRO: Falha ao criar moov box\n");
-        free(ftyp.Data);
+        memop_free_raw(ftyp.Data);
         return -6;
     }
 
@@ -1740,18 +1743,18 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
     // ───────────────────────────────────────────────────────────────
 
     output->Size = ftyp.Size + moov.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     if (!output->Data)
     {
         fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
-        free(ftyp.Data);
-        free(moov.Data);
+        memop_free_raw(ftyp.Data);
+        memop_free_raw(moov.Data);
         return -7;
     }
 
-    memcpy(output->Data, ftyp.Data, ftyp.Size);
-    memcpy(output->Data + ftyp.Size, moov.Data, moov.Size);
+    memop_copy_raw(output->Data, ftyp.Data, ftyp.Size);
+    memop_copy_raw(output->Data + ftyp.Size, moov.Data, moov.Size);
 
     /*  printf("Initialization segment criado:\n");
       printf("   Resolução: %dx%d\n", metadata->Width, metadata->Height);
@@ -1762,8 +1765,8 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
       printf("   Total: %zu bytes\n", output->Size);*/
 
       // Liberar buffers temporários
-    free(ftyp.Data);
-    free(moov.Data);
+    memop_free_raw(ftyp.Data);
+    memop_free_raw(moov.Data);
 
     return 0;
 }
@@ -1845,7 +1848,7 @@ int mp4builder_create_fragment(
         sample_count, &sample_sizes, &actual_sample_count) != 0)
     {
         fprintf(stderr, "ERRO: Falha ao extrair tamanhos dos samples\n");
-        free(h264_data.Data);
+        memop_free_raw(h264_data.Data);
         return -3;
     }
 
@@ -1878,28 +1881,28 @@ int mp4builder_create_fragment(
     // PASSO 5: Juntar moof + mdat
     // ───────────────────────────────────────────────────────────────
     output->Size = moof.Size + mdat.Size;
-    output->Data = malloc(output->Size);
+    output->Data = memop_alloc_raw(output->Size);
 
     if (!output->Data)
     {
         fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
-        free(h264_data.Data);
-        free(moof.Data);
-        free(mdat.Data);
-        free(sample_sizes);  // ✅ LIBERAR
+        memop_free_raw(h264_data.Data);
+        memop_free_raw(moof.Data);
+        memop_free_raw(mdat.Data);
+        memop_free_raw(sample_sizes);  // ✅ LIBERAR
         return -2;
     }
 
-    memcpy(output->Data, moof.Data, moof.Size);
-    memcpy(output->Data + moof.Size, mdat.Data, mdat.Size);
+    memop_copy_raw(output->Data, moof.Data, moof.Size);
+    memop_copy_raw(output->Data + moof.Size, mdat.Data, mdat.Size);
 
     // ───────────────────────────────────────────────────────────────
     // PASSO 6: Liberar buffers temporários
     // ───────────────────────────────────────────────────────────────
-    free(h264_data.Data);
-    free(moof.Data);
-    free(mdat.Data);
-    free(sample_sizes);  // ✅ LIBERAR
+    memop_free_raw(h264_data.Data);
+    memop_free_raw(moof.Data);
+    memop_free_raw(mdat.Data);
+    memop_free_raw(sample_sizes);  // ✅ LIBERAR
 
     return 0;
 }

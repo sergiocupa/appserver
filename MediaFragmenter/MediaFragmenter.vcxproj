@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -33,6 +33,9 @@
     <ClInclude Include="src\Mp4Builder.h" />
     <ClInclude Include="src\Mp4Diag.h" />
     <ClInclude Include="src\Mp4MetadataUtil.h" />
+    <ClInclude Include="include\embed_ops.h" />
+    <ClInclude Include="include\frag_session.h" />
+    <ClInclude Include="include\yason_build.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BufferUtil.c" />
@@ -51,9 +54,24 @@
     <ClCompile Include="src\Mp4Diag.c" />
     <ClCompile Include="src\Mp4H265MetadataUtil.c" />
     <ClCompile Include="src\Mp4MetadataUtil.c" />
+    <!-- Orquestracao (Etapa 3): entrada MP4 via demux (mp4builder) + chamada ao MediaGateway. -->
+    <ClCompile Include="src\media_source.c" />
+    <ClCompile Include="src\frag_session.c" />
+    <ClCompile Include="src\pipeline.c" />
+    <ClCompile Include="src\embed_ops.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\appserver\submodules\xplatbase\Xplatbase\Xplatbase\Xplatbase.vcxproj">
+      <Project>{f217b4d5-f6bc-4fce-af5e-beef9fe1f3e8}</Project>
+    </ProjectReference>
+    <!-- Etapa 3: orquestracao usa o nucleo de conversao (gateway/sink/mux). Ordem de build.
+         MediaGateway NAO referencia MediaFragmenter (dependencia one-way). -->
+    <ProjectReference Include="..\MediaGateway\MediaGateway.vcxproj">
+      <Project>{6a7e0a00-0000-4000-8000-00000000a7e0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7ed3299c-00e2-42af-9507-0cb87663dd37}</ProjectGuid>
     <RootNamespace>MediaFragmenter</RootNamespace>
@@ -63,26 +81,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -108,7 +126,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -125,7 +143,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -140,14 +158,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;_LIB;HAVE_LIBYUV;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)MediaFragmenter\deps\openh264\include;$(SolutionDir)MediaFragmenter\deps\libde265\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -155,7 +173,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\MediaFragmenter\deps\openh264;E:\git\appserver\MediaFragmenter\deps\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
@@ -165,16 +183,24 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;_LIB;HAVE_LIBYUV;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

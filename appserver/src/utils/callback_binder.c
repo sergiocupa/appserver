@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#if defined(PLATFORM_WIN)
+#if defined(XPLATBASE_WIN)
     #include <windows.h> 
 #else 
     #include <sys/mman.h>
@@ -28,7 +28,7 @@
 
 static void* memo_map(size_t size) 
 {
-#if defined(PLATFORM_WIN)
+#if defined(XPLATBASE_WIN)
     void* code = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     return code;
 #else 
@@ -39,7 +39,7 @@ static void* memo_map(size_t size)
 
 
 // Monta seguinte trampoline entre chamadas
-// trampoline(ResourceBuffer* object, MessageMatchReceiverCalback callback)
+// trampoline(ResourceBuffer* object, MessageResultCallback callback)
 //{
 //    ThunkArgs.Sender(object, callback, ThunkArgs.Client);
 //}
@@ -166,7 +166,7 @@ MessageEmitterCalback create_trampoline_linux_arm64(ThunkArgs* args)
 
 static MessageEmitterCalback create_trampoline(ThunkArgs* args)
 {
-#if defined(PLATFORM_WIN)
+#if defined(XPLATBASE_WIN)
     return create_trampoline_win_x64(args);
 #else 
     return create_trampoline_linux_arm64(args);

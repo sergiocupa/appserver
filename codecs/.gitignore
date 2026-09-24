@@ -1,0 +1,16 @@
+# ============================================================================
+#  Saidas de build das libs de TERCEIROS.
+#
+#  O fonte delas fica versionado (e o que garante que o build e reprodutivel);
+#  o que sai da compilacao, nao. Estas duas sao construidas UMA VEZ, a mao --
+#  nao tem Build.0 na solution -- entao num clone limpo e preciso reconstruir
+#  antes do primeiro build completo. Ver codecs/build-codecs.bat.
+# ============================================================================
+
+x265/_vsbuild/      # arvore inteira de build do CMake do x265
+svtav1/Bin/         # SvtAv1Enc.lib / libSvtAv1Enc.a
+
+# ATENCAO: dav1d/build/ NAO entra aqui, e nao e descuido. Apesar do nome, ela
+# guarda FONTE GERADO que o projeto compila (bitdepth/*_8bpc.c e *_16bpc.c, 118
+# arquivos no libdav1d.vcxproj) mais config.h, config.asm e vcs_version.h. Sem
+# esses arquivos o dav1d nao compila, e regenera-los exige meson no host.

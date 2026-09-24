@@ -1,0 +1,778 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\svtav1\Source\Lib\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\fastfeat\FASTFEAT.dir\$(Configuration)\fast.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\fastfeat\FASTFEAT.dir\$(Configuration)\fast_9.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\fastfeat\FASTFEAT.dir\$(Configuration)\nonmax.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Globals\GLOBALS.dir\$(Configuration)\enc_handle.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Globals\GLOBALS.dir\$(Configuration)\enc_settings.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Globals\GLOBALS.dir\$(Configuration)\metadata_handle.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\adaptive_mv_pred.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\aom_dsp_rtcd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\av1me.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\bitstream_unit.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\blend_a64_mask.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\block_structures.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\cabac_context_model.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\cdef.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\cdef_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\coding_loop.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\coding_unit.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\common_dsp_rtcd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\convolve.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\corner_detect.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\corner_match.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\deblocking_common.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\deblocking_filter.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\dlf_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\dwt.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_cdef.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_dec_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_dec_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_dec_segments.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_dec_tasks.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_inter_prediction.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_intra_prediction.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_mode_config.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\enc_warped_motion.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\encode_context.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\entropy_coding.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\ec_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\ec_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\fft.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\firstpass.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\full_loop.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\global_motion.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\global_me.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\global_me_cost.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\grainSynthesis.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\hash.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\hash_motion.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\initial_rc_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\initial_rc_reorder_queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\initial_rc_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\inter_prediction.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\intra_prediction.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\inv_transforms.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\mcomp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\md_rate_estimation.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\me_sad_calculation.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\mode_decision.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\md_config_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\md_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\motion_estimation.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\me_context.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\me_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\me_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\neighbor_arrays.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\noise_model.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\noise_util.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\packetization_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\packetization_reorder_queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\palette.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pass2_strategy.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_analysis_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_analysis_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_buffer_desc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pcs.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pd_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pd_queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pd_reorder_queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pd_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_demux_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_manager_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_manager_queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pic_operators.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\pred_structure.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\product_coding_loop.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\ransac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\rc_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\rc_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\rc_tasks.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\rd_cost.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\reference_object.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\resize.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\resource_coordination_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\resource_coordination_results.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\rest_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\restoration.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\restoration_pick.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\segmentation.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\segmentation_params.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\sequence_control_set.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\src_ops_process.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\super_res.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\svt_log.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\svt_malloc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\svt_psnr.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\svt_threads.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\svt_time.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\sys_resource_manager.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\temporal_filtering.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\transforms.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\utility.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\vector.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CODEC.dir\$(Configuration)\warped_motion.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\blend_a64_mask_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\cfl_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\compute_sad_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\encode_txb_ref_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\filterintra_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\inter_prediction_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\intra_prediction_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\pack_unpack_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\picture_operators_c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\sad_av1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\C_DEFAULT\C_DEFAULT.dir\$(Configuration)\variance.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\avc_style_mcp_intrin_sse.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\compute_mean_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\convolve_2d_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\convolve_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\dlf_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\encodetxb_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\fft_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\highbd_intrapred_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\highbd_subtract_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\highbd_variance_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\intra_pred_av1_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\jnt_convolve_2d_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\jnt_convolve_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\me_sad_calc_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\pack_unpack_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\pic_operators_intrin_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\variance_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\wiener_convolve_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\aom_subpixel_8t_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\highbd_intrapred_sse2_.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\highbd_variance_impl_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\intrapred_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\picture_operators_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\subpel_variance_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\subtract_sse2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE2\ASM_SSE2.dir\$(Configuration)\x64RegisterUtil.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\aom_subpixel_8t_intrin_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\av1_inv_txfm_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\highbd_convolve_2d_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\highbd_convolve_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\highbd_intrapred_intrin_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\highbd_wiener_convolve_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\intrapred_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\jnt_convolve_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\reconinter_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\variance_impl_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\aom_subpixel_bilinear_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\aom_subpixel_8t_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSSE3\ASM_SSSE3.dir\$(Configuration)\subpel_variance_ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\av1_convolve_scale_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\av1_quantize_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\blend_a64_mask_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\cdef_block_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\cdef_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\compute_sad_intrin_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\corner_match_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\encodetxb_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\filterintra_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\highbd_convolve_2d_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\highbd_fwd_txfm_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\highbd_inv_txfm_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\highbd_jnt_convolve_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\intrapred_16bit_intrin_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\obmc_variance_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\pickrst_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\pic_operators_intrin_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\reconinter_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\selfguided_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\temporal_filtering_sse4_1.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_SSE4_1\ASM_SSE4_1.dir\$(Configuration)\warp_plane_sse4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\aom_subpixel_8t_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\av1_inv_txfm_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\av1_quantize_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\blend_a64_mask_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\cdef_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\cdef_block_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\cfl_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\comb_avg_sad_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\compute_sad_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\convolve_2d_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\convolve_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\corner_match_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\dwt_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\encodetxb_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\fft_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_convolve_2d_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_convolve_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_fwd_txfm_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_intra_pred_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_inv_txfm_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_jnt_convolve_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_quantize_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_variance_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\highbd_warp_affine_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\inter_prediction_com_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\intra_pred_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\jnt_convolve_2d_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\jnt_convolve_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\noise_model_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\obmc_sad_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\obmc_variance_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\pack_unpack_intrinsic_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\palette_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\pickrst_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\pic_operators_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\resize_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\restoration_pick_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\selfguided_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\sse_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\ssim_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\temporal_filtering_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\transforms_intrin_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\variance_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\variance_impl_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\warp_plane_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\wiener_convolve_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\itx_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\itx16_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\mc_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX2\ASM_AVX2.dir\$(Configuration)\mc16_avx2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\cdef_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\cdef_block_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\compute_sad_intrin_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\convolve_2d_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\convolve_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\encodetxb_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\highbd_fwd_txfm_AVX512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\highbd_intra_pred_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\highbd_inv_txfm_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\jnt_convolve_2d_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\jnt_convolve_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\pickrst_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\pic_operators_intrin_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\variance_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\ASM_AVX512\ASM_AVX512.dir\$(Configuration)\wiener_convolve_avx512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\src\init.c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\api.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\x86_init.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\vendor.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\isa.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\cpuinfo.dir\$(Configuration)\src\x86\windows\init.c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\svtav1\_vsbuild\third_party\cpuinfo\deps\clog\clog.dir\$(Configuration)\clog.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{E4A8BEA6-F069-3C3C-ACBC-0A2B24FFEC75}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

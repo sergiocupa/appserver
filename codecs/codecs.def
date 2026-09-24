@@ -1,0 +1,23 @@
+EXPORTS
+  opus_encode
+  opus_encoder_create
+  opus_encoder_ctl
+  opus_encoder_destroy
+  svt_av1_enc_deinit
+  svt_av1_enc_deinit_handle
+  svt_av1_enc_get_packet
+  svt_av1_enc_init
+  svt_av1_enc_init_handle
+  svt_av1_enc_release_out_buffer
+  svt_av1_enc_send_picture
+  svt_av1_enc_set_parameter
+  vpx_codec_control_
+  vpx_codec_destroy
+  vpx_codec_enc_config_default
+  vpx_codec_enc_init_ver
+  vpx_codec_encode
+  vpx_codec_get_cx_data
+  vpx_codec_vp9_cx
+  vpx_img_alloc
+  vpx_img_free
+  x265_api_get_215

@@ -1,0 +1,298 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixel-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\const-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\cpu-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\ssd-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\mc-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\mc-a2.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixel-util8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\blockcopy8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\pixeladd8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\dct8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\seaintegral.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\sad-a.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\intrapred8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\intrapred8_allangs.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\v4-ipfilter8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\h-ipfilter8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\ipfilter8.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\_vsbuild\CMakeFiles\9a8f59c413ccfc9204f21b845bdf9f29\loopfilter.asm.obj.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="E:\git\appserver\codecs\x265\source\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\analysis.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\search.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\bitcost.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\motion.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\slicetype.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\frameencoder.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\framefilter.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\level.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\nal.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\sei.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\sao.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\entropy.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\dpb.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\ratecontrol.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\reference.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\encoder.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\api.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\encoder\encoder.dir\$(Configuration)\weightPrediction.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\asm-primitives.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\vec-primitives.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-sse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-ssse3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct-sse41.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\winxp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\primitives.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\pixel.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\dct.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\lowpassdct.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\ipfilter.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\intrapred.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\loopfilter.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\constants.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\cpu.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\version.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\threading.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\threadpool.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\wavefront.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\md5.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\bitstream.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\yuv.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\shortyuv.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\picyuv.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\common.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\param.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\frame.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\framedata.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\cudata.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\slice.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\lowres.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\piclist.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\predict.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\scalinglist.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\quant.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\deblock.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\scaler.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\ringmem.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\common\common.dir\$(Configuration)\temporalfilter.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixel-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\const-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\cpu-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\ssd-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\mc-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\mc-a2.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixel-util8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\blockcopy8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\pixeladd8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\dct8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\seaintegral.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\sad-a.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\intrapred8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\intrapred8_allangs.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\v4-ipfilter8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\h-ipfilter8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\ipfilter8.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+    <Object Include="E:\git\appserver\codecs\x265\_vsbuild\loopfilter.asm.obj">
+      <Filter>Object Files</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4BCDC6A5-4437-35AF-9A62-1EE198E5C1AD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Files">
+      <UniqueIdentifier>{7D8EEA12-B0B0-31B8-9972-65CB51494F4B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{7C820CBD-1791-3F00-9958-19BB51B16452}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

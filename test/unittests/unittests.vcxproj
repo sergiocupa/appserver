@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{7C1F5A2E-9D34-4B7A-9E51-3F2A6C8B1D40}</ProjectGuid>
+    <RootNamespace>unittests</RootNamespace>
+    <ProjectName>unittests</ProjectName>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectSubType>NativeUnitTestProject</ProjectSubType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tests\obj\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway\media;$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaFragmenter\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdclatest</LanguageStandard_C>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll;$(SolutionDir)codecs\$(Platform)\$(Configuration);$(SolutionDir)MediaGateway\$(Platform)\$(Configuration);$(SolutionDir)$(Platform)\$(Configuration);$(SolutionDir)codecs\svtav1\Bin\$(Configuration);$(SolutionDir)codecs\x265\_vsbuild\$(Configuration);$(SolutionDir)codecs\openh264;$(SolutionDir)codecs\libyuv\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>MediaGateway.lib;codec_core.lib;codec_hw.lib;MediaFragmenter.lib;libyuv.lib;mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;Xplatbase.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="ctest_core.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_xplatbase.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_pipeline.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_hardware.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_codecs.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_gateway_matrix.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_plugins.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_instancia_modulos.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="registro.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ctest_core.h" />
+    <ClInclude Include="testes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Nao e so pela biblioteca de importacao: sem esta dependencia o MSBuild pode
+         construir os testes ANTES do xplatbase. Ai ou o link falha, ou uma DLL velha
+         e copiada para a pasta de saida e o executor morre sem reportar nada.
+         Os dois casos aconteceram aqui. -->
+    <ProjectReference Include="..\..\appserver\submodules\xplatbase\Xplatbase\Xplatbase\Xplatbase.vcxproj">
+      <Project>{f217b4d5-f6bc-4fce-af5e-beef9fe1f3e8}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="mod_compartilhado.vcxproj">
+      <Project>{cec46acc-ae15-4406-87bb-74b89e836671}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <ProjectReference Include="mod_duplicado.vcxproj">
+      <Project>{e0016450-f4ac-4b31-b44a-d2f9b794e442}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="CopiaXplatbaseDll" AfterTargets="Build">
+    <!-- O executor de testes carrega esta DLL de dentro da pasta de saida; a Xplatbase.dll
+         precisa estar ao lado, senao o modulo nem e carregado e o teste some da lista. -->
+    <Copy SourceFiles="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll\Xplatbase.dll"
+          DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <!-- Os testes de pipeline carregam os codecs em tempo de execucao; sem estas
+         DLLs ao lado, o executor nem consegue carregar o modulo de teste. -->
+    <Copy SourceFiles="$(SolutionDir)codecs\openh264\openh264.dll;$(SolutionDir)codecs\libde265\libde265.dll"
+          DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

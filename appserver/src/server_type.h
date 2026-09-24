@@ -1,4 +1,4 @@
-//  MIT License – Modified for Mandatory Attribution
+//  MIT License ï¿½ Modified for Mandatory Attribution
 //  
 //  Copyright(c) 2025 Sergio Paludo
 //
@@ -7,8 +7,8 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, 
 //  to use, copy, modify, merge, publish, distribute, and sublicense the software, including for commercial purposes, provided that:
 //  
-//     01. The original author’s credit is retained in all copies of the source code;
-//     02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
+//     01. The original authorï¿½s credit is retained in all copies of the source code;
+//     02. The original authorï¿½s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code - generating scripts.
 //  
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -20,18 +20,26 @@
 extern "C" {
 #endif
 
-    // TO-DO: esta com referencia INCLUDE redundante por submodules em muitos niveis. listlib.h encontrada em varias origens.
-    //        reestruturar os submudules para nao ter esta origem redundante em varios niveis
-    #include "../submodules/utility/listlib/include/listlib.h"
-    #include "stringlib.h"
-    #include "platform.h"
-    #include "numeric.h"
+    // Migrado para xplatbase (ListX/StringX/memory_pool/numeric/threads) â€” camada utilitaria unica.
+    #include "xplatbase.h"
+    #include "utils/xpb_compat.h"   // funcoes stringlib/sha/base64/file reimplementadas sobre StringX
     #include "../submodules/yason/yason/src/yason_element.h"
     
     #define AOTP_HEADER_SIGN "AOTP[9DAC10BA43E2402694C84B21A4219497]"
 
-    #define LIST_CREATE(TYPE, THIS) THIS = list_create(sizeof(TYPE))
+    #define LIST_CREATE(TYPE, THIS) THIS = list_create(8, sizeof(TYPE))
     #define LIST_ADD(TYPE, THIS, ITEM) list_add(THIS, ITEM, sizeof(TYPE))
+
+    // Split de um trecho de C-string (nao necessariamente terminado em NUL) por 1 char,
+    // usando o string_split do xplatbase (que COPIA cada segmento). Retorna ListX de StringX*.
+    static inline ListX* string_split_cstr(const char* s, int len, char token)
+    {
+        StringX _t; string_init(&_t);
+        if (len > 0) string_appends(&_t, s, len, 0, len);
+        ListX* r = string_split(&_t, token);
+        string_release(&_t);
+        return r;
+    }
  
 
     typedef struct _AppClientInfo     AppClientInfo;
@@ -69,8 +77,8 @@ extern "C" {
         bool IsEndGroup;
         bool IsEndParam;
         bool IsHardware;
-        String Name;
-        String Value;
+        StringX Name;
+        StringX Value;
         MessageFieldParam* Next;
         MessageFieldParam* Previus;
     };
@@ -78,7 +86,9 @@ extern "C" {
 
     typedef struct _MessageField
     {
-        String            Name;
+        StringX            Name;
+        StringX            Raw;     // valor CRU (apos ":", sem espacos nas pontas). Param quebra o
+                                    // valor em nome=valor, o que destroi base64 (padding "=").
         MessageFieldParam Param;
     }
     MessageField;
@@ -141,7 +151,9 @@ extern "C" {
         AUDIO_OGG                = 17,
         VIDEO_MP4                = 18,
         VIDEO_WEBM               = 19,
-        MULTIPART_FORMDATA       = 20
+        MULTIPART_FORMDATA       = 20,
+        APPLICATION_MPEGURL      = 21,
+        VIDEO_MP2T               = 22
     }
     ContentTypeOption;
 
@@ -170,39 +182,45 @@ extern "C" {
     {
         bool                 IsMatch;
         MessageProtocol      Protocol;
-        String               Version;
+        StringX               Version;
         MessageCommand       Cmd;
         MessageCommand       OriginCmd;
                              
-        StringArray          Route;
-        String               Host;
+        ListX          Route;
+        StringX               Host;
         MessageConnection    ConnectionOption;
-        String               UserAgent;
-        String               Content;
+        StringX               UserAgent;
+        StringX               Content;
         ContentTypeOption    ContentType;
         int                  ContentLength;
         MessageFieldList     Fields;
-        String*              SessionUID;
-        String*              EventUID;
-        String*              OriginEventUID;
+        StringX*              SessionUID;
+        StringX*              EventUID;
+        StringX*              OriginEventUID;
         MessageFieldParam*   Param;
-        String*              SecWebsocketKey;
-        String*              SecWebsocketAccept;
-        String*              Upgrade;
+        StringX*              SecWebsocketKey;
+        StringX*              SecWebsocketAccept;
+        StringX*              Upgrade;
         void*                MatchThread;
                              
         AppClientInfo*       Client;
         void*                Object;
 
         MessageResponseInfo* Response;
+
+        // Quando true, o handler ja escreveu a resposta diretamente no socket
+        // (ex.: streaming SSE) e o framework nao deve enviar resposta automatica.
+        bool                 StreamHandled;
     };
 
 
 
 
-    typedef Element* (*MessageMatchReceiverCalback) (ResourceBuffer* result);
-    typedef void  (*MessageEmitterCalback)  (ResourceBuffer* object, MessageMatchReceiverCalback callback);
-    typedef void  (*MessageSenderCalback) (ResourceBuffer* object, MessageMatchReceiverCalback callback, AppClientInfo* client);
+    typedef Element* (*MessageMatchReceiverCalback) (Message* request);
+    typedef void (*RequestCallback) (Message* request);
+    typedef void (*MessageResultCallback) (ResourceBuffer* result);
+    typedef void (*MessageEmitterCalback) (ResourceBuffer* object, MessageResultCallback callback);
+    typedef void (*MessageSenderCalback) (ResourceBuffer* object, MessageResultCallback callback, AppClientInfo* client);
 
     struct _MessageEventList
     {
@@ -213,12 +231,12 @@ extern "C" {
 
     struct _MessageEvent
     {
-        String UID;
-        String OriginUID;
+        StringX UID;
+        StringX OriginUID;
         bool WaitForCallback;
         MessageCommand LastCommand;
         MessageCommand CurrentStep;
-		MessageMatchReceiverCalback Callback;
+		MessageResultCallback Callback;
         AppClientInfo* Client;
     };
 
@@ -235,8 +253,8 @@ extern "C" {
     {
         int                         Position;
         Message* Partial;
-        String* Buffer;
-        MessageMatchReceiverCalback MessageMatch;
+        StringX* Buffer;
+        RequestCallback MessageMatch;
     }
     MessageParser;
 
@@ -247,8 +265,8 @@ extern "C" {
     {
         bool           IsConnected;
 		bool           IsWebSocketMode;
-        String         LocalHost;
-        String         RemoteHost;
+        StringX         LocalHost;
+        StringX         RemoteHost;
         void*          Handle;
         void*          ReceivedThread;
         AppServerInfo* Server;
@@ -278,16 +296,15 @@ extern "C" {
 
 
 
-    typedef void(*RequestCallback) (Message* request);
 
     typedef struct _FunctionBind
     {
         bool        IsWebApplication;
         bool        WithCallback;
 		bool        IsEventEmitter;
-        StringArray Route;
-        String      Extension;
-        String      AbsPathWebContent;
+        ListX Route;
+        StringX      Extension;
+        StringX      AbsPathWebContent;
         ThunkArgs   Thung;
 		MessageMatchReceiverCalback CallbackFunc;
     }
@@ -315,10 +332,10 @@ extern "C" {
     {
         bool                      IsRunning;
         int                       Port;
-        String                    AgentName;
+        StringX                    AgentName;
         ContentTypeOption         DefaultWebApiObjectType;
-        String                    AbsLocal;
-        StringArray*              Prefix;
+        StringX                    AbsLocal;
+        ListX*              Prefix;
         void*                     Handle;
         void*                     AcceptThread;
         AppClientList*            Clients;

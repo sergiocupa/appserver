@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -20,13 +20,30 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="appservertester.c" />
+    <ClCompile Include="hls_controller.c" />
+    <ClCompile Include="session_controller.c" />
+    <ClCompile Include="device_controller.c" />
+    <ClCompile Include="live_controller.c" />
+    <!-- media_codec + codec_*.c movidos para o projeto codecs (codecs\media). Linka codec_core.lib;codec_hw.lib;libdav1d.lib.
+         Nucleo de conversao movido para MediaGateway (MediaGateway\media). Linka MediaGateway.lib.
+         Orquestracao (pipeline/embed_ops/media_source) movida para MediaFragmenter (src). Linka MediaFragmenter.lib.
+         appservertester agora so compila o codigo do app (appservertester.c, hls_controller.c). -->
+  </ItemGroup>
+  <!-- libyuv movido para codecs\libyuv.vcxproj (lib build-once); aqui so linkamos libyuv.lib. -->
+  <ItemGroup>
+    <ClInclude Include="hls_controller.h" />
+    <ClInclude Include="session_controller.h" />
+    <ClInclude Include="device_controller.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\appserver\appserver.vcxproj">
+    <ProjectReference Include="..\..\appserver\appserver.vcxproj">
       <Project>{9a8943e1-d7e9-49fc-9e9c-ae719d47d450}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\MediaFragmenter\MediaFragmenter.vcxproj">
+    <ProjectReference Include="..\..\MediaFragmenter\MediaFragmenter.vcxproj">
       <Project>{7ed3299c-00e2-42af-9507-0cb87663dd37}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\MediaGateway\MediaGateway.vcxproj">
+      <Project>{6a7e0a00-0000-4000-8000-00000000a7e0}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +68,7 @@
     <None Include="web\components\ui\waiting\waiting-box.css" />
     <None Include="web\components\ui\waiting\waiting-box.html" />
     <None Include="web\components\ui\waiting\waiting-box.js" />
+    <None Include="web\index.html" />
     <None Include="web\VideoViewer.css" />
     <None Include="web\VideoViewer.html" />
     <None Include="web\VideoViewer.js" />
@@ -59,7 +77,7 @@
     <Text Include="web\Open in browser in offline mode.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>17.0</VCProjectVersion>
+    <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{e4b5a6d1-dceb-45e2-a6bd-a776b3eda803}</ProjectGuid>
     <RootNamespace>appservertester</RootNamespace>
@@ -69,30 +87,33 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -114,9 +135,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/submodules/utility/stringlib/include;$(SolutionDir)appserver/submodules/utility/platformlib/include;$(SolutionDir)appserver/submodules/utility/numericlib/include;$(SolutionDir)appserver/include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
@@ -124,8 +146,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)appserver\submodules\utility\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>yason.lib;platformlib.lib;filelib.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>yason.lib</AdditionalDependencies>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -135,8 +157,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -154,9 +177,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_OPENH264;HAVE_SVTAV1;HAVE_X265;HAVE_LIBYUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/submodules/utility/stringlib/include;$(SolutionDir)appserver/submodules/utility/platformlib/include;$(SolutionDir)appserver/submodules/utility/numericlib/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)MediaFragmenter\deps\openh264\include;$(SolutionDir)MediaFragmenter\deps\libde265\include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
@@ -164,9 +188,10 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Debug;$(SolutionDir)appserver\submodules\utility\x64\Debug;$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\MediaFragmenter\deps\openh264;E:\git\appserver\MediaFragmenter\deps\libde265;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>yason.lib;platformlib.lib;filelib.lib;dashstream.lib;SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Debug;$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;$(SolutionDir)MediaGateway\x64\Debug;$(SolutionDir)codecs\x64\Debug;$(SolutionDir)codecs\svtav1\Bin\Debug;$(SolutionDir)codecs\x265\_vsbuild\Debug;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>yason.lib;dashstream.lib;SDL2.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib</AdditionalDependencies>
+      
+      
     </Link>
     <PostBuildEvent>
       <Command>
@@ -179,22 +204,34 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_OPENH264;HAVE_SVTAV1;HAVE_X265;HAVE_LIBYUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);yason.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Release;$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;$(SolutionDir)MediaGateway\x64\Release;$(SolutionDir)codecs\x64\Release;$(SolutionDir)codecs\svtav1\Bin\Release;$(SolutionDir)codecs\x265\_vsbuild\Release;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>yason.lib;dashstream.lib;SDL2.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib;x265-static.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="CopiaXplatbaseDll" AfterTargets="Build">
+    <!-- Instancia unica: a DLL tem de estar ao lado do exe, senao o carregador
+         nao a acha e o processo nem sobe. -->
+    <Copy SourceFiles="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll\Xplatbase.dll"
+          DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

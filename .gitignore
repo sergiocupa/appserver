@@ -1,4 +1,58 @@
-.vs/
+# ============================================================================
+#  O que NAO entra no repositorio.
+#
+#  Regra: bloquear por PASTA DE SAIDA, nao por extensao. Um `*.dll` ou `*.lib`
+#  aqui varreria junto os binarios de terceiros que o build PRECISA e que vem
+#  vendorizados (openh264.dll, de265.lib, SDL2.dll) -- e o sumico seria
+#  silencioso, aparecendo so num clone limpo que nao linka.
+# ============================================================================
+
+# ---- saidas de build (MSBuild) ---------------------------------------------
+# Todo projeto sai em <projeto>/x64/<Config>/; os nomes abaixo pegam em
+# qualquer nivel da arvore.
+#
+# NAO ha `Win32/` aqui de proposito: no Windows a comparacao ignora
+# maiusculas, e o padrao mordia codecs/dav1d/src/win32/, que e FONTE
+# (o thread.c do dav1d). A solution so constroi x64.
 x64/
 Debug/
 Release/
+obj/
+ipch/
+
+# ---- estado local do Visual Studio (por maquina, nao por projeto) ----------
+.vs/
+*.suo
+*.aps
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# *.vcxproj.user NAO esta bloqueado: seis deles ja estao versionados neste
+# repositorio. Bloquear agora deixaria os antigos dentro e os novos fora.
+# Para tirar de vez:  git rm --cached **/*.vcxproj.user  e acrescentar *.user aqui.
+
+# ---- CMake e Ninja, quando configurados dentro da arvore -------------------
+# O build normal e fora (build-linux/, ~/build/...), mas um `cmake .` sem
+# querer deixa tudo isto para tras.
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+.ninja_deps
+.ninja_log
+build.ninja
+/build/
+/build-*/
+
+# ---- testes ----------------------------------------------------------------
+Testing/            # saida do CTest (Testing/Temporary/LastTest.log)
+unittests_tmp/      # pasta de trabalho dos testes de pipeline e do gateway
+
+# ---- restos de ferramenta e do sistema -------------------------------------
+*.stackdump         # dump do MSYS/Git Bash quando uma ferramenta morre
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,4 +1,6 @@
-﻿#include "MediaFragmenterType.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
+#include "MediaFragmenterType.h"
 
 
 int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h)
@@ -36,7 +38,7 @@ int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h)
     *w = header.width;
     *h = abs(header.height);
 
-    *pixels = (uint8_t*)malloc((*w) * (*h) * 3);
+    *pixels = (uint8_t*)memop_alloc_raw((*w) * (*h) * 3);
     if (!*pixels) {
         fclose(f);
         return -1;
@@ -47,10 +49,10 @@ int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h)
     int row_bytes = (*w) * 3;
     int padding = (4 - (row_bytes % 4)) % 4;
 
-    uint8_t* row_buf = (uint8_t*)malloc(row_bytes + padding);
+    uint8_t* row_buf = (uint8_t*)memop_alloc_raw(row_bytes + padding);
     if (!row_buf) {
         fclose(f);
-        free(*pixels);
+        memop_free_raw(*pixels);
         return -1;
     }
 
@@ -71,7 +73,7 @@ int load_bmp_manual(const char* path, uint8_t** pixels, int* w, int* h)
         }
     }
 
-    free(row_buf);
+    memop_free_raw(row_buf);
     fclose(f);
 
     return 0;
@@ -92,9 +94,9 @@ int rgb_to_yuv(uint8_t* rgb, int w, int h, uint8_t** y, uint8_t** u, uint8_t** v
     int uv_size = (*stride_u) * ((h + 1) / 2);  // Teto para alturas ímpares
 
     // Aloca planos
-    *y = (uint8_t*)malloc(y_size);
-    *u = (uint8_t*)malloc(uv_size);
-    *v = (uint8_t*)malloc(uv_size);
+    *y = (uint8_t*)memop_alloc_raw(y_size);
+    *u = (uint8_t*)memop_alloc_raw(uv_size);
+    *v = (uint8_t*)memop_alloc_raw(uv_size);
     if (!*y || !*u || !*v)
         return -1;
 

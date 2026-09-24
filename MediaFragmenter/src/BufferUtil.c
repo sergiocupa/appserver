@@ -1,3 +1,5 @@
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
+#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
 #include "BufferUtil.h"
 #include <string.h>
 
@@ -33,7 +35,7 @@ void  buffer_write64(uint8_t* buf, uint64_t value)
 
 void write_fourcc(uint8_t* buf, const char* fourcc)
 {
-    memcpy(buf, fourcc, 4);
+    memop_copy_raw(buf, fourcc, 4);
 }
 
 

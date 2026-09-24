@@ -1,0 +1,4 @@
+# Saida do fragmentador: cada sessao vira uma pasta s<data>-<hora> com os
+# segmentos e as playlists. E resultado de execucao, nao fonte.
+current/
+s[0-9]*/

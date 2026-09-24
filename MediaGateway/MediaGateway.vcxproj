@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64"><Configuration>Release</Configuration><Platform>x64</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals"><VCProjectVersion>18.0</VCProjectVersion><ProjectGuid>{6A7E0A00-0000-4000-8000-00000000A7E0}</ProjectGuid>
+    <RootNamespace>MediaGateway</RootNamespace><WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>true</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType><UseDebugLibraries>false</UseDebugLibraries><PlatformToolset>v145</PlatformToolset><CharacterSet>MultiByte</CharacterSet></PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Saida deterministica: sempre MediaGateway\x64\<Config>. O appservertester procura MediaGateway.lib aqui. -->
+    <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\obj\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBYUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)media;$(ProjectDir)../codecs/media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/include;$(ProjectDir)../codecs/vpx/third_party/libyuv/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBYUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)media;$(ProjectDir)../codecs/media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/include;$(ProjectDir)../codecs/vpx/third_party/libyuv/include</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <!-- StaticLibrary: sem Link/.def. libyuv/SvtAv1Enc/x265-static/codecs sao linkados
+         pelo CONSUMIDOR final (appservertester), nao embutidos aqui. -->
+  </ItemDefinitionGroup>
+  <!-- Nucleo de conversao: source -> decode/encode/scale -> sink (MP4/HLS/DASH). -->
+  <ItemGroup>
+    <ClCompile Include="media/sync_gateway.c" />
+    <ClCompile Include="media/media_sink.c" />
+    <ClCompile Include="media/sink_mp4.c" />
+    <ClCompile Include="media/sink_hls.c" />
+    <ClCompile Include="media/sink_dash.c" />
+    <ClCompile Include="media/sink_live.c" />
+    <ClCompile Include="media/live_store.c" />
+    <ClCompile Include="media/mux_webm.c" />
+    <ClCompile Include="media/mux_mp4.c" />
+    <ClCompile Include="media/audio_aac.c" />
+    <ClCompile Include="media/mp4_timing.c" />
+    <ClCompile Include="media/h26x_util.c" />
+    <ClCompile Include="media/gw_path.c" />
+    <ClCompile Include="media/device_enum.c" />
+    <ClCompile Include="media/source_camera.c" />
+    <ClCompile Include="media/gw_decode.c" />
+    <ClCompile Include="media/demux_webm.c" />
+    <ClCompile Include="media/source_file.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="media/sync_gateway.h" />
+    <ClInclude Include="media/media_sink.h" />
+    <ClInclude Include="media/media_source.h" />
+    <ClInclude Include="media/mux_webm.h" />
+    <ClInclude Include="media/mux_mp4.h" />
+    <ClInclude Include="media/audio_aac.h" />
+    <ClInclude Include="media/mp4_timing.h" />
+    <ClInclude Include="media/h26x_util.h" />
+    <ClInclude Include="media/gw_path.h" />
+    <ClInclude Include="media/gw_decode.h" />
+    <ClInclude Include="media/device_enum.h" />
+    <ClInclude Include="media/gw_types.h" />
+    <ClInclude Include="media/gw_base.h" />
+    <ClInclude Include="media/media_time.h" />
+    <ClInclude Include="media/pipeline.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

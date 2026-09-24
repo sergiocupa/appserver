@@ -1,0 +1,45 @@
+Copyright (c)  2013, Cisco Systems
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+   * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+   * Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+--------------------------------------------------------------------
+NOTA DESTE REPOSITORIO
+
+Este projeto redistribui apenas os CABECALHOS do OpenH264 (include/) e os
+arquivos de export (openh264.def, exports.txt, linkermember.txt), usados para
+linkar contra a openh264.dll publicada pela Cisco.
+
+Um arquivo foi ALTERADO em relacao ao original:
+
+  include/wels/codec_app_def.h
+     'float rPsnr[3]', acrescentado pelo OpenH264 2.6.0 ao final de
+     SLayerBSInfo, esta comentado. O motivo esta no proprio arquivo: a DLL
+     usada aqui e a 2.5.1, e como SFrameBSInfo embute sLayerInfo[128] inline,
+     o campo a mais mudava o passo entre as camadas (40 -> 56 bytes) e
+     desalinhava a leitura. O texto da licenca BSD acima foi mantido
+     integralmente no arquivo alterado.

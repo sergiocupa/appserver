@@ -8,3 +8,39 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 02. The original author’s credit is included in any code generated, derived, or distributed from this software, including templates, libraries, or code-generating scripts.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+
+================================================================================
+SCOPE OF THIS LICENSE — THIRD-PARTY CODE
+================================================================================
+
+The license above applies ONLY to the code written for this project.
+
+This repository also redistributes third-party source code, each under its own
+license, held by its own copyright owners. Those files are NOT covered by the
+license above and are NOT sublicensed by it. Nothing in this file grants any
+right over them beyond what their own licenses grant.
+
+The third-party code lives in these directories, each with its own license file:
+
+    codecs/x265/           GPL v2         see codecs/x265/COPYING
+    codecs/libvpx (vpx/)   BSD 3-clause   see codecs/vpx/LICENSE
+    codecs/opus/           BSD 3-clause   see codecs/opus/COPYING
+    codecs/dav1d/          BSD 2-clause   see codecs/dav1d/COPYING
+    codecs/svtav1/         BSD 3-Clause Clear + AOM patent license
+                                          see codecs/svtav1/LICENSE.md
+    codecs/openh264/       BSD 2-clause   see codecs/openh264/LICENSE
+                                          (headers and export files only)
+    codecs/libde265/       LGPL v3        see codecs/libde265/COPYING
+                                          (headers only)
+    MediaFragmenter/deps/sdl2/   zlib           see MediaFragmenter/deps/sdl2/LICENSE.txt
+                                          (headers only)
+
+IMPORTANT — x265 is licensed under the GNU General Public License v2. Linking it
+into a program makes the combined work subject to the GPL. In this project x265
+is confined to a single loadable module (codec_h265_plugin); the rest of the
+program neither links nor references it. Distributing a build WITHOUT that module
+does not distribute the combined work. If you intend to ship that module, review
+the GPL terms, or obtain a commercial x265 license from MulticoreWare.
+
+See THIRD-PARTY-NOTICES.md for the full attribution list.

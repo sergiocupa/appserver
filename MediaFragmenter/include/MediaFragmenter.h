@@ -46,10 +46,6 @@ extern "C" {
 
 
 	// Visualizador
-	MediaSourceSession* media_sim_create(int width, int height, int codec);
-	int media_sim_feed(MediaSourceSession* source, MediaBuffer* data);
-	void media_sim_release(MediaSourceSession** source);
-	void medias_waiting(VideoOutput* v);
 
 
 	char* dash_create_mpd(VideoMetadata* meta, FrameIndexList* frames, double fragment_duration_sec, size_t* output_length);

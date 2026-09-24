@@ -19,13 +19,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    #include "codec_api.h"
     #include "de265.h"
     #ifdef _WIN32
-    // Simulador de player (MediaSourceSim.c): SDL + eventos Win32. So existe no Windows; o
-    // nucleo do fragmentador nao depende dele.
-    #define SDL_MAIN_HANDLED
-    #include "SDL2/SDL.h"
     #include <wtypes.h>
     #endif
     #include <stdint.h>
@@ -158,34 +153,6 @@ extern "C" {
     H264Decoder;*/
 
 
-    #ifdef _WIN32   // tipos do simulador (ver acima)
-    typedef void (*KeyDownEvent)(SDL_KeyCode key);
-    typedef void (*QuitEvent)();
-    typedef void (*WaitEvent)();
-
-    typedef struct 
-    {
-        int           Width;
-        int           Height;
-        int           WindowWidth;
-        int           WindowHeight;
-        int           a;
-        SDL_Window*   win;
-        SDL_Renderer* ren;
-        SDL_Texture*  tex;
-        void*         EventThread;
-        int           Running;
-        KeyDownEvent  KeyDown;
-        QuitEvent     Quit;
-        HANDLE        Wait;
-        HANDLE        WaitShow;
-    } 
-    VideoOutput;
-    #else
-    // Fora do Windows o simulador nao existe, mas MediaSourceSession e os prototipos dele
-    // (MediaFragmenter.h) usam VideoOutput por ponteiro: um tipo opaco basta para compilar.
-    typedef struct VideoOutputSim VideoOutput;
-    #endif
 
 
 
@@ -277,12 +244,6 @@ extern "C" {
     VideoInitData;
 
 
-    typedef struct _MediaSourceSession
-    {
-        VideoOutput*     Output;
-        DecoderInstance* Decoder;
-    }
-    MediaSourceSession;
 
 
     void nal_list_init(NALList* nalus, int initial_count);

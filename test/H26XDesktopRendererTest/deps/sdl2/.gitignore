@@ -1,0 +1,10 @@
+# Binarios do SDL2: ficam no disco (o build local precisa deles), fora do repositorio.
+#
+# Quem quiser construir este projeto baixa o pacote de desenvolvimento do SDL2 em
+# libsdl.org e copia bin/ e lib/ para ca. Os CABECALHOS, esses sim, estao versionados --
+# sao o que a licenca zlib pede que acompanhe a redistribuicao, e o que o compilador usa.
+
+# *.dll
+# *.lib
+*.pdb
+*.exp

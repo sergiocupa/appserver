@@ -14,6 +14,8 @@
 
 
 #include "MediaFragmenter.h"
+#include "MediaSourceSim.h"   // simulador de janela: MediaSourceSession e media_sim_*
+                              // (saiu do MediaFragmenter, que nao tem de conhecer UI)
 
 
 

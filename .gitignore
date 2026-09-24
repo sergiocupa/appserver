@@ -19,6 +19,8 @@ Debug/
 Release/
 obj/
 ipch/
+# simbolos de depuracao: nunca sao fonte
+*.pdb
 
 # ---- estado local do Visual Studio (por maquina, nao por projeto) ----------
 .vs/
@@ -47,11 +49,14 @@ build.ninja
 /build-*/
 
 # ---- testes ----------------------------------------------------------------
-Testing/            # saida do CTest (Testing/Temporary/LastTest.log)
-unittests_tmp/      # pasta de trabalho dos testes de pipeline e do gateway
+# saida do CTest (Testing/Temporary/LastTest.log)
+Testing/
+# pasta de trabalho dos testes de pipeline e do gateway
+unittests_tmp/
 
 # ---- restos de ferramenta e do sistema -------------------------------------
-*.stackdump         # dump do MSYS/Git Bash quando uma ferramenta morre
+# dump do MSYS/Git Bash quando uma ferramenta morre
+*.stackdump
 *.log
 Thumbs.db
 desktop.ini

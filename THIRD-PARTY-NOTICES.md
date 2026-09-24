@@ -20,7 +20,7 @@ a separate matter, not addressed here.
 | `codecs/svtav1/` | SVT-AV1 (Alliance for Open Media) | BSD 3-Clause Clear + AOM patent license | `LICENSE.md` | full source |
 | `codecs/openh264/` | OpenH264 (Cisco Systems) | BSD 2-clause | `LICENSE` | headers and export files only |
 | `codecs/libde265/` | libde265 (struktur AG, Dirk Farin) | **LGPL v3 or later** | `COPYING` | headers only |
-| `MediaFragmenter/deps/sdl2/` | SDL2 (Sam Lantinga) | zlib | `LICENSE.txt` | headers only |
+| `test/H26XDesktopRendererTest/deps/sdl2/` | SDL2 (Sam Lantinga) | zlib | `LICENSE.txt` | headers only (binaries are not redistributed) |
 
 `codecs/libyuv/` is built from the copy inside `codecs/vpx/third_party/libyuv`
 (BSD 3-clause), covered by the libvpx entry.

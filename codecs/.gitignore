@@ -7,8 +7,10 @@
 #  antes do primeiro build completo. Ver codecs/build-codecs.bat.
 # ============================================================================
 
-x265/_vsbuild/      # arvore inteira de build do CMake do x265
-svtav1/Bin/         # SvtAv1Enc.lib / libSvtAv1Enc.a
+# arvore inteira de build do CMake do x265
+x265/_vsbuild/
+# SvtAv1Enc.lib / libSvtAv1Enc.a
+svtav1/Bin/
 
 # ATENCAO: dav1d/build/ NAO entra aqui, e nao e descuido. Apesar do nome, ela
 # guarda FONTE GERADO que o projeto compila (bitdepth/*_8bpc.c e *_16bpc.c, 118

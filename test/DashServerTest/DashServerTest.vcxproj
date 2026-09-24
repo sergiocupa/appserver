@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -102,15 +102,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/submodules/utility/stringlib/include;$(SolutionDir)appserver/submodules/utility/platformlib/include;$(SolutionDir)appserver/submodules/utility/numericlib/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)appserver/submodules/utility/stringlib/include;$(SolutionDir)appserver/submodules/utility/platformlib/include;$(SolutionDir)appserver/submodules/utility/numericlib/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Debug;$(SolutionDir)appserver\submodules\utility\x64\Debug;$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>yason.lib;platformlib.lib;filelib.lib;dashstream.lib;SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Debug;$(SolutionDir)appserver\submodules\utility\x64\Debug;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>yason.lib;platformlib.lib;filelib.lib;dashstream.lib;de265.lib;openh264.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

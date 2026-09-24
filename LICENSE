@@ -33,7 +33,7 @@ The third-party code lives in these directories, each with its own license file:
                                           (headers and export files only)
     codecs/libde265/       LGPL v3        see codecs/libde265/COPYING
                                           (headers only)
-    MediaFragmenter/deps/sdl2/   zlib           see MediaFragmenter/deps/sdl2/LICENSE.txt
+    test/H26XDesktopRendererTest/deps/sdl2/   zlib           see test/H26XDesktopRendererTest/deps/sdl2/LICENSE.txt
                                           (headers only)
 
 IMPORTANT — x265 is licensed under the GNU General Public License v2. Linking it

@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="deps\libde265\include\de265.h" />
     <ClInclude Include="deps\openh264\include\codec_api.h" />
-    <ClInclude Include="deps\sdl2\include\SDL2\SDL.h" />
     <ClInclude Include="include\MediaFragmenter.h" />
     <ClInclude Include="src\BufferUtil.h" />
     <ClInclude Include="src\DashBuilder.h" />
@@ -29,7 +28,6 @@
     <ClInclude Include="src\H264Builder.h" />
     <ClInclude Include="src\H265Builder.h" />
     <ClInclude Include="src\MediaFragmenterType.h" />
-    <ClInclude Include="src\MediaSourceSim.h" />
     <ClInclude Include="src\Mp4Builder.h" />
     <ClInclude Include="src\Mp4Diag.h" />
     <ClInclude Include="src\Mp4MetadataUtil.h" />
@@ -48,7 +46,6 @@
     <ClCompile Include="src\ImageTools.c" />
     <ClCompile Include="src\MediaFragmenter.c" />
     <ClCompile Include="src\MediaFragmenterType.c" />
-    <ClCompile Include="src\MediaSourceSim.c" />
     <ClCompile Include="src\Mp4Builder.c" />
     <ClCompile Include="src\Mp4BuilderTest.c" />
     <ClCompile Include="src\Mp4Diag.c" />
@@ -165,7 +162,7 @@
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -173,8 +170,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>de265.lib;openh264.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -190,7 +187,7 @@
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -198,8 +195,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;de265.lib;openh264.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>de265.lib;openh264.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -18,13 +18,7 @@
     <ClInclude Include="src\MediaFragmenterType.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\MediaSourceSim.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="deps\openh264\include\codec_api.h">
-      <Filter>deps</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\sdl2\include\SDL2\SDL.h">
       <Filter>deps</Filter>
     </ClInclude>
     <ClInclude Include="src\FileUtil.h">
@@ -54,15 +48,15 @@
     <ClInclude Include="src\H265Builder.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="include\embed_ops.h" />
+    <ClInclude Include="include\frag_session.h" />
+    <ClInclude Include="include\yason_build.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\MediaFragmenter.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\MediaFragmenterType.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\MediaSourceSim.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ImageTools.c">
@@ -104,5 +98,9 @@
     <ClCompile Include="src\VideoCodecWrapper.c">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\media_source.c" />
+    <ClCompile Include="src\frag_session.c" />
+    <ClCompile Include="src\pipeline.c" />
+    <ClCompile Include="src\embed_ops.c" />
   </ItemGroup>
 </Project>

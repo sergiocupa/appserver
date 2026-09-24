@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -19,7 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MediaSourceSim.h" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="H26XDesktopRendererTest.c" />
+    <ClCompile Include="MediaSourceSim.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
@@ -77,7 +81,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -91,7 +95,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -103,17 +107,17 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter/include;$(SolutionDir)MediaFragmenter\deps\sdl2\include;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MediaFragmenter/include;$(SolutionDir)test\H26XDesktopRendererTest\deps\sdl2\include;$(SolutionDir)codecs\media;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;$(SolutionDir)MediaFragmenter\src;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)x64\Debug;$(SolutionDir)MediaFragmenter\deps\sdl2\lib;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;de265.lib;openh264.lib;MediaFragmenter.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)x64\Debug;$(SolutionDir)test\H26XDesktopRendererTest\deps\sdl2\lib;$(SolutionDir)codecs\$(Platform)\$(Configuration);$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>codec_core.lib;codec_hw.lib;mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;ole32.lib;Xplatbase.lib;SDL2.lib;de265.lib;openh264.lib;MediaFragmenter.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -122,7 +126,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>XPLATBASE_USE_SHARED;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>

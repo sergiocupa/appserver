@@ -1,6 +1,6 @@
-#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
-#include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
-#include "../include/MediaFragmenter.h"
+#include "memory_pool.h"
+#include "string_handler.h"
+#include "MediaFragmenter.h"
 #include "MediaSourceSim.h"
 
 

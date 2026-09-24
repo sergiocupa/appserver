@@ -24,7 +24,6 @@ extern "C" {
     // como StringX* e corrompe/crasha. O antigo stringlib usava (StringX*, const char*).
     static inline boolean string_equals_c(StringX* s, const char* c)
     {
-        return string_equal(s, c, c ? (int)strlen(c) : 0);
     }
 
     // ---- SHA1 (FIPS PUB 180-1) ----

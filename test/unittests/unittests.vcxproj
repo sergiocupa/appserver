@@ -107,6 +107,47 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- ====================================================================
+       Codec por demanda.
+
+       Os projetos da pasta Codecs ficam FORA do build geral (ActiveCfg sem
+       Build.0), para que um "Rebuild Solution" nao recompile 400 arquivos de
+       terceiros. Mas o NOSSO codigo de codec sao 12 arquivos, e deixa-lo de
+       fora traz o risco que ja custou caro aqui duas vezes: linkar .lib
+       velha em silencio.
+
+       Este alvo resolve os dois lados. O par Inputs/Outputs faz o MSBuild
+       PULAR o alvo quando todo fonte de codec e mais antigo que a lib, entao
+       no dia a dia ele nem executa. Quando algum fonte muda, ele constroi os
+       sete projetos nossos, e cada um deles ainda e incremental: so recompila
+       o arquivo que mudou.
+
+       As libs de TERCEIROS (libopus, libvpx, libdav1d, x265, SvtAv1Enc,
+       libyuv) continuam manuais, por codecs\build-codecs.bat: sao a parte
+       pesada e mudam so quando voce troca de versao, de proposito.
+       ==================================================================== -->
+  <ItemGroup>
+    <FonteDeCodec Include="$(SolutionDir)codecs\media\**\*.c" />
+    <FonteDeCodec Include="$(SolutionDir)codecs\media\**\*.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_core.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_hw.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_h264_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_h265_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_vp9_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_av1_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_opus_plugin.vcxproj" />
+  </ItemGroup>
+  <Target Name="ConstroiCodecSeMudou" BeforeTargets="Build"
+          Inputs="@(FonteDeCodec)"
+          Outputs="$(SolutionDir)codecs\$(Platform)\$(Configuration)\codec_core.lib">
+    <Message Importance="high" Text="Fonte de codec alterado: reconstruindo os projetos de codec ($(Configuration))..." />
+    <MSBuild Projects="@(ProjetoDeCodec)"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);SolutionDir=$(SolutionDir)"
+             BuildInParallel="true" />
+  </Target>
+
   <Target Name="CopiaXplatbaseDll" AfterTargets="Build">
     <!-- O executor de testes carrega esta DLL de dentro da pasta de saida; a Xplatbase.dll
          precisa estar ao lado, senao o modulo nem e carregado e o teste some da lista. -->

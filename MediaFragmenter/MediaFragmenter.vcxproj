@@ -19,8 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="deps\libde265\include\de265.h" />
-    <ClInclude Include="deps\openh264\include\codec_api.h" />
     <ClInclude Include="include\MediaFragmenter.h" />
     <ClInclude Include="src\BufferUtil.h" />
     <ClInclude Include="src\DashBuilder.h" />

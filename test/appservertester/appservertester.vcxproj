@@ -180,7 +180,7 @@
       <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_OPENH264;HAVE_SVTAV1;HAVE_X265;HAVE_LIBYUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
       <LanguageStandard>Default</LanguageStandard>
       <LanguageStandard_C>Default</LanguageStandard_C>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
@@ -189,7 +189,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Debug;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;$(SolutionDir)MediaGateway\x64\Debug;$(SolutionDir)codecs\x64\Debug;$(SolutionDir)codecs\svtav1\Bin\Debug;$(SolutionDir)codecs\x265\_vsbuild\Debug;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>yason.lib;dashstream.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib</AdditionalDependencies>
+      <AdditionalDependencies>yason.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib</AdditionalDependencies>
       
       
     </Link>
@@ -210,7 +210,7 @@
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)dashstream/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)appserver/include;$(SolutionDir)MediaFragmenter/include;$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway;$(SolutionDir)MediaGateway\media;$(SolutionDir)codecs\openh264\include;$(SolutionDir)codecs\libde265\include;$(SolutionDir)codecs\opus\include;$(SolutionDir)codecs\vpx;$(SolutionDir)codecs\vpx\third_party\libyuv\include;$(SolutionDir)codecs\svtav1\Source\API;$(SolutionDir)codecs\x265\source;$(SolutionDir)codecs\x265\_vsbuild;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -218,7 +218,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)appserver\submodules\yason\x64\Debug;$(SolutionDir)x64\Release;E:\git\appserver\codecs\openh264;E:\git\appserver\codecs\libde265;$(SolutionDir)MediaGateway\x64\Release;$(SolutionDir)codecs\x64\Release;$(SolutionDir)codecs\svtav1\Bin\Release;$(SolutionDir)codecs\x265\_vsbuild\Release;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>yason.lib;dashstream.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib;x265-static.lib</AdditionalDependencies>
+      <AdditionalDependencies>yason.lib;MediaGateway.lib;codec_core.lib;codec_hw.lib;libyuv.lib;x265-static.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -226,6 +226,47 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- ====================================================================
+       Codec por demanda.
+
+       Os projetos da pasta Codecs ficam FORA do build geral (ActiveCfg sem
+       Build.0), para que um "Rebuild Solution" nao recompile 400 arquivos de
+       terceiros. Mas o NOSSO codigo de codec sao 12 arquivos, e deixa-lo de
+       fora traz o risco que ja custou caro aqui duas vezes: linkar .lib
+       velha em silencio.
+
+       Este alvo resolve os dois lados. O par Inputs/Outputs faz o MSBuild
+       PULAR o alvo quando todo fonte de codec e mais antigo que a lib, entao
+       no dia a dia ele nem executa. Quando algum fonte muda, ele constroi os
+       sete projetos nossos, e cada um deles ainda e incremental: so recompila
+       o arquivo que mudou.
+
+       As libs de TERCEIROS (libopus, libvpx, libdav1d, x265, SvtAv1Enc,
+       libyuv) continuam manuais, por codecs\build-codecs.bat: sao a parte
+       pesada e mudam so quando voce troca de versao, de proposito.
+       ==================================================================== -->
+  <ItemGroup>
+    <FonteDeCodec Include="$(SolutionDir)codecs\media\**\*.c" />
+    <FonteDeCodec Include="$(SolutionDir)codecs\media\**\*.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_core.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_hw.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_h264_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_h265_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_vp9_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_av1_plugin.vcxproj" />
+    <ProjetoDeCodec Include="$(SolutionDir)codecs\codec_opus_plugin.vcxproj" />
+  </ItemGroup>
+  <Target Name="ConstroiCodecSeMudou" BeforeTargets="Build"
+          Inputs="@(FonteDeCodec)"
+          Outputs="$(SolutionDir)codecs\$(Platform)\$(Configuration)\codec_core.lib">
+    <Message Importance="high" Text="Fonte de codec alterado: reconstruindo os projetos de codec ($(Configuration))..." />
+    <MSBuild Projects="@(ProjetoDeCodec)"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);SolutionDir=$(SolutionDir)"
+             BuildInParallel="true" />
+  </Target>
+
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="CopiaXplatbaseDll" AfterTargets="Build">

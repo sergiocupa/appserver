@@ -362,8 +362,6 @@ extern "C" {
 
     FunctionBind* bind_create(const char* route);
     FunctionBind* bind_create_to_extension(const char* extension);
-    void bind_list_add_web_resource(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function);
-    void bind_list_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
     FunctionBindList* bind_list_release(FunctionBindList* list);
     FunctionBindList* bind_list_create();
     void bind_list_add(FunctionBindList* list, FunctionBind* bind);

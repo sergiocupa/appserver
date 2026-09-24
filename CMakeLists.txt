@@ -303,7 +303,6 @@ add_library(mediafragmenter STATIC
   MediaFragmenter/src/ImageTools.c
   MediaFragmenter/src/MediaFragmenter.c
   MediaFragmenter/src/MediaFragmenterType.c
-  # MediaSourceSim.c: simulador de player com SDL + Win32 -- so no Windows
   MediaFragmenter/src/Mp4Builder.c
   # Mp4BuilderTest.c: codigo de teste sem chamadores, que chama funcoes que nao existem
   # (build_avcC em vez de _build_avcC). No MSVC so nao quebra porque o objeto nunca e

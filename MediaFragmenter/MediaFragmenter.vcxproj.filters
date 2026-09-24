@@ -7,9 +7,6 @@
     <Filter Include="src">
       <UniqueIdentifier>{93bb9e78-80ad-4e7a-b0ed-508fb53eb7df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="deps">
-      <UniqueIdentifier>{89e48e30-3728-4f89-bcec-e60169dfdc08}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\MediaFragmenter.h">
@@ -17,9 +14,6 @@
     </ClInclude>
     <ClInclude Include="src\MediaFragmenterType.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\openh264\include\codec_api.h">
-      <Filter>deps</Filter>
     </ClInclude>
     <ClInclude Include="src\FileUtil.h">
       <Filter>src</Filter>
@@ -38,9 +32,6 @@
     </ClInclude>
     <ClInclude Include="src\DashBuilder.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="deps\libde265\include\de265.h">
-      <Filter>deps</Filter>
     </ClInclude>
     <ClInclude Include="src\H264Builder.h">
       <Filter>src</Filter>

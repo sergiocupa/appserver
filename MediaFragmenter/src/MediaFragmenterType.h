@@ -287,7 +287,6 @@ extern "C" {
     void mbuffer_append_uint8(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint16(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint32(MediaBuffer* buffer, uint32_t value);
-    void mbuffer_append_uint64(MediaBuffer* buffer, uint64_t value);
     void mbuffer_box_from_buf(MediaBuffer* db, const char* type, MediaBuffer* content);
     void mbuffer_append_uint32_string(MediaBuffer* buffer, uint32_t value);
     void mbuffer_append_uint64_string(MediaBuffer* buffer, uint64_t value);

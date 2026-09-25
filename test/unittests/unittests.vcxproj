@@ -77,6 +77,9 @@
     <ClCompile Include="test_plugins.c">
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
+    <ClCompile Include="bench_h264.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
     <ClCompile Include="test_instancia_modulos.c">
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>

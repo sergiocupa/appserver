@@ -57,6 +57,33 @@ message(STATUS "codecs: OS=${CMAKE_SYSTEM_NAME} ARCH=${CODECS_ARCH}")
 set(DEPS "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # ============================================================================
+#  Otimizacao ISOLADA nos codecs
+# ============================================================================
+#  Aqui o Debug compila otimizado. Vale so para ESTE diretorio e os que ele inclui
+#  (opus, svtav1, x265): set() em CMake nao volta para o escopo do pai, entao o resto
+#  do projeto continua compilando como sempre.
+#
+#  Por que: nos codecs a falta de otimizacao muda o RESULTADO de uma medicao, nao so o
+#  tempo de espera. E o libvpx nem escolha tinha -- ele nao tem CMake, entra por
+#  ExternalProject rodando o ./configure dele, que ignora o CMAKE_BUILD_TYPE e sai
+#  sempre otimizado (CONFIG_DEBUG 0, com AVX2). O resultado era um build onde um codec
+#  estava otimizado e os outros nao, e a comparacao entre eles nao valia nada.
+#
+#  O -O3 vem depois de CMAKE_C_FLAGS_DEBUG na linha de comando, entao ganha do -O0 que
+#  o gcc assume quando so ha -g. O -g continua, entao o simbolo de depuracao fica.
+#
+#  O preco: depurar DENTRO de um codec fica pior (inline, variaveis otimizadas).
+if(NOT MSVC)
+  string(APPEND CMAKE_C_FLAGS_DEBUG   " -O3")
+  string(APPEND CMAKE_CXX_FLAGS_DEBUG " -O3")
+  if(NOT CMAKE_BUILD_TYPE)
+    # Sem build type nenhum o gcc tambem cai em -O0, e nem as flags _DEBUG sao usadas.
+    string(APPEND CMAKE_C_FLAGS   " -O3")
+    string(APPEND CMAKE_CXX_FLAGS " -O3")
+  endif()
+endif()
+
+# ============================================================================
 #  1) Opus  (C portavel; escolhe intrinsecos pelo alvo)
 # ============================================================================
 set(OPUS_BUILD_SHARED_LIBRARY        OFF CACHE BOOL "" FORCE)

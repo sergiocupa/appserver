@@ -54,4 +54,11 @@ void teste_plugin_usa_o_pool_do_host(TestResult* r);
 void teste_plugin_nao_sai_em_uso(TestResult* r);
 void teste_plugin_descarrega_e_volta(TestResult* r);
 
+// ---- medicao com video real (pula se o arquivo nao estiver na maquina) -----
+void teste_bench_h264_threads(TestResult* r);
+
+void teste_bench_todos_codecs(TestResult* r);
+
+void teste_bench_varredura(TestResult* r);
+
 #endif

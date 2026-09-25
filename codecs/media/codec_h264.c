@@ -8,7 +8,12 @@
 
 #include "media_codec.h"
 #include "memory_pool.h"   // memop_* (evita declaracao implicita -> ponteiro truncado em x64)
+#include "codec_parallel.h" // quantas threads dar quando o chamador nao pede
+#include <stdio.h>
 #include <stdlib.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 #include <string.h>
 
 #ifdef HAVE_OPENH264
@@ -126,9 +131,36 @@ MediaEncoder* h264_encoder_open(const MediaEncoderParams* p)
     param.sSpatialLayers[0].fFrameRate    = param.fMaxFrameRate;
     param.sSpatialLayers[0].iSpatialBitrate = param.iTargetBitrate;
 
-    // (Threading do openh264 desativado: forcar iMultipleThreadIdc + SM_FIXEDSLCNUM_SLICE
-    //  produzia sLayerInfo/pNalLengthInByte inconsistente -> crash no h264_recv. O ganho por
-    //  slice e pequeno; mantem o default single-slice, que e estavel.)
+    // Threading por SLICES. Ficou desligado por muito tempo porque forcar
+    // iMultipleThreadIdc + SM_FIXEDSLCNUM_SLICE terminava em crash no h264_recv, com
+    // sLayerInfo/pNalLengthInByte inconsistentes. A causa nao era o threading: era a ABI
+    // do openh264 -- o campo rPsnr, que a 2.6.0 acrescentou ao fim de SLayerBSInfo,
+    // mudava o passo entre camadas contra a DLL 2.5.1 usada aqui. Com varias slices ha
+    // mais NALs por camada, e por isso o erro aparecia justamente neste caminho.
+    // O header ja foi acertado; o threading volta com o numero de threads que o chamador
+    // pedir. Threads <= 1 mantem o single-slice de sempre.
+    // Threads <= 0 significa "decida por mim": entra o padrao medido (metade dos
+    // nucleos fisicos). Threads == 1 e um PEDIDO explicito de uma thread -- e o que o
+    // caminho de segmentos paralelos usa, onde o paralelismo ja esta na camada de cima e
+    // mais slices so roubariam nucleo das outras tarefas. Esse caso segue single-slice.
+    {
+        // Regra do H.264: 0.5 x nucleos fisicos. Medido -- o rendimento por slice cai
+        // rapido (1.70x com 2, 2.26x com 4, 2.69x com 8): de 4 para 8 o consumo dobra
+        // para render 19%.
+        int budget = codec_nucleos_fisicos() / 2;
+
+        // Geometria: SLICES HORIZONTAIS, faixas de linhas de macrobloco (16 px). Faixa
+        // fina perde o contexto de predicao das vizinhas; exigimos 8 linhas por slice.
+        int faixas  = (p->Height / 16) / 8;
+
+        int threads = codec_threads(p->Threads, budget, faixas);
+        if (threads > 1)
+        {
+            param.iMultipleThreadIdc = (unsigned short)threads;
+            param.sSpatialLayers[0].sSliceArgument.uiSliceMode = SM_FIXEDSLCNUM_SLICE;
+            param.sSpatialLayers[0].sSliceArgument.uiSliceNum  = (unsigned int)threads;
+        }
+    }
 
     if ((*enc)->InitializeExt(enc, &param) != 0) { WelsDestroySVCEncoder(enc); return 0; }
     int fmt = videoFormatI420;

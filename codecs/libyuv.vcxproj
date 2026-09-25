@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64"><Configuration>Debug</Configuration><Platform>x64</Platform></ProjectConfiguration>
@@ -28,6 +28,10 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(ProjectDir)vpx/third_party/libyuv/include</AdditionalIncludeDirectories>
     </ClCompile>
+  </ItemDefinitionGroup>
+  <!-- Otimizacao LIGADA tambem no Debug. Isto vale so para os projetos de codec: o CRT continua o de Debug, entao nada muda para quem linka com eles. Sem bloco de Debug aqui o libyuv saia /Od pelo padrao do toolset. /RTC e incompativel com /O2, por isso o BasicRuntimeChecks explicito. -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile><Optimization>MaxSpeed</Optimization><BasicRuntimeChecks>Default</BasicRuntimeChecks></ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile><Optimization>MaxSpeed</Optimization></ClCompile>

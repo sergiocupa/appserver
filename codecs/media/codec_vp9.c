@@ -8,6 +8,7 @@
 //  Obter libvpx (Windows/MSVC): vcpkg install libvpx  (ou build proprio).
 
 #include "media_codec.h"
+#include "codec_parallel.h"
 #include "memory_pool.h"   // memop_* (evita declaracao implicita -> ponteiro truncado em x64)
 #include <stdlib.h>
 #include <string.h>
@@ -121,7 +122,18 @@ MediaEncoder* vp9_encoder_open(const MediaEncoderParams* p)
     cfg.rc_dropframe_thresh = 0;
     cfg.g_pass             = VPX_RC_ONE_PASS;
     cfg.g_lag_in_frames    = 0;   // realtime: sem lookahead
-    cfg.g_threads          = p->Threads > 0 ? (unsigned)p->Threads : 4;
+    // Regra do VP9: 2 x nucleos fisicos (= 1 x logicos). Medido -- com ROW_MT a curva
+    // so satura em 16 numa maquina de 8 fisicos / 16 logicos, e acima disso oscila
+    // dentro do ruido. O trabalho por linha e fino e regular, que e o caso em que o
+    // hyper-threading ainda rende.
+    //
+    // Geometria: o ROW_MT distribui LINHAS DE SUPERBLOCO (64 px) dentro de cada tile.
+    // As colunas de tile saem da largura, logo abaixo, e sao outro eixo.
+    {
+        int budget = codec_nucleos_fisicos() * 2;
+        int faixas = p->Height / 64;
+        cfg.g_threads = (unsigned)codec_threads(p->Threads, budget, faixas);
+    }
 
     if (vpx_codec_enc_init(&c->codec, vpx_codec_vp9_cx(), &cfg, 0) != VPX_CODEC_OK) { memop_free_raw(c); return 0; }
 
@@ -131,7 +143,9 @@ MediaEncoder* vp9_encoder_open(const MediaEncoderParams* p)
     // Tile columns = log2(threads), limitado pela largura (>=256px por coluna).
     // Com ROW_MT, isso faz o VP9 realmente espalhar o encode entre os threads.
     {
-        int T = p->Threads > 0 ? p->Threads : 4;
+        // O numero de colunas de tile sai da mesma conta de threads, e o teto pela
+        // LARGURA (>= 256 px por coluna, potencia de 2) e o cols_by_w logo abaixo.
+        int T = (int)cfg.g_threads;
         int tc = 0; while ((1 << (tc + 1)) <= T && tc < 6) tc++;              // log2(T)
         int cols_by_w = p->Width / 256; int max_tc = 0;
         while ((1 << (max_tc + 1)) <= cols_by_w && max_tc < 6) max_tc++;      // teto pela largura
@@ -239,7 +253,10 @@ MediaDecoder* vp9_decoder_open(void)
 
     vpx_codec_dec_cfg_t cfg;
     memset(&cfg, 0, sizeof(cfg));
-    cfg.threads = 4;   // o decode de VP9 escala por tiles; 4 cobre ate 1080p sem exagero
+    // O decode de VP9 escala por tiles. Antes era 4 fixo -- numero sem origem, que
+    // nao acompanhava nem a maquina nem a resolucao. A altura ainda nao e conhecida
+    // aqui (o primeiro quadro nao chegou), entao vale so a regra da maquina.
+    cfg.threads = (unsigned)codec_threads(0, codec_nucleos_fisicos() * 2, 0);
 
     if (vpx_codec_dec_init(&c->codec, vpx_codec_vp9_dx(), &cfg, 0) != VPX_CODEC_OK)
     { memop_free_raw(c); return 0; }

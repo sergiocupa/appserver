@@ -22,13 +22,35 @@ REM  Pre-requisitos ja no repo: nasm em codecs\tools\nasm.exe (2.16.03).
 REM  Projetos cmake ja gerados em _vsbuild (nao precisa re-rodar cmake).
 REM
 REM  x265 COM assembly: o _vsbuild do x265 foi gerado com ENABLE_ASSEMBLY=ON. Se precisar
-REM  regenerar (pasta apagada, outra maquina), o NASM tem de ser passado explicitamente --
-REM  sem ele o CMake do x265 registra NASM_EXECUTABLE-NOTFOUND e DESLIGA o assembly em
-REM  silencio (foi assim que o build anterior saiu sem ele).
+REM  regenerar (pasta apagada, outra maquina), NAO chame o cmake a mao: rode o
+REM  regen-codecs-cmake.bat, que ja passa o NASM e as flags certas. Sem o NASM o CMake do
+REM  x265 registra NASM_EXECUTABLE-NOTFOUND e DESLIGA o assembly em silencio (foi assim
+REM  que o build anterior saiu sem ele).
+REM
+REM  DEBUG AQUI E OTIMIZADO. So nesta pasta: todo projeto de codec compila com /O2 nas
+REM  DUAS configuracoes, mantendo o CRT de Debug (MultiThreadedDebugDLL). O resto da
+REM  solution nao muda em nada, e ninguem troca de CRT atravessando fronteira de DLL.
+REM  A razao: nos codecs a falta de otimizacao muda o RESULTADO de uma medicao, e nao so
+REM  o tempo de espera. O libvpx do Linux se compila pelo ./configure dele e ignora o
+REM  CMAKE_BUILD_TYPE, saindo sempre otimizado; o do Windows saia /Od. O mesmo teste de
+REM  ida e volta marcava 420 ms num lado e 60 ms no outro, e a diferenca nao era o sistema
+REM  operacional.
+REM
+REM  O preco: depurar DENTRO de um codec fica pior (inline, variaveis otimizadas). Se
+REM  precisar, ponha Optimization=Disabled no projeto em questao e lembre de desfazer.
 REM ============================================================================
 
 setlocal
-set ROOT=%~dp0..
+REM  Resolve a raiz para um caminho absoluto SEM ".." no meio. O "%~dp0.." cru vinha com
+REM  o ".." literal, e o SolutionDir sai dai.
+pushd "%~dp0.."
+set ROOT=%CD%
+popd
+if not "%ROOT%"=="%ROOT: =%" (
+    echo ERRO: o caminho do repositorio tem espaco: "%ROOT%"
+    echo Este script passa o SolutionDir sem aspas; veja a nota no fim do arquivo.
+    exit /b 1
+)
 set CFGS=%1
 if "%CFGS%"=="" set CFGS=Debug Release
 
@@ -67,7 +89,12 @@ echo ======== OK: todos os projetos de codec gerados ========
 exit /b 0
 
 :build
-msbuild %1 /p:Configuration=%2 /p:Platform=x64 /p:SolutionDir="%ROOT%\" /m /v:minimal /nologo
+REM  SolutionDir SEM aspas de proposito. Com aspas o valor termina em \" e o MSBuild le
+REM  isso como aspas escapada: o resto da linha (/m /v:minimal /nologo) era engolido para
+REM  dentro da propriedade, e os projetos gerados pelo CMake quebravam com
+REM  "Caracteres invalidos no caminho" ao expandir $(SolutionDir). Isso exige que o
+REM  caminho do repositorio nao tenha espacos -- a verificacao esta no topo do script.
+msbuild %1 /p:Configuration=%2 /p:Platform=x64 /p:SolutionDir=%ROOT%\ /m /v:minimal /nologo
 exit /b %errorlevel%
 
 :err

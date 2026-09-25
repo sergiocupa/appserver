@@ -7,6 +7,7 @@
 //  Saiu do codec_video.c, que tinha isto junto com o decode de H.264.
 
 #include "dec_select.h"
+#include "codec_parallel.h"
 #include <stdio.h>
 #include "de265.h"
 
@@ -20,9 +21,14 @@ static void* h265_dec_create(void)
     de265_set_parameter_bool(decoder, DE265_DECODER_PARAM_DISABLE_DEBLOCKING, 0);
     de265_set_parameter_bool(decoder, DE265_DECODER_PARAM_DISABLE_SAO, 0);
 
-    // Usar múltiplas threads se disponível
-    int num_threads = 4;  // Ajustar conforme necessário
-    de265_start_worker_threads(decoder, num_threads);
+    // Threads de trabalho do libde265. Era 4 fixo, "ajustar conforme necessario" --
+    // numero sem origem, que nao acompanhava nem a maquina nem a resolucao.
+    //
+    // Aqui vale so a regra da maquina do H.265 (1 x nucleos fisicos): o teto de geometria
+    // depende da altura do quadro, que so se conhece depois do primeiro NAL. E a regra foi
+    // medida no ENCODE (x265); o decode do libde265 nao foi medido, entao fica no mesmo
+    // numero em vez de ganhar um palpite proprio.
+    de265_start_worker_threads(decoder, codec_threads(0, codec_nucleos_fisicos(), 0));
 
     return decoder;
 }

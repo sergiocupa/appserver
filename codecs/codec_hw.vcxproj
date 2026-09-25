@@ -18,9 +18,10 @@
     <OutDir>$(ProjectDir)x64\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)x64\$(Configuration)\obj\codec_hw\</IntDir>
   </PropertyGroup>
+  <!-- Otimizacao LIGADA tambem no Debug. Isto vale so para os projetos de codec: o CRT continua o de Debug (MultiThreadedDebugDLL), entao nada muda para quem linka com eles. Sem isto, o libvpx do Windows saia /Od enquanto o do Linux se compila sozinho pelo ./configure dele e sai otimizado - a mesma medicao dava 420 ms num lado e 60 ms no outro. /RTC e incompativel com /O2, por isso o BasicRuntimeChecks explicito. -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>Disabled</Optimization>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel><Optimization>MaxSpeed</Optimization><BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_DEBUG;OPUS_BUILD;USE_ALLOCA;WIN32;_CRT_SECURE_NO_WARNINGS;HAVE_LIBOPUS;HAVE_LIBVPX;HAVE_SVTAV1;HAVE_DAV1D;HAVE_X265;HAVE_OPENH264;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)opus/include;$(ProjectDir)opus/celt;$(ProjectDir)opus/silk;$(ProjectDir)opus/silk/float;$(ProjectDir)opus;$(ProjectDir)vpx;$(ProjectDir)dav1d/include/compat/msvc;$(ProjectDir)dav1d;$(ProjectDir)dav1d/include;$(ProjectDir)dav1d/include/dav1d;$(ProjectDir)dav1d/src;$(ProjectDir)dav1d/build;$(ProjectDir)svtav1/Source/API;$(ProjectDir)x265/source;$(ProjectDir)x265/_vsbuild;$(ProjectDir)openh264/include;$(ProjectDir)media;$(ProjectDir)../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src;$(ProjectDir)libde265/include</AdditionalIncludeDirectories>

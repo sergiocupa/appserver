@@ -7,6 +7,7 @@
 //  NAO TESTADO EM RUNTIME.
 
 #include "media_codec.h"
+#include "codec_parallel.h"
 #include "memory_pool.h"   // memop_* (evita declaracao implicita -> ponteiro truncado em x64)
 #include <stdlib.h>
 #include <string.h>
@@ -179,11 +180,16 @@ MediaEncoder* av1_encoder_open(const MediaEncoderParams* p)
 
     // Paralelismo POR INSTANCIA. Sem isto, cada encoder se dimensiona para a maquina
     // inteira -- e o gateway abre um por rendition, o que multiplica threads que so
-    // disputam os mesmos nucleos. O campo e' um NIVEL (1..6), nao uma contagem de threads;
-    // 0 deixa o SVT decidir (caso de encoder unico, como a conversao para arquivo).
-    if (p->Threads > 0)
+    // disputam os mesmos nucleos.
+    //
+    // Regra do AV1: 0.5 x nucleos fisicos. Medido -- 5.87x no nivel 3, 8.40x no 4, e
+    // 8.47x / 8.46x nos niveis 5 e 6: satura em 4.
+    //
+    // Nao ha teto de geometria aqui: o campo e um NIVEL de configuracao interna do SVT
+    // (1..6), nao uma contagem de threads nem uma divisao do quadro.
     {
-        uint32_t level = (uint32_t)(p->Threads < 6 ? p->Threads : 6);
+        int t = codec_threads(p->Threads, codec_nucleos_fisicos() / 2, 0);
+        uint32_t level = (uint32_t)(t < 6 ? t : 6);
         cfg.level_of_parallelism = level;
         cfg.logical_processors   = level;   // nome antigo do mesmo controle (SVT < 3.0)
     }

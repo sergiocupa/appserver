@@ -24,6 +24,14 @@ extern "C" {
     // como StringX* e corrompe/crasha. O antigo stringlib usava (StringX*, const char*).
     static inline boolean string_equals_c(StringX* s, const char* c)
     {
+        // O return abaixo foi apagado por engano no commit d0aa10e ("removido nao
+        // usados mais"): a funcao ficou com corpo VAZIO. Sem return, o valor devolvido
+        // e lixo do registrador, e quem chamava passou a decidir por acaso.
+        // Derrubou todo arquivo estatico do servidor (o guarda de ".." em
+        // binder_get_web_resource rejeitava qualquer rota com segmento), e ainda
+        // alcanca o parser de HTTP, que compara metodo e Connection por aqui.
+        // O string_equal do xplatbase nunca saiu de la; so a chamada se perdeu.
+        return string_equal(s, c, c ? (int)strlen(c) : 0);
     }
 
     // ---- SHA1 (FIPS PUB 180-1) ----

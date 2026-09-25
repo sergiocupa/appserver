@@ -37,7 +37,9 @@ AppServerList Servers;
 
 void send_response_server_error(Message* request, const char* msg)
 {
-    int msgz = sizeof(msg);
+    // Era sizeof(msg): o TAMANHO DO PONTEIRO, 8 em x64. Todo erro 500 saia com
+    // Content-Length 8 e o texto cortado, o que escondia qual das causas tinha sido.
+    int msgz = msg ? (int)strlen(msg) : 0;
     ResourceBuffer rb = { .Data = msg, .Length = msgz, .Type = TEXT_PLAIN };
     appserver_http_response_send(request->Client->Server, request, HTTP_STATUS_INTERNAL_ERROR, &rb, 0, 0);
 }

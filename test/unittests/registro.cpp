@@ -114,4 +114,12 @@ public:
     CASO(NaoSaiEmUso,             teste_plugin_nao_sai_em_uso)
     CASO(DescarregaEVolta,        teste_plugin_descarrega_e_volta)
 };
+
+TEST_CLASS(Bench)
+{
+public:
+    CASO(H264Threads,             teste_bench_h264_threads)
+    CASO(TodosCodecs,             teste_bench_todos_codecs)
+    CASO(Varredura,               teste_bench_varredura)
+};
 }   // namespace Suite

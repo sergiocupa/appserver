@@ -7,6 +7,7 @@
 //  ciente das implicacoes. Saida do encoder e Annex-B (start codes). NAO TESTADO EM RUNTIME.
 
 #include "media_codec.h"
+#include "codec_parallel.h"
 #include "memory_pool.h"   // memop_* (evita declaracao implicita -> ponteiro truncado em x64)
 #include <stdlib.h>
 #include <string.h>
@@ -129,11 +130,18 @@ MediaEncoder* h265_encoder_open(const MediaEncoderParams* p)
     param->rc.rateControlMode = X265_RC_ABR;
     param->rc.bitrate   = (p->BitrateBps > 0 ? p->BitrateBps : 2000000) / 1000;   // kbps
 
-    // Paralelismo: WPP (linhas de CTU em paralelo) limitado a p->Threads; sem frame-parallel
-    // (evita reordenacao/latencia). Se Threads<=0, mantem o default do preset (usa os cores).
-    if (p->Threads > 0)
+    // Regra do H.265: 1 x nucleos fisicos. Medido -- 2.75x com 4 pools, 3.59x com 8,
+    // e de 8 para 12 o ganho e de 1%.
+    //
+    // Geometria: WPP processa FRENTES DE ONDA em linhas de CTU (64 px), logo o eixo e a
+    // altura. Frame-parallel continua desligado (frameNumThreads = 1): ele evita
+    // reordenacao e latencia, e nao foi medido -- ligar sem medir seria trocar um
+    // comportamento conhecido por um palpite.
     {
-        char pools[16]; snprintf(pools, sizeof(pools), "%d", p->Threads);
+        int budget = codec_nucleos_fisicos();
+        int faixas = p->Height / 64;
+        int t      = codec_threads(p->Threads, budget, faixas);
+        char pools[16]; snprintf(pools, sizeof(pools), "%d", t);
         api->param_parse(param, "pools", pools);
         param->frameNumThreads  = 1;
         param->bEnableWavefront = 1;

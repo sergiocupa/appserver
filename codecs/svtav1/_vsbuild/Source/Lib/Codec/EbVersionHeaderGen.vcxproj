@@ -109,7 +109,7 @@
     <CustomBuild Include="E:\git\appserver\codecs\svtav1\_vsbuild\CMakeFiles\613d8358ff06c81b55bac192fbd0021b\EbVersionHeaderGen.rule">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating version header</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -123,7 +123,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating version header</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -137,7 +137,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</VerifyInputsAndOutputsExist>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Generating version header</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -151,7 +151,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</VerifyInputsAndOutputsExist>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Generating version header</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D INPUT_FILE=E:/git/appserver/codecs/svtav1/Source/Lib/Codec/EbVersion.h.in -D OUTPUT_FILE=EbVersion.h -D GIT_ROOT_DIR=E:/git/appserver/codecs/svtav1 -D PACKAGE_VERSION_STRING=2.3.0 -P E:/git/appserver/codecs/svtav1/Source/Lib/Codec/ConfigureGitVersion.cmake
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -170,7 +170,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <UseUtf8Encoding>Always</UseUtf8Encoding>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -178,12 +178,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -191,12 +191,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -204,12 +204,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule E:/git/appserver/codecs/svtav1/Source/Lib/Codec/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
+"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SE:/git/appserver/codecs/svtav1 -BE:/git/appserver/codecs/svtav1/_vsbuild --check-stamp-file E:/git/appserver/codecs/svtav1/_vsbuild/Source/Lib/Codec/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -217,7 +217,7 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.props.in;%(AdditionalInputs)</AdditionalInputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">E:\git\appserver\codecs\svtav1\_vsbuild\Source\Lib\Codec\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
@@ -237,6 +237,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.targets" />
+    <Import Project="C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\share\cmake-4.3\Templates\MSBuild\nasm.targets" />
   </ImportGroup>
 </Project>

@@ -146,6 +146,18 @@ target_compile_definitions(appserver_lib PRIVATE XPLATBASE_NO_AUTO_INIT)
 target_link_libraries(appserver_lib PUBLIC yason xplatbase)
 app_compat(appserver_lib)
 
+# Otimizacao ISOLADA: so os alvos de codec, mesmo num build Debug. As deps de terceiros
+# ganham isso no escopo de codecs/CMakeLists.txt; estes alvos moram aqui, entao ganham um
+# a um. As COMPILE_OPTIONS do alvo entram DEPOIS de CMAKE_C_FLAGS_<CONFIG> na linha de
+# comando, entao o -O3 vence o -O0 que o gcc assume quando so ha -g; o -g continua.
+#
+# Motivo e preco estao escritos por extenso em codecs/CMakeLists.txt.
+function(codec_otimiza alvo)
+  if(NOT MSVC)
+    target_compile_options(${alvo} PRIVATE -O3)
+  endif()
+endfunction()
+
 # ============================================================================
 #  libyuv (mesmos 22 fontes do libyuv.vcxproj; os _win/_neon se auto-excluem por #if)
 # ============================================================================
@@ -160,6 +172,7 @@ add_library(yuv STATIC
   ${YUV}/source/rotate_any.cc ${YUV}/source/rotate_gcc.cc ${YUV}/source/rotate_win.cc
   ${YUV}/source/video_common.cc)
 target_include_directories(yuv PUBLIC ${YUV}/include)
+codec_otimiza(yuv)
 
 # ============================================================================
 #  dav1d (decoder AV1) -- C + assembly NASM em x86-64 (elf64); ARM64 em C puro
@@ -200,6 +213,7 @@ target_include_directories(dav1d
   PUBLIC  ${DAV1D}/include
   PRIVATE ${DAV1D} ${DAV1D}/include/dav1d ${DAV1D}/src ${DAV1D}/build)
 target_link_libraries(dav1d PUBLIC Threads::Threads m)
+codec_otimiza(dav1d)
 
 # ============================================================================
 #  Camada de codecs (encode/decode, seletor de backend)
@@ -219,6 +233,7 @@ function(codec_alvo nome)
     PRIVATE ${OPENH264_WELS_DIR} ${DE265_HDR_DIR})
   target_compile_definitions(${nome} PRIVATE ${CODEC_DEFS})
   target_link_libraries(${nome} PUBLIC codecs dav1d xplatbase PkgConfig::OPENH264 PkgConfig::DE265)
+  codec_otimiza(${nome})
   app_compat(${nome})
 endfunction()
 
@@ -236,6 +251,7 @@ function(codec_plugin nome define)
   target_compile_definitions(${nome} PRIVATE ${CODEC_DEFS} CODEC_PLUGIN_BUILD ${define})
   target_link_libraries(${nome} PRIVATE codecs dav1d xplatbase PkgConfig::OPENH264 PkgConfig::DE265)
   set_target_properties(${nome} PROPERTIES C_VISIBILITY_PRESET hidden)
+  codec_otimiza(${nome})
   app_compat(${nome})
 endfunction()
 
@@ -354,6 +370,7 @@ add_executable(unittests
   test/unittests/test_codecs.c
   test/unittests/test_gateway_matrix.c
   test/unittests/test_plugins.c
+  test/unittests/bench_h264.c
   test/unittests/test_instancia_modulos.c
   test/unittests/runner_main.c)
 target_include_directories(unittests PRIVATE
@@ -376,6 +393,9 @@ foreach(caso
     "Pipeline.GatewayDashVp9"
     "Pipeline.GatewayHlsH264"
     "Pipeline.GatewayMemoriaNaoCresce"
+    "Bench.H264Threads"
+    "Bench.TodosCodecs"
+    "Bench.Varredura"
     "Plugins.Carregado"
     "Plugins.UsaOPoolDoHost"
     "Plugins.NaoSaiEmUso"

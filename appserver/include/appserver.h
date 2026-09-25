@@ -24,7 +24,21 @@ extern "C" {
 
 
 
-    XPLATBASE_API AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, const char* web_content_path, FunctionBindList* bind_list);
+    /* enable_health_monitor: liga a rota embutida de saude, /<prefix>/health.
+     *
+     *   true  -> amostra CPU, memoria do processo, contadores do pool do xplatbase e, no
+     *            Windows, GPU via PDH. A rota expoe contadores internos do processo SEM
+     *            passar por autenticacao -- ver a ressalva em health_controller.c antes de
+     *            expor o servidor fora de uma rede de confianca.
+     *   false -> o monitor nao inicializa, a consulta do PDH nao abre, nenhuma amostra e
+     *            colhida e /<prefix>/health nao existe (cai na rota nao encontrada).
+     *
+     *  O que o parametro NAO muda: pdh.dll continua mapeada no processo nos dois casos,
+     *  porque o import e estatico (ver a nota em health_monitor.c). d3d11.dll e dxgi.dll
+     *  tambem aparecem sempre, mas vem do encode por hardware em codecs/media/hw_dec_mf.c,
+     *  nada a ver com este monitor. Em nenhum dos casos roda codigo de PDH com false.
+     */
+    XPLATBASE_API AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, const char* web_content_path, FunctionBindList* bind_list, boolean enable_health_monitor);
 
     void app_add_receiver(FunctionBindList* list, const char* route, MessageMatchReceiverCalback function, bool with_callback);
     void app_add_receiver_extension(FunctionBindList* list, const char* extension, MessageMatchReceiverCalback function, bool with_callback);

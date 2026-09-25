@@ -1,0 +1,45 @@
+<div class="painel" id="painel">
+
+    <div class="topo" id="topo" title="Saude do processo servidor">
+        <span class="led" id="led"></span>
+        <span class="titulo">Servidor</span>
+        <span class="seta" id="seta">&#9650;</span>
+    </div>
+
+    <div class="corpo">
+
+        <div class="linha">
+            <span class="rotulo">CPU</span>
+            <span class="barra"><span class="preenche" id="cpu-barra"></span></span>
+            <span class="valor" id="cpu-valor">--</span>
+        </div>
+
+        <div class="linha">
+            <span class="rotulo">GPU</span>
+            <span class="barra"><span class="preenche" id="gpu-barra"></span></span>
+            <span class="valor" id="gpu-valor">--</span>
+        </div>
+
+        <div class="linha">
+            <span class="rotulo">Mem</span>
+            <span class="barra"><span class="preenche" id="mem-barra"></span></span>
+            <span class="valor" id="mem-valor">--</span>
+        </div>
+
+        <div class="detalhe">
+            <div>Blocos vivos: <b id="vivos">--</b> <span class="tend" id="tend"></span></div>
+            <div>Pool reservado: <b id="reservado">--</b></div>
+            <div id="gpu-video-linha">Engine de video: <b id="gpu-video">--</b></div>
+        </div>
+
+        <div class="leak-motivo" id="leak-motivo"></div>
+
+        <div class="acoes">
+            <button id="btn-scan" title="Suspende as threads uma a uma para varrer alcancabilidade. Caro: use sob demanda.">Varrer vazamento</button>
+            <span class="aviso" id="scan-aviso"></span>
+        </div>
+
+        <div class="log" id="log"></div>
+
+    </div>
+</div>

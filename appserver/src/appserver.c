@@ -20,6 +20,7 @@
 #include "utils/message_assembler.h"
 #include "utils/message_parser.h"
 #include "utils/activity_binder.h"
+#include "utils/health_monitor.h"   // painel de saude embutido
 #include "yason.h"
 #include "utils/websocket_util.h"
 
@@ -33,6 +34,11 @@ MessageField HTTP_HEADER_ALLOW_HEADERS;
 MessageField HTTP_HEADER_ALLOW_METHODS;
 AppServerList Servers;
 
+
+
+// Definido em health_controller.c. Declarado aqui para nao criar um header so por
+// causa de um simbolo interno da biblioteca.
+Element* appserver_health_route(Message* request);
 
 
 void send_response_server_error(Message* request, const char* msg)
@@ -123,6 +129,8 @@ void appserver_init()
 void appserver_shutdown()
 {
     if (!ServerInitialized) return;
+
+    health_monitor_shutdown();   // no-op se nunca foi iniciado; fecha a consulta do PDH
 
 
     //...
@@ -329,12 +337,27 @@ void accept_client_proc(void* ptr)
 
 
 
-AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, const char* web_content_path, FunctionBindList* bind_list)
+AppServerInfo* appserver_create(const char* agent_name, const int port, const char* prefix, const char* web_content_path, FunctionBindList* bind_list, boolean enable_health_monitor)
 {
     appserver_init();
 
     AppServerInfo* info = serverinfo_create();
     info->BindList  = bind_list;
+
+    // Rota de saude EMBUTIDA: /<prefixo>/health, so se o chamador pedir. Entra na lista
+    // dele para que a aplicacao a tenha sem registrar nada. Desligada, nem o monitor
+    // inicializa -- e isso importa, porque o init do PDH carrega pdh.dll, d3d11.dll e
+    // dxgi.dll no processo. Ver health_controller.c, inclusive a ressalva de que a rota
+    // ainda nao passa por autenticacao.
+    //
+    // ANTES do laco logo abaixo, de proposito: e ele quem da um Thung.Client a cada bind.
+    // Registrada depois, a rota entrava na lista com esse campo nulo, e o servidor travava
+    // ao atender por ela -- foi o que aconteceu, e custou caro achar.
+    if (enable_health_monitor)
+    {
+        health_monitor_init();
+        if (info->BindList) app_add_receiver(info->BindList, "health", appserver_health_route, true);
+    }
     info->IsRunning = true;
 	info->Events    = event_list_create();
 

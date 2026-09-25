@@ -13,8 +13,23 @@
             onerror="var s=document.createElement('script');s.src='https://cdn.dashjs.org/v4.7.4/dash.all.min.js';document.head.appendChild(s);"></script>
     <script type="module" src="components/ui/authentication/login-box.js"></script>
     <script type="module" src="components/ui/player/video-player.js"></script>
+    <!-- Painel de saude do servidor (canto superior direito). Le /api/health.
+
+         NOTA sobre um defeito do servidor que NAO e deste painel: servindo esta pagina
+         para um navegador, o appservertester as vezes TRAVA -- para de responder em
+         qualquer rota, o processo segue vivo, e o log termina no aviso
+         "SEGUNDA INSTANCIA NO MESMO PROCESSO" do xplatbase (a codec_h264_plugin.dll traz
+         a Xplatbase.dll para um processo que ja tem uma copia estatica: dois pools de
+         memoria e dois registros de thread no mesmo processo).
+
+         Ficou provado que o painel nao causa isso: com ele DESLIGADO na pagina, e com
+         ZERO requisicoes a /api/health no log, o travamento aconteceu igual. E o
+         endpoint sozinho aguentou tudo que foi jogado nele por curl -- sequencial,
+         keep-alive, seis simultaneas e com os cabecalhos do Chrome. -->
+    <script type="module" src="components/ui/health/health-box.js"></script>
 </head>
 <body>
+    <health-box></health-box>
     <header>
         <logoff-box></logoff-box>
     </header>

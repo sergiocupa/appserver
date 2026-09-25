@@ -1,0 +1,203 @@
+/*  Painel de saude do servidor -- canto superior direito.
+
+    position:fixed de proposito: o <body> do VideoViewer e um grid com place-items:center,
+    entao qualquer elemento no fluxo normal seria centralizado junto com o player. O painel
+    precisa ficar ancorado no canto, independente do layout da pagina.                    */
+
+:host {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-size: 12px;
+    color: #e8eef6;
+}
+
+.painel {
+    width: 232px;
+    background: rgba(15, 21, 28, .92);
+    border: 1px solid #22303f;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+    backdrop-filter: blur(6px);
+    overflow: hidden;
+}
+
+.topo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    user-select: none;
+    background: #131a22;
+    border-bottom: 1px solid #22303f;
+}
+
+.titulo {
+    flex: 1;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+/* Verde = respondeu; vermelho = servidor fora do ar ou rota indisponivel. */
+.led {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3fb950;
+    box-shadow: 0 0 6px #3fb95088;
+}
+.led.off { background: #f85149; box-shadow: 0 0 6px #f8514988; }
+
+.seta { color: #a3b0c2; font-size: 10px; }
+
+.corpo { padding: 8px 10px 10px; }
+.painel.fechado .corpo { display: none; }
+
+.linha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 7px 0;
+}
+
+.rotulo { width: 42px; color: #a3b0c2; }
+
+.barra {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #1d2733;
+    overflow: hidden;
+}
+
+.preenche {
+    height: 100%;
+    width: 0;
+    border-radius: 3px;
+    background: #4da3ff;
+    transition: width .35s ease, background-color .35s ease;
+}
+.preenche.medio { background: #d9a441; }
+.preenche.alto  { background: #f85149; }
+
+.valor {
+    width: 54px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.nd { color: #6b7a8d; font-style: italic; }
+
+.detalhe {
+    margin-top: 9px;
+    padding-top: 8px;
+    border-top: 1px solid #22303f;
+    color: #a3b0c2;
+    line-height: 1.55;
+}
+
+.detalhe b { color: #e8eef6; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Tendencia dos blocos vivos: subindo de forma sustentada = acumulo. */
+.tend      { font-variant-numeric: tabular-nums; }
+.tend.sobe { color: #f0a04b; }
+.tend.desce{ color: #3fb950; }
+
+.acoes { margin-top: 9px; display: flex; gap: 6px; align-items: center; }
+
+button {
+    font: inherit;
+    color: #e8eef6;
+    background: #1d2733;
+    border: 1px solid #2a3a4c;
+    border-radius: 6px;
+    padding: 4px 9px;
+    cursor: pointer;
+}
+button:hover:not(:disabled) { background: #273242; }
+button:disabled { opacity: .5; cursor: default; }
+
+.aviso { color: #6b7a8d; font-size: 11px; }
+
+.log {
+    margin-top: 8px;
+    max-height: 190px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: #c6d3e2;
+    background: #0b1016;
+    border: 1px solid #22303f;
+    border-radius: 6px;
+    padding: 6px 7px;
+}
+.log:empty { display: none; }
+
+
+/*  Alarme de vazamento. O botao pisca so para CHAMAR atencao -- a varredura detalhada
+    continua sendo uma escolha de quem esta olhando, porque ela e cara.                */
+@keyframes pulso-alarme {
+    0%, 100% { background: #3d1e1e; border-color: #7a2d2d; }
+    50%      { background: #6e2a2a; border-color: #f85149; }
+}
+@keyframes pulso-observar {
+    0%, 100% { background: #3a301a; border-color: #6b5524; }
+    50%      { background: #55431f; border-color: #d9a441; }
+}
+
+button.alarme   { animation: pulso-alarme   1.1s ease-in-out infinite; color: #ffd9d6; }
+button.observar { animation: pulso-observar 1.8s ease-in-out infinite; color: #ffeccc; }
+
+/* Quem prefere menos movimento na tela ganha o aviso em cor fixa. */
+@media (prefers-reduced-motion: reduce) {
+    button.alarme, button.observar { animation: none; }
+    button.alarme   { background: #6e2a2a; border-color: #f85149; }
+    button.observar { background: #55431f; border-color: #d9a441; }
+}
+
+.leak-motivo { font-size: 11px; line-height: 1.45; margin-top: 6px; }
+.leak-motivo.alarme   { color: #f0908a; }
+.leak-motivo.observar { color: #d9a441; }
+.leak-motivo.ok       { color: #6b7a8d; }
+
+
+/*  Relatorio de vazamento. O painel alarga so quando ha relatorio aberto -- 232px cabe
+    os numeros do dia a dia, mas nao um nome de funcao com arquivo e linha.            */
+.painel.largo { width: 340px; }
+
+.log .resumo {
+    color: #a3b0c2;
+    margin-bottom: 6px;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.log .item {
+    padding: 5px 0;
+    border-top: 1px solid #1a242f;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.log .item:first-of-type { border-top: 0; }
+.log .item.crit .origem { color: #f85149; }
+
+.log .origem {
+    color: #e8eef6;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.log .origem .arq {
+    color: #6b7a8d;
+    font-weight: 400;
+    font-size: 10px;
+    margin-left: 6px;
+}
+
+.log .pilha  { color: #8fa2b8; font-size: 10px; margin-top: 1px; word-break: break-word; }
+.log .nums   { color: #6b7a8d; font-size: 10px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.log .vazio  { color: #6b7a8d; font-family: ui-sans-serif, system-ui, sans-serif; }

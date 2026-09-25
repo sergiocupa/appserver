@@ -23,6 +23,7 @@
     <ClInclude Include="src\appclient.h" />
     <ClInclude Include="src\event_server.h" />
     <ClInclude Include="src\server_type.h" />
+    <ClInclude Include="src\utils\health_monitor.h" />
     <ClInclude Include="src\utils\activity_binder.h" />
     <ClInclude Include="src\utils\callback_binder.h" />
     <ClInclude Include="src\utils\message_assembler.h" />
@@ -34,6 +35,8 @@
     <ClCompile Include="src\appclient.c" />
     <ClCompile Include="src\appserver.c" />
     <ClCompile Include="src\event_server.c" />
+    <ClCompile Include="src\health_controller.c" />
+    <ClCompile Include="src\utils\health_monitor.c" />
     <ClCompile Include="src\server_type.c" />
     <ClCompile Include="src\utils\activity_binder.c" />
     <ClCompile Include="src\utils\callback_binder.c" />

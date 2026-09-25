@@ -648,3 +648,162 @@ video {
     font-size: 11px;
     color: #7d8b99;
 }
+
+
+/*  Cabecalho das faixas de fragmentacao: quanto ja andou, ha quanto tempo, e quanto
+    deve durar no total. A estimativa e uma PROJECAO do ritmo ate agora -- por isso vem
+    com "~" e so aparece depois que ha progresso suficiente para ela significar algo. */
+.frag-head {
+    padding: 10px 16px 8px;
+    background: #0b141e;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.frag-head[hidden] { display: none; }
+
+.frag-head-linha {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted, #a3b0c2);
+}
+
+.frag-head-rotulo { font-weight: 600; color: #e8eef6; }
+
+.frag-head-pct {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #7ae2ff;
+}
+
+.frag-head-tempo {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.frag-head-tempo b { color: #e8eef6; font-weight: 600; }
+.frag-head-sep     { opacity: .5; margin: 0 2px; }
+
+.frag-head-barra {
+    margin-top: 6px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.07);
+    overflow: hidden;
+}
+
+.frag-head-barra > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4da3ff, #7ae2ff);
+    transition: width .3s ease;
+}
+
+/* Concluido: o cabecalho para de estimar e passa a mostrar o total medido. */
+.frag-head.concluido .frag-head-pct    { color: #7ee0a2; }
+.frag-head.concluido .frag-head-barra > i { background: #7ee0a2; }
+
+
+/*  ---- Tela cheia ----------------------------------------------------------------
+    Vai para tela cheia a CASCA (video + barra de controles), nao o elemento <video>.
+    Mandando o proprio video, o navegador desenha os controles nativos dele (ou nenhum)
+    e a barra de busca e o seletor de qualidade somem.                              */
+.player-shell:fullscreen {
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    height: 100%;
+}
+
+.player-shell:fullscreen .stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Em tela cheia o video se ajusta a area, sem esticar: o object-fit preserva a
+   proporcao e a altura maxima impede que ele empurre a barra para fora. */
+.player-shell:fullscreen video {
+    max-height: 100%;
+    height: auto;
+    object-fit: contain;
+    aspect-ratio: auto;
+}
+
+.player-shell:fullscreen .controls {
+    flex: 0 0 auto;
+    background: rgba(10, 15, 20, 0.92);
+}
+
+/* O icone alterna entre "abrir" e "sair" conforme o estado. */
+#fullscreen .fs-sair  { display: none; }
+#fullscreen[aria-pressed="true"] .fs-abrir { display: none; }
+#fullscreen[aria-pressed="true"] .fs-sair  { display: inline; }
+
+
+/*  ---- Volume -------------------------------------------------------------------
+    O icone mostra o estado em tres degraus: mudo, baixo (uma onda) e alto (duas).
+    So o icone -- o numero exato quem diz e a barra.                              */
+.volume-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#mute .vol-mudo { display: none; }
+
+#mute[data-nivel="mudo"] .vol-onda-1,
+#mute[data-nivel="mudo"] .vol-onda-2 { display: none; }
+#mute[data-nivel="mudo"] .vol-mudo   { display: inline; }
+
+#mute[data-nivel="baixo"] .vol-onda-2 { display: none; }
+
+.volume-slider {
+    width: 84px;
+    height: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.14);
+    outline: none;
+    cursor: pointer;
+}
+
+/* O preenchimento ate o ponto atual vem de uma variavel que o JS atualiza: um
+   input[type=range] nao tem, sozinho, como colorir so o trecho percorrido. */
+.volume-slider {
+    background: linear-gradient(90deg,
+                var(--primary, #4da3ff) 0 var(--vol-pct, 100%),
+                rgba(255,255,255,0.14) var(--vol-pct, 100%) 100%);
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e8eef6;
+    border: 0;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e8eef6;
+    border: 0;
+    cursor: pointer;
+}
+
+.volume-slider:focus-visible {
+    box-shadow: 0 0 0 2px var(--ring, #2a6fd6);
+}
+
+/* Em tela cheia a barra ganha espaco: sobra largura de sobra ali. */
+.player-shell:fullscreen .volume-slider { width: 120px; }

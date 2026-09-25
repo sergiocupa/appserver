@@ -208,9 +208,24 @@ static Aac* aac_demux_open(const char* mp4_path)
         // AudioSampleEntry: 6 reserved + 2 dataref + 8 reserved + 2 channelcount + 2 samplesize + 4 + 4 samplerate(16.16)
         a->channels = (entry[16 + 8] << 8) | entry[16 + 9];
         a->rate     = (int)(rd32(entry + 16 + 16) >> 16);
-        uint32_t eo, el; // esds dentro do mp4a (payload comeca em entry+28)
-        if (find_box(entry + 28, rd32(entry) - 28, BOXT('e','s','d','s'), &eo, &el))
-            parse_esds_asc(entry + 28 + eo, el, a->asc, &a->asc_len);
+        // Os filhos de uma AudioSampleEntry comecam em +36, nao em +28. O cabecalho e:
+        //   8 box(size+type) + 6 reservado + 2 data_ref + 8 reservado
+        //   + 2 channelcount + 2 samplesize + 2 pre_defined + 2 reservado + 4 samplerate
+        // = 36. Os proprios campos lidos acima confirmam: channelcount em +24 e
+        // samplerate em +32..36.
+        //
+        // Com +28 o find_box lia como tamanho/tipo de box os ultimos 8 bytes do
+        // cabecalho (no arquivo de teste: 00 00 ac 44, que e 44100 << 16), nao achava
+        // o esds e a ASC saia vazia. Como aac_demux_open recusa asc_len == 0, TODO
+        // arquivo perdia o audio: a fragmentacao HLS saia so com video, sem grupo
+        // EXT-X-MEDIA, e o player nao tinha o que tocar.
+        #define AAC_SAMPLE_ENTRY_HDR 36
+        uint32_t eo, el;
+        uint32_t entry_sz = rd32(entry);
+        if (entry_sz > AAC_SAMPLE_ENTRY_HDR &&
+            find_box(entry + AAC_SAMPLE_ENTRY_HDR, entry_sz - AAC_SAMPLE_ENTRY_HDR,
+                     BOXT('e','s','d','s'), &eo, &el))
+            parse_esds_asc(entry + AAC_SAMPLE_ENTRY_HDR + eo, el, a->asc, &a->asc_len);
     }
     if (a->channels <= 0) a->channels = 2;
     if (a->rate <= 0) a->rate = (int)a->timescale;

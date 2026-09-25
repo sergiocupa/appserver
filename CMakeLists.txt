@@ -134,9 +134,11 @@ add_library(appserver_lib STATIC
   appserver/src/appclient.c
   appserver/src/appserver.c
   appserver/src/event_server.c
+  appserver/src/health_controller.c
   appserver/src/server_type.c
   appserver/src/utils/activity_binder.c
   appserver/src/utils/callback_binder.c
+  appserver/src/utils/health_monitor.c
   appserver/src/utils/message_assembler.c
   appserver/src/utils/message_parser.c
   appserver/src/utils/websocket_util.c

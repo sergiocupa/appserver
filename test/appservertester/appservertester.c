@@ -137,7 +137,7 @@ int main()
 
     Notification = app_add_emitter(bind, "service/notification");
 
-    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind);
+    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind, true);   // com painel de saude: a pagina web tem o health-box
 
 
     //int data = 12344;

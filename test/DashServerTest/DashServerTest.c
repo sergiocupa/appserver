@@ -372,7 +372,7 @@ int main()
     app_add_receiver_extension(bind, ".mpd", get_mpd, true);
     app_add_receiver_extension(bind, ".m4s", fragment_m4s, true);
 
-    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind);
+    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind, false);   // sem painel de saude
 
     getchar();
     return 0;

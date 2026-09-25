@@ -7,6 +7,9 @@
         </div>
     </div>
 
+    <!-- A casca do player: o que vai para tela cheia. Precisa conter a .stage E a barra
+         de .controls, senao em tela cheia o video aparece sem botao nenhum. -->
+    <div class="player-shell" id="player-shell">
     <div class="stage">
         <div id="video-stats" class="video-stats" hidden aria-label="Estatisticas do fluxo de video">
             <div class="video-stats-title">Fluxo do vídeo</div>
@@ -64,11 +67,52 @@
             <img id="forward-img" alt="" class="icon" width="18" height="18">
         </button>
 
+        <!-- Volume: botao de mudo + barra. O <video> nao tem o atributo controls, entao
+             sem isto nao havia como mexer no som. -->
+        <div class="volume-wrap">
+            <button class="btn" id="mute" type="button" aria-pressed="false"
+                    aria-label="Mudo" title="Mudo (M)">
+                <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                     stroke-linejoin="round" aria-hidden="true">
+                    <polygon points="4 9 8 9 13 5 13 19 8 15 4 15"></polygon>
+                    <path class="vol-onda-1" d="M16 9.5a3.5 3.5 0 0 1 0 5"></path>
+                    <path class="vol-onda-2" d="M18.5 7a7 7 0 0 1 0 10"></path>
+                    <g class="vol-mudo">
+                        <line x1="16.5" y1="9.5" x2="21.5" y2="14.5"></line>
+                        <line x1="21.5" y1="9.5" x2="16.5" y2="14.5"></line>
+                    </g>
+                </svg>
+            </button>
+
+            <input type="range" id="volume" class="volume-slider"
+                   min="0" max="100" step="1" value="100"
+                   aria-label="Volume" title="Volume (setas para cima/baixo)">
+        </div>
+
         <!-- Qualidade em reproducao: pertence ao player, entao fica na barra dele. -->
         <select id="hls-resolution" class="input_default player-quality" disabled
                 aria-label="Resolucao do player" title="Resolucao em reproducao (Auto = adaptativa)">
             <option value="">Envie um video...</option>
         </select>
+
+        <button class="btn" id="fullscreen" type="button"
+                aria-label="Tela cheia" aria-pressed="false"
+                title="Tela cheia (F, ou duplo clique no video). Esc sai.">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <polyline class="fs-abrir" points="4 9 4 4 9 4"></polyline>
+                <polyline class="fs-abrir" points="15 4 20 4 20 9"></polyline>
+                <polyline class="fs-abrir" points="20 15 20 20 15 20"></polyline>
+                <polyline class="fs-abrir" points="9 20 4 20 4 15"></polyline>
+                <polyline class="fs-sair" points="9 4 9 9 4 9"></polyline>
+                <polyline class="fs-sair" points="20 9 15 9 15 4"></polyline>
+                <polyline class="fs-sair" points="15 20 15 15 20 15"></polyline>
+                <polyline class="fs-sair" points="4 15 9 15 9 20"></polyline>
+            </svg>
+        </button>
+    </div>
     </div>
 
     <div id="hls-progress" class="hls-progress" hidden>
@@ -211,6 +255,22 @@
     </div>
 
     <div id="processing-status" class="processing-status" hidden></div>
+
+    <!-- Cabecalho das faixas: progresso geral, tempo decorrido e estimativa do total.
+         Fica FORA do #track-progress porque aquele div e limpo a cada sessao
+         (replaceChildren no reset_track_progress). -->
+    <div id="frag-head" class="frag-head" hidden>
+        <div class="frag-head-linha">
+            <span class="frag-head-rotulo">Fragmentacao</span>
+            <span class="frag-head-pct" id="frag-head-pct">0%</span>
+            <span class="frag-head-tempo">
+                <b id="frag-head-decorrido">0:00</b>
+                <span class="frag-head-sep">/</span>
+                <span id="frag-head-total">estimando...</span>
+            </span>
+        </div>
+        <div class="frag-head-barra"><i id="frag-head-fill"></i></div>
+    </div>
 
     <div id="track-progress" class="virtual-tracks" aria-label="Progresso da fragmentacao por pista"></div>
 

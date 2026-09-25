@@ -47,6 +47,15 @@ export class VideoPlayer extends HTMLElement
         this.file_input            = this.shadowRoot.querySelector('#player-file');
         this.status_field           = this.shadowRoot.querySelector('#processing-status');
         this.frag_time              = this.shadowRoot.querySelector('#frag-time');
+        this.mute_btn               = this.shadowRoot.querySelector('#mute');
+        this.volume_slider          = this.shadowRoot.querySelector('#volume');
+        this.player_shell           = this.shadowRoot.querySelector('#player-shell');
+        this.fullscreen_btn         = this.shadowRoot.querySelector('#fullscreen');
+        this.frag_head              = this.shadowRoot.querySelector('#frag-head');
+        this.frag_head_pct          = this.shadowRoot.querySelector('#frag-head-pct');
+        this.frag_head_fill         = this.shadowRoot.querySelector('#frag-head-fill');
+        this.frag_head_decorrido    = this.shadowRoot.querySelector('#frag-head-decorrido');
+        this.frag_head_total        = this.shadowRoot.querySelector('#frag-head-total');
         this.session_select         = this.shadowRoot.querySelector('#session-select');
         this.session_new_btn        = this.shadowRoot.querySelector('#session-new');
         this.session_name_field     = this.shadowRoot.querySelector('#session-name');
@@ -160,12 +169,51 @@ export class VideoPlayer extends HTMLElement
 
         window.addEventListener('keydown', (e) =>
         {
+            // Nao sequestra a tecla enquanto o foco esta num campo: o 'f' de um nome de
+            // arquivo digitado no formulario nao pode jogar a pagina em tela cheia.
+            if (this.digitando(e)) return;
+
             if (e.code === 'Space')
             {
                 e.preventDefault();
                 this.on_play();
             }
+            else if (e.key === 'f' || e.key === 'F')
+            {
+                e.preventDefault();
+                this.tela_cheia_alternar();
+            }
+            else if (e.key === 'm' || e.key === 'M')
+            {
+                e.preventDefault();
+                this.mudo_alternar();
+            }
+            else if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+            {
+                e.preventDefault();
+                this.volume_passo(e.key === 'ArrowUp' ? 0.05 : -0.05);
+            }
         });
+
+        if (this.mute_btn)      this.mute_btn.addEventListener('click', () => this.mudo_alternar());
+        if (this.volume_slider) this.volume_slider.addEventListener('input',
+                                    () => this.volume_aplicar(this.volume_slider.value / 100, false));
+
+        // O estado vem do ELEMENTO, nao do controle: volume mudado por outro caminho
+        // (teclado do sistema, script, restauracao) tem de chegar na barra do mesmo jeito.
+        this.video.addEventListener('volumechange', () => this.volume_sincronizar());
+
+        this.volume_restaurar();
+
+        // Duplo clique no video: o gesto que todo player tem.
+        this.video.addEventListener('dblclick', (e) => { e.preventDefault(); this.tela_cheia_alternar(); });
+        if (this.fullscreen_btn) this.fullscreen_btn.addEventListener('click', () => this.tela_cheia_alternar());
+
+        // O estado tem de vir do EVENTO, e nao do clique: o Esc e o botao do proprio
+        // navegador saem de tela cheia sem passar por aqui, e o icone ficaria mentindo.
+        this._on_fs_change = () => this.tela_cheia_sincronizar();
+        document.addEventListener('fullscreenchange', this._on_fs_change);
+        document.addEventListener('webkitfullscreenchange', this._on_fs_change);
 
         this.video.addEventListener('play',  () => this.update_player_control(PlayerControlOptions.PLAY));
         this.video.addEventListener('pause', () => this.update_player_control(PlayerControlOptions.PAUSE));
@@ -978,6 +1026,8 @@ export class VideoPlayer extends HTMLElement
         this.status_field.hidden = true;
         this.status_field.textContent = '';
         if (this.frag_time)     this.frag_time.hidden = true;
+        this.frag_head_parar();
+        if (this.frag_head)     this.frag_head.hidden = true;
         if (this.progress_wrap) this.progress_wrap.hidden = true;
         if (this.track_progress) this.track_progress.innerHTML = '';
         if (this.convert_link)  this.convert_link.hidden = true;
@@ -1085,6 +1135,7 @@ export class VideoPlayer extends HTMLElement
             if (ev.type === 'start')
             {
                 this.reset_track_progress(ev.total || 0);
+                this.frag_head_iniciar();
                 if (this.frag_time) { this.frag_time.hidden = true; this.frag_time.textContent = ''; }
                 if (this.session_cancel_btn) this.session_cancel_btn.hidden = false;
                 this.refresh_sessions();   // o chip sai de "idle" para "running"
@@ -1107,6 +1158,7 @@ export class VideoPlayer extends HTMLElement
                 // enche a barra da pista concluida em 100% e marca "pronto"
                 if (this._track_rows && this._track_rows[ev.name])
                 {
+                    this.frag_head_pista_pronta();
                     const row = this._track_rows[ev.name];
                     const bar = row.querySelector('.track-limit i'); if (bar) bar.style.width = '100%';
                 }
@@ -1137,12 +1189,14 @@ export class VideoPlayer extends HTMLElement
                     // Progresso POR PISTA (faseado): aplica so na linha da rendition.
                     this.status_field.textContent = `Fragmentando (${proto})… ${ev.name} ${ev.percent}%`;
                     if (this._track_rows) applyRow(this._track_rows[ev.name]);
+                    this.frag_head_progresso_pista(ev.percent);
                 }
                 else
                 {
                     // Progresso GLOBAL (per-frame): aplica em todas as linhas ativas.
                     this.status_field.textContent = `Fragmentando (${proto})… ${ev.percent}%`;
                     if (this._track_rows) for (const name in this._track_rows) applyRow(this._track_rows[name]);
+                    this.frag_head_progresso(ev.percent);
                 }
             }
             else if (ev.type === 'done')
@@ -1150,6 +1204,7 @@ export class VideoPlayer extends HTMLElement
                 // Terminou de verdade: some o botao de cancelar e a lista recarrega para
                 // refletir o novo estado ("done") gravado no session.json.
                 if (this.session_cancel_btn) this.session_cancel_btn.hidden = true;
+                this.frag_head_concluir(ev.elapsed);
                 this.refresh_sessions_settled(this.session_id());
                 this.manifest = ev;
                 // ev.tracks sao objetos novos; remarca ready/playlist (o master vira o caminho normal,
@@ -1185,6 +1240,7 @@ export class VideoPlayer extends HTMLElement
             else if (ev.type === 'cancelled')
             {
                 this.status_field.textContent = 'Fragmentacao interrompida. A saida NAO foi publicada.';
+                this.frag_head_interromper('cancelado');
                 this.set_uploading(false);
                 if (this.session_cancel_btn) this.session_cancel_btn.hidden = true;
                 source.close();
@@ -1194,6 +1250,7 @@ export class VideoPlayer extends HTMLElement
             else if (ev.type === 'error')
             {
                 this.status_field.textContent = `Falha na fragmentacao: ${ev.message}`;
+                this.frag_head_interromper('falhou');
                 this.set_uploading(false);
                 if (this.session_cancel_btn) this.session_cancel_btn.hidden = true;
                 source.close();
@@ -1711,6 +1768,287 @@ export class VideoPlayer extends HTMLElement
     // Uma linha por resolucao: aguardando -> fragmentando… -> pronto ✓. A selecao
     // de qualidade so e liberada quando TODAS ficam prontas (ver evento 'done').
 
+    // ================================================================
+    //  Volume
+    // ================================================================
+    //
+    //  O <video> nao tem o atributo controls, entao nada disso vem de graca: mudo, barra,
+    //  teclas e a memoria entre visitas sao daqui.
+    //
+    //  Guardar em localStorage vale a pena porque a alternativa e o video voltar a tocar
+    //  no volume cheio toda vez que a pagina recarrega. O acesso vai em try/catch: em aba
+    //  anonima, com dados do site bloqueados, o proprio LEITOR lanca excecao -- nao basta
+    //  tratar o valor ausente.
+
+    volume_aplicar(v, tambem_desmudar)
+    {
+        const vol = Math.min(1, Math.max(0, v));
+        this.video.volume = vol;
+        // Mexer na barra e um pedido de som: sair do mudo junto e o que se espera.
+        if (tambem_desmudar !== false && vol > 0) this.video.muted = false;
+        if (vol === 0) this.video.muted = true;
+        this.volume_guardar();
+        // Sincroniza AQUI, e nao so pelo volumechange: o evento e assincrono e, se o
+        // elemento de video for recriado, o ouvinte fica preso no antigo. Chamar direto
+        // garante que a barra e o icone acompanham sempre.
+        this.volume_sincronizar();
+    }
+
+    volume_passo(d)
+    {
+        const base = this.video.muted ? 0 : this.video.volume;
+        this.volume_aplicar(base + d);
+    }
+
+    mudo_alternar()
+    {
+        // Sair do mudo com o volume em zero nao devolveria som nenhum: restaura o ultimo
+        // valor audivel, ou meio volume se nunca houve um.
+        if (this.video.muted)
+        {
+            this.video.muted = false;
+            if (this.video.volume === 0) this.video.volume = this._vol_anterior || 0.5;
+        }
+        else
+        {
+            if (this.video.volume > 0) this._vol_anterior = this.video.volume;
+            this.video.muted = true;
+        }
+        this.volume_guardar();
+        this.volume_sincronizar();
+    }
+
+    volume_sincronizar()
+    {
+        const mudo = this.video.muted || this.video.volume === 0;
+        const vol  = mudo ? 0 : this.video.volume;
+
+        if (this.volume_slider)
+        {
+            this.volume_slider.value = Math.round(vol * 100);
+            this.volume_slider.style.setProperty('--vol-pct', Math.round(vol * 100) + '%');
+        }
+        if (this.mute_btn)
+        {
+            const nivel = mudo ? 'mudo' : (vol < 0.5 ? 'baixo' : 'alto');
+            this.mute_btn.dataset.nivel = nivel;
+            this.mute_btn.setAttribute('aria-pressed', mudo ? 'true' : 'false');
+            this.mute_btn.setAttribute('aria-label', mudo ? 'Tirar do mudo' : 'Mudo');
+            this.mute_btn.title = mudo ? 'Tirar do mudo (M)' : 'Mudo (M)';
+        }
+    }
+
+    volume_guardar()
+    {
+        try
+        {
+            localStorage.setItem('vp.volume', String(this.video.volume));
+            localStorage.setItem('vp.muted',  this.video.muted ? '1' : '0');
+        }
+        catch { /* sem armazenamento: o volume vale so para esta visita */ }
+    }
+
+    volume_restaurar()
+    {
+        let vol = 1, mudo = false;
+        try
+        {
+            const v = localStorage.getItem('vp.volume');
+            const m = localStorage.getItem('vp.muted');
+            if (v !== null && isFinite(parseFloat(v))) vol = Math.min(1, Math.max(0, parseFloat(v)));
+            if (m !== null) mudo = (m === '1');
+        }
+        catch { /* idem */ }
+
+        this.video.volume = vol;
+        this.video.muted  = mudo;
+        this._vol_anterior = vol > 0 ? vol : 0.5;
+        this.volume_sincronizar();
+    }
+
+    // ================================================================
+    //  Tela cheia
+    // ================================================================
+    //
+    //  Vai para tela cheia a CASCA (#player-shell = video + barra de controles). Mandar o
+    //  proprio <video> entregaria a tela ao navegador, que desenha os controles nativos
+    //  dele -- e a barra de busca, o seletor de qualidade e os botoes daqui sumiriam.
+
+    digitando(e)
+    {
+        const alvo = e.composedPath ? e.composedPath()[0] : e.target;
+        if (!alvo || !alvo.tagName) return false;
+        const t = alvo.tagName.toUpperCase();
+        return t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || alvo.isContentEditable === true;
+    }
+
+    tela_cheia_ativa()
+    {
+        const el = document.fullscreenElement || document.webkitFullscreenElement || null;
+        // Em shadow DOM o fullscreenElement do documento e o HOST, nao o elemento interno.
+        return el === this || el === this.player_shell;
+    }
+
+    async tela_cheia_alternar()
+    {
+        if (!this.player_shell) return;
+        try
+        {
+            if (this.tela_cheia_ativa())
+            {
+                const sair = document.exitFullscreen || document.webkitExitFullscreen;
+                if (sair) await sair.call(document);
+            }
+            else
+            {
+                const pedir = this.player_shell.requestFullscreen
+                           || this.player_shell.webkitRequestFullscreen;
+                if (pedir) await pedir.call(this.player_shell);
+            }
+        }
+        catch (err)
+        {
+            // Sem permissao (gesto do usuario exigido) ou nao suportado: avisa em vez de
+            // falhar calado, senao o botao parece quebrado.
+            if (this.status_field) this.status_field.textContent = `Tela cheia indisponivel: ${err.message}`;
+        }
+        this.tela_cheia_sincronizar();
+    }
+
+    tela_cheia_sincronizar()
+    {
+        const ativa = this.tela_cheia_ativa();
+        if (this.fullscreen_btn)
+        {
+            this.fullscreen_btn.setAttribute('aria-pressed', ativa ? 'true' : 'false');
+            this.fullscreen_btn.setAttribute('aria-label', ativa ? 'Sair da tela cheia' : 'Tela cheia');
+            this.fullscreen_btn.title = ativa
+                ? 'Sair da tela cheia (F ou Esc)'
+                : 'Tela cheia (F, ou duplo clique no video). Esc sai.';
+        }
+    }
+
+    // ================================================================
+    //  Cabecalho das faixas: progresso geral, decorrido e estimativa
+    // ================================================================
+    //
+    //  O DECORRIDO e cronometrado aqui, no cliente, e nao vem do servidor: o servidor so
+    //  manda 'elapsed' no fim. Para o numero andar de segundo em segundo enquanto o job
+    //  roda, o relogio tem de ser local.
+    //
+    //  O TOTAL ESTIMADO e uma projecao do ritmo ate agora (decorrido / fracao concluida).
+    //  E so isso mesmo: no comeco ela oscila muito, entao a estimativa so aparece depois
+    //  de 5% e de 3 segundos. Antes disso mostra "estimando...", que e honesto, em vez de
+    //  um numero que muda de minuto para segundo na cara de quem esta olhando.
+    //
+    //  No fim o cabecalho troca a estimativa pelo tempo MEDIDO que o servidor informou.
+
+    frag_head_mmss(seg)
+    {
+        if (!isFinite(seg) || seg < 0) return '--:--';
+        // Arredonda o TOTAL antes de dividir, e nao cada parte: assim 185.6 s vira
+        // 3:06 igual ao "3m 06s" que a linha de conclusao ja mostrava. Truncando os
+        // segundos, os dois textos discordavam em 1 s para o mesmo valor.
+        const t = Math.round(seg);
+        const m = Math.floor(t / 60);
+        const s = t % 60;
+        return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    frag_head_iniciar()
+    {
+        if (!this.frag_head) return;
+        this.frag_head_parar();
+
+        this._frag_t0       = performance.now();
+        this._frag_pct      = 0;
+        this._frag_prontas  = 0;
+
+        this.frag_head.hidden = false;
+        this.frag_head.classList.remove('concluido');
+        this.frag_head_pct.textContent       = '0%';
+        this.frag_head_fill.style.width      = '0%';
+        this.frag_head_decorrido.textContent = '0:00';
+        this.frag_head_total.textContent     = 'estimando...';
+
+        this._frag_timer = setInterval(() => this.frag_head_tick(), 500);
+    }
+
+    frag_head_parar()
+    {
+        if (this._frag_timer) { clearInterval(this._frag_timer); this._frag_timer = null; }
+    }
+
+    frag_head_decorrido_seg()
+    {
+        return this._frag_t0 ? (performance.now() - this._frag_t0) / 1000 : 0;
+    }
+
+    frag_head_tick()
+    {
+        if (!this.frag_head || this.frag_head.hidden) return;
+        const dec = this.frag_head_decorrido_seg();
+        this.frag_head_decorrido.textContent = this.frag_head_mmss(dec);
+
+        if (this._frag_pct >= 5 && dec >= 3)
+        {
+            const total = dec / (this._frag_pct / 100);
+            this.frag_head_total.textContent = '~' + this.frag_head_mmss(total);
+        }
+    }
+
+    // pct: 0..100 geral. Chamado pelos eventos de progresso e de pista concluida.
+    frag_head_progresso(pct)
+    {
+        if (!this.frag_head || this.frag_head.hidden) return;
+        // Nunca anda para tras: com progresso por pista o percentual da pista reinicia a
+        // cada nova, e o geral voltaria visualmente sem que nada tenha se perdido.
+        this._frag_pct = Math.max(this._frag_pct || 0, Math.min(100, Math.max(0, pct)));
+        this.frag_head_pct.textContent  = Math.round(this._frag_pct) + '%';
+        this.frag_head_fill.style.width = this._frag_pct + '%';
+        this.frag_head_tick();
+    }
+
+    // Progresso geral a partir do progresso de UMA pista, quando o servidor manda por pista.
+    frag_head_progresso_pista(pctPista)
+    {
+        const total = this._readyTotal || 1;
+        const feito = (this._frag_prontas || 0) + Math.min(1, Math.max(0, pctPista / 100));
+        this.frag_head_progresso((feito / total) * 100);
+    }
+
+    frag_head_pista_pronta()
+    {
+        this._frag_prontas = (this._frag_prontas || 0) + 1;
+        const total = this._readyTotal || 1;
+        this.frag_head_progresso((this._frag_prontas / total) * 100);
+    }
+
+    // segServidor: o 'elapsed' medido pelo servidor. Sem ele, cai no relogio local.
+    frag_head_concluir(segServidor)
+    {
+        if (!this.frag_head) return;
+        this.frag_head_parar();
+
+        const seg = (typeof segServidor === 'number' && segServidor > 0)
+                  ? segServidor : this.frag_head_decorrido_seg();
+
+        this.frag_head.classList.add('concluido');
+        this.frag_head.hidden = false;
+        this.frag_head_pct.textContent       = '100%';
+        this.frag_head_fill.style.width      = '100%';
+        this.frag_head_decorrido.textContent = this.frag_head_mmss(seg);
+        this.frag_head_total.textContent     = 'total';
+        this._frag_pct = 100;
+    }
+
+    frag_head_interromper(rotulo)
+    {
+        if (!this.frag_head) return;
+        this.frag_head_parar();
+        this.frag_head_total.textContent = rotulo || 'interrompido';
+    }
+
     reset_track_progress(total)
     {
         if (this.track_progress) this.track_progress.replaceChildren();
@@ -1800,6 +2138,11 @@ export class VideoPlayer extends HTMLElement
 
     disconnectedCallback()
     {
+        if (this._on_fs_change)
+        {
+            document.removeEventListener('fullscreenchange', this._on_fs_change);
+            document.removeEventListener('webkitfullscreenchange', this._on_fs_change);
+        }
         if (this._on_doc_click)
         {
             document.removeEventListener('click', this._on_doc_click);

@@ -188,6 +188,16 @@ export class VideoPlayer extends HTMLElement
                 e.preventDefault();
                 this.mudo_alternar();
             }
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight')
+            {
+                e.preventDefault();
+                if (e.key === 'ArrowLeft') this.on_back(); else this.on_forward();
+            }
+            else if (e.key === ',' || e.key === '.')
+            {
+                e.preventDefault();
+                if (e.key === ',') this.on_back_step(); else this.on_forward_step();
+            }
             else if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
             {
                 e.preventDefault();
@@ -269,29 +279,52 @@ export class VideoPlayer extends HTMLElement
         }
     }
 
+    // ---- Transporte ----------------------------------------------------------------
+    // Os cinco handlers estavam VAZIOS: os botoes existiam e nao faziam nada.
+
+    // Posiciona o video em 't', dentro do que existe. Em live a duracao e infinita; ali o
+    // limite de cima e o fim do que ja esta carregado (seekable).
+    seek_to(t)
+    {
+        const v = this.video;
+        if (!v || !isFinite(t)) return;
+        let fim = v.duration;
+        if (!isFinite(fim) && v.seekable && v.seekable.length) fim = v.seekable.end(v.seekable.length - 1);
+        if (!isFinite(fim)) fim = t;
+        v.currentTime = Math.max(0, Math.min(t, Math.max(0, fim - 0.05)));
+    }
+
+    // Quadros por segundo da fonte, para o passo de um quadro. Sem o dado, 30 -- errar por
+    // pouco aqui so move meio quadro a mais ou a menos.
+    current_fps()
+    {
+        const f = parseFloat(this._plan?.source?.fps);
+        return f > 0 && f < 1000 ? f : 30;
+    }
+
     on_stop()
     {
-
+        if (!this.video) return;
+        this.video.pause();
+        this.seek_to(0);
     }
 
-    on_forward()
+    on_back()    { if (this.video) this.seek_to(this.video.currentTime - 10); }
+    on_forward() { if (this.video) this.seek_to(this.video.currentTime + 10); }
+
+    // Passo de um quadro pausa antes: com o video rodando, o quadro exibido ja teria mudado.
+    on_back_step()
     {
-
-    }
-
-    on_back()
-    {
-
+        if (!this.video) return;
+        this.video.pause();
+        this.seek_to(this.video.currentTime - 1 / this.current_fps());
     }
 
     on_forward_step()
     {
-
-    }
-
-    on_back_step()
-    {
-
+        if (!this.video) return;
+        this.video.pause();
+        this.seek_to(this.video.currentTime + 1 / this.current_fps());
     }
 
     on_open_file()

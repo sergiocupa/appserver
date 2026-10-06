@@ -20,29 +20,42 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\appserver.h" />
-    <ClInclude Include="src\appclient.h" />
     <ClInclude Include="src\event_server.h" />
+    <ClInclude Include="src\net\net_poll.h" />
+    <ClInclude Include="src\net\net_servidor.h" />
+    <ClInclude Include="src\http\http_conexao.h" />
+    <ClInclude Include="src\http\http_canal.h" />
+    <ClInclude Include="src\http\http_ws.h" />
     <ClInclude Include="src\server_type.h" />
     <ClInclude Include="src\utils\health_monitor.h" />
     <ClInclude Include="src\utils\activity_binder.h" />
     <ClInclude Include="src\utils\callback_binder.h" />
     <ClInclude Include="src\utils\message_assembler.h" />
-    <ClInclude Include="src\utils\message_parser.h" />
+    <ClInclude Include="src\http\http_parser.h" />
+    <ClInclude Include="src\http\http_resposta.h" />
     <ClInclude Include="src\utils\program_util.h" />
+    <ClInclude Include="src\utils\pista.h" />
     <ClInclude Include="src\utils\websocket_util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\appclient.c" />
     <ClCompile Include="src\appserver.c" />
     <ClCompile Include="src\event_server.c" />
+    <ClCompile Include="src\net\net_poll.c" />
+    <ClCompile Include="src\net\net_servidor.c" />
+    <ClCompile Include="src\http\http_conexao.c" />
+    <ClCompile Include="src\http\http_canal.c" />
+    <ClCompile Include="src\http\http_ws.c" />
+    <ClCompile Include="src\app_topico.c" />
     <ClCompile Include="src\health_controller.c" />
     <ClCompile Include="src\utils\health_monitor.c" />
     <ClCompile Include="src\server_type.c" />
     <ClCompile Include="src\utils\activity_binder.c" />
     <ClCompile Include="src\utils\callback_binder.c" />
     <ClCompile Include="src\utils\message_assembler.c" />
-    <ClCompile Include="src\utils\message_parser.c" />
+    <ClCompile Include="src\http\http_parser.c" />
+    <ClCompile Include="src\http\http_resposta.c" />
     <ClCompile Include="src\utils\websocket_util.c" />
+    <ClCompile Include="src\utils\pista.c" />
     <ClCompile Include="src\utils\xpb_compat.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

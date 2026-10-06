@@ -20,15 +20,10 @@
   #include <share.h>   // _SH_DENYNO para ler o log que o mem_leak_watch mantem aberto
   #include "mem_leak_watch.h"
   #pragma comment(lib, "psapi.lib")
-  #pragma comment(lib, "pdh.lib")
-  // NOTA: o import da pdh.dll e ESTATICO, entao ela e mapeada no processo assim que ele
-  // sobe, mesmo com o monitor desligado. Tentei /DELAYLOAD por pragma aqui e o linkador
-  // ignorou (nenhum aviso, e o dumpbin continua listando pdh.dll como dependencia
-  // normal) -- num modulo que vira biblioteca ESTATICA a diretiva nao chegou ao link.
-  // Para valer, ou o projeto do EXECUTAVEL declara DelayLoadDLLs, ou o PDH passa a ser
-  // resolvido por LoadLibrary/GetProcAddress aqui dentro. Nao e urgente: mapear a DLL
-  // custa endereco virtual, nao trabalho -- nenhum codigo de PDH roda com o monitor
-  // desligado.
+  // pdh.dll NAO e linkada: e carregada por LoadLibrary quando o monitor inicializa (ver
+  // pdh_carregar). Com o import estatico ela era mapeada no processo assim que ele subia,
+  // mesmo com o monitor desligado; o /DELAYLOAD por pragma nao funciona aqui porque este
+  // modulo vira biblioteca ESTATICA e a diretiva nao chega ao link do executavel.
 #else
   #include <unistd.h>
 #endif
@@ -224,6 +219,46 @@ static void mem_processo(uint64* rss, uint64* virt)
  */
 #ifdef _WIN32
 
+/* ---- pdh.dll sob demanda ----------------------------------------------------------- */
+typedef PDH_STATUS (WINAPI *PfnOpenQueryA)(LPCSTR, DWORD_PTR, PDH_HQUERY*);
+typedef PDH_STATUS (WINAPI *PfnAddCounterA)(PDH_HQUERY, LPCSTR, DWORD_PTR, PDH_HCOUNTER*);
+typedef PDH_STATUS (WINAPI *PfnCollectQueryData)(PDH_HQUERY);
+typedef PDH_STATUS (WINAPI *PfnGetFormattedCounterArrayA)(PDH_HCOUNTER, DWORD, LPDWORD, LPDWORD, PPDH_FMT_COUNTERVALUE_ITEM_A);
+typedef PDH_STATUS (WINAPI *PfnCloseQuery)(PDH_HQUERY);
+
+static HMODULE                      g_pdh_dll;
+static PfnOpenQueryA                pPdhOpenQueryA;
+static PfnAddCounterA               pPdhAddCounterA;
+static PfnCollectQueryData          pPdhCollectQueryData;
+static PfnGetFormattedCounterArrayA pPdhGetFormattedCounterArrayA;
+static PfnCloseQuery                pPdhCloseQuery;
+
+static int pdh_carregar(void)
+{
+    if (g_pdh_dll) return 1;
+    // So do diretorio de sistema: nada de achar uma pdh.dll plantada ao lado do executavel.
+    HMODULE h = LoadLibraryExA("pdh.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!h) return 0;
+    pPdhOpenQueryA                = (PfnOpenQueryA)               GetProcAddress(h, "PdhOpenQueryA");
+    pPdhAddCounterA               = (PfnAddCounterA)              GetProcAddress(h, "PdhAddCounterA");
+    pPdhCollectQueryData          = (PfnCollectQueryData)         GetProcAddress(h, "PdhCollectQueryData");
+    pPdhGetFormattedCounterArrayA = (PfnGetFormattedCounterArrayA)GetProcAddress(h, "PdhGetFormattedCounterArrayA");
+    pPdhCloseQuery                = (PfnCloseQuery)               GetProcAddress(h, "PdhCloseQuery");
+    if (!pPdhOpenQueryA || !pPdhAddCounterA || !pPdhCollectQueryData ||
+        !pPdhGetFormattedCounterArrayA || !pPdhCloseQuery)
+    {
+        FreeLibrary(h);
+        return 0;
+    }
+    g_pdh_dll = h;
+    return 1;
+}
+
+static void pdh_descarregar(void)
+{
+    if (g_pdh_dll) { FreeLibrary(g_pdh_dll); g_pdh_dll = NULL; }
+}
+
 #define GPU_MAX_TIPOS 16
 
 typedef struct { char nome[32]; double soma; } EngTipo;
@@ -251,7 +286,7 @@ static void gpu_amostra_win(HealthSample* out)
     out->GpuAvailable = 0;
     if (!g_pdh_ok) return;
 
-    if (PdhCollectQueryData(g_pdh) != ERROR_SUCCESS) return;
+    if (pPdhCollectQueryData(g_pdh) != ERROR_SUCCESS) return;
 
     DWORD pid = GetCurrentProcessId();
     out->GpuAvailable = 1;
@@ -259,13 +294,13 @@ static void gpu_amostra_win(HealthSample* out)
     /* ---- utilizacao ---- */
     {
         DWORD tam = 0, count = 0;
-        PDH_STATUS st = PdhGetFormattedCounterArrayA(g_pdh_util, PDH_FMT_DOUBLE, &tam, &count, NULL);
+        PDH_STATUS st = pPdhGetFormattedCounterArrayA(g_pdh_util, PDH_FMT_DOUBLE, &tam, &count, NULL);
         if (st == PDH_MORE_DATA && tam > 0)
         {
             PDH_FMT_COUNTERVALUE_ITEM_A* itens = (PDH_FMT_COUNTERVALUE_ITEM_A*)memop_alloc_raw(tam);
             if (itens)
             {
-                if (PdhGetFormattedCounterArrayA(g_pdh_util, PDH_FMT_DOUBLE, &tam, &count, itens) == ERROR_SUCCESS)
+                if (pPdhGetFormattedCounterArrayA(g_pdh_util, PDH_FMT_DOUBLE, &tam, &count, itens) == ERROR_SUCCESS)
                 {
                     EngTipo tipos[GPU_MAX_TIPOS];
                     int nt = 0;
@@ -309,13 +344,13 @@ static void gpu_amostra_win(HealthSample* out)
     /* ---- memoria dedicada ---- */
     {
         DWORD tam = 0, count = 0;
-        PDH_STATUS st = PdhGetFormattedCounterArrayA(g_pdh_mem, PDH_FMT_LARGE, &tam, &count, NULL);
+        PDH_STATUS st = pPdhGetFormattedCounterArrayA(g_pdh_mem, PDH_FMT_LARGE, &tam, &count, NULL);
         if (st == PDH_MORE_DATA && tam > 0)
         {
             PDH_FMT_COUNTERVALUE_ITEM_A* itens = (PDH_FMT_COUNTERVALUE_ITEM_A*)memop_alloc_raw(tam);
             if (itens)
             {
-                if (PdhGetFormattedCounterArrayA(g_pdh_mem, PDH_FMT_LARGE, &tam, &count, itens) == ERROR_SUCCESS)
+                if (pPdhGetFormattedCounterArrayA(g_pdh_mem, PDH_FMT_LARGE, &tam, &count, itens) == ERROR_SUCCESS)
                 {
                     uint64 soma = 0;
                     for (DWORD i = 0; i < count; i++)
@@ -336,21 +371,22 @@ static void gpu_amostra_win(HealthSample* out)
 static void gpu_init_win(void)
 {
     g_pdh_ok = 0;
-    if (PdhOpenQueryA(NULL, 0, &g_pdh) != ERROR_SUCCESS) return;
+    if (!pdh_carregar()) return;   /* sem pdh.dll: GPU fica "n/d" */
+    if (pPdhOpenQueryA(NULL, 0, &g_pdh) != ERROR_SUCCESS) return;
 
     /* Os contadores de GPU so existem a partir do Windows 10 1709. Em versao mais antiga
      * o AddCounter falha e o painel simplesmente mostra "n/d" -- nao e erro. */
-    if (PdhAddCounterA(g_pdh, "\\GPU Engine(*)\\Utilization Percentage", 0, &g_pdh_util) != ERROR_SUCCESS)
+    if (pPdhAddCounterA(g_pdh, "\\GPU Engine(*)\\Utilization Percentage", 0, &g_pdh_util) != ERROR_SUCCESS)
     {
-        PdhCloseQuery(g_pdh); g_pdh = NULL; return;
+        pPdhCloseQuery(g_pdh); g_pdh = NULL; return;
     }
-    if (PdhAddCounterA(g_pdh, "\\GPU Process Memory(*)\\Dedicated Usage", 0, &g_pdh_mem) != ERROR_SUCCESS)
+    if (pPdhAddCounterA(g_pdh, "\\GPU Process Memory(*)\\Dedicated Usage", 0, &g_pdh_mem) != ERROR_SUCCESS)
     {
         g_pdh_mem = NULL;   /* utilizacao sozinha ja serve */
     }
 
     /* Contador de taxa precisa de DUAS coletas para ter valor. Esta e a primeira. */
-    PdhCollectQueryData(g_pdh);
+    pPdhCollectQueryData(g_pdh);
     g_pdh_ok = 1;
 }
 #endif /* _WIN32 */
@@ -471,7 +507,8 @@ void health_monitor_shutdown(void)
 {
     if (!g_ready) return;
 #ifdef _WIN32
-    if (g_pdh) { PdhCloseQuery(g_pdh); g_pdh = NULL; }
+    if (g_pdh) { pPdhCloseQuery(g_pdh); g_pdh = NULL; }
+    pdh_descarregar();
     g_pdh_ok = 0;
 #endif
     thread_mutex_destroy_inline(&g_lock);
@@ -509,6 +546,9 @@ boolean health_monitor_sample(HealthSample* out)
         out->PoolReservedBytes = s.os_reserved_bytes;
         out->PoolCachedChunks  = s.cached_chunks;
         out->PoolPurgeCount    = s.purge_count;
+        out->PoolLanesCreated   = s.lanes_created;
+        out->PoolLanesDestroyed = s.lanes_destroyed;
+        out->PoolRemoteFrees    = s.remote_frees;
 
         leak_registra(out->PoolLiveBlocks, out);
     }

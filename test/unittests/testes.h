@@ -13,6 +13,51 @@ void teste_instancia_vem_da_compartilhada(TestResult* r);
 void teste_memoria_contabiliza_alocacao(TestResult* r);
 void teste_memoria_escreve_e_le(TestResult* r);
 
+// ---- servidor: camada de rede (appserver/src/net) --------------------------
+void teste_poll_acordar(TestResult* r);
+void teste_poll_leitura_e_desarme(TestResult* r);
+void teste_poll_escrita_e_varios(TestResult* r);
+
+// ---- servidor: parser HTTP (appserver/src/http) ---------------------------
+void teste_parser_pedacos_de_um_byte(TestResult* r);
+void teste_parser_pipelining_em_ordem(TestResult* r);
+void teste_parser_corpo_grande_em_memoria(TestResult* r);
+void teste_parser_corpo_grande_vai_para_disco(TestResult* r);
+void teste_parser_corpo_salvar_move_o_arquivo(TestResult* r);
+void teste_parser_limites_e_erros(TestResult* r);
+void teste_parser_destruir_no_meio_apaga_temporario(TestResult* r);
+
+// ---- servidor: reator (appserver/src/net/net_servidor.c) ------------------
+void teste_reator_eco_em_ordem(TestResult* r);
+void teste_reator_conexoes_sem_thread(TestResult* r);
+void teste_reator_pausa_e_retoma(TestResult* r);
+void teste_reator_cliente_que_nao_le_cai(TestResult* r);
+void teste_reator_fecha_ocioso(TestResult* r);
+void teste_reator_sincrono_com_um_cliente(TestResult* r);
+void teste_reator_paralelo_sob_disputa(TestResult* r);
+void teste_reator_disputa_leve_fica_no_reator(TestResult* r);
+void teste_reator_muitos_clientes_usam_o_pool(TestResult* r);
+void teste_pista_sob_demanda_e_reuso(TestResult* r);
+void teste_reator_parado_nao_acorda(TestResult* r);
+void teste_reator_envia_arquivo(TestResult* r);
+void teste_reator_envia_arquivo_cliente_parado(TestResult* r);
+void teste_reator_arquivos_simultaneos(TestResult* r);
+
+// ---- servidor: WebSocket incremental e topicos ----------------------------
+void teste_ws_quadros_partidos_e_juntos(TestResult* r);
+void teste_ws_fragmentada_ping_e_close(TestResult* r);
+void teste_topico_retido_e_ao_vivo(TestResult* r);
+void teste_topico_assinantes_sem_thread(TestResult* r);
+void teste_rota_lenta_aprendida(TestResult* r);
+void teste_perfil_economia_e_jobs(TestResult* r);
+void teste_sse_poucos_assinantes_sem_pista(TestResult* r);
+void teste_sse_pistas_ordem_e_todos(TestResult* r);
+void teste_sse_pistas_assinantes_saem(TestResult* r);
+void teste_sse_pistas_dois_publicadores(TestResult* r);
+
+// ---- servidor: fronteiras entre camadas (le os fontes) ----------------------
+void teste_fronteiras_entre_camadas(TestResult* r);
+
 // ---- pool de tarefas --------------------------------------------------------
 void teste_pool_executa_tarefas(TestResult* r);
 

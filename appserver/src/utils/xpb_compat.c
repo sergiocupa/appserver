@@ -172,7 +172,7 @@ int string_index_first(const char* data, const int data_length, const char* toke
     return -1;
 }
 
-void string_init_copy(StringX* dst, char* data, int length)
+void string_init_copy(StringX* dst, const char* data, int length)
 {
     if (!dst) return;
     string_init(dst);
@@ -190,7 +190,13 @@ ListX* string_array_release(ListX* ar, bool only_data)
     // Itens sao StringX* alocados no pool (ver string_split_param): liberar Content E a struct.
     for (uint64 i = 0; i < ar->Count; i++) { StringX* s = (StringX*)ar->Items[i]; if (s) { string_release(s); memop_free_raw(s); } }
     if (only_data) { ar->Count = 0; return ar; }   // mantem o container (pode ser embutido, ex.: Message.Route)
-    list_release(&ar);                              // libera o container inteiro (alocado via list_create)
+    // O list_release do xplatbase libera o VETOR e zera o ponteiro, mas de proposito NAO libera
+    // a struct (ela pode estar embutida). Aqui o contrato e "libera o container inteiro", e ele
+    // veio de list_create (struct no pool): a struct e nossa. Sem isto vazava um bloco por
+    // requisicao -- a linha inicial de todo pedido HTTP e quebrada com string_split.
+    ListX* dono = ar;
+    list_release(&ar);
+    memop_free_raw(dono);
     return 0;
 }
 

@@ -1,3 +1,4 @@
+#include <stdlib.h>   // abs(): sem isto o C assume int abs() implicito (C4013)
 #include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/memory_pool.h"
 #include "../../appserver/submodules/xplatbase/Xplatbase/Xplatbase/src/string_handler.h"
 #include "MediaFragmenterType.h"

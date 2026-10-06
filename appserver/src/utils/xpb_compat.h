@@ -57,7 +57,7 @@ extern "C" {
     void     string_append_s(StringX* dst, StringX* data);
     void     string_sub(const char* content, const int content_length, const int start, const int count, const int initialize, StringX* target);
     int      string_index_first(const char* data, const int data_length, const char* token, const int token_length, const int start, int* position);
-    void     string_init_copy(StringX* dst, char* data, int length);
+    void     string_init_copy(StringX* dst, const char* data, int length);
     int      string_equals_s(StringX* s1, StringX* s2);
     ListX*   string_array_release(ListX* ar, bool only_data);
     void     string_release_data(StringX* ar);

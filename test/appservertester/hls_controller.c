@@ -4,10 +4,8 @@
 #include <winsock2.h>   // antes do windows.h: senao entra o winsock 1 e conflita
 #include <direct.h>
 #include <windows.h>
-#else
-#include <sys/socket.h> // send() do SSE
-typedef int SOCKET;
 #endif
+// SSE sai pelo servidor (app_assinar / topicos): este controller nao toca em socket.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,7 +32,13 @@ typedef struct HlsTrack
     const char* Name;
 } HlsTrack;
 
-static char g_last_error[512];
+// Por THREAD: cada requisicao roda na sua, e o texto e escrito e lido dentro da mesma
+// requisicao. Global, dois uploads ao mesmo tempo misturavam as mensagens de erro.
+#ifdef _MSC_VER
+  static __declspec(thread) char g_last_error[512];
+#else
+  static _Thread_local char g_last_error[512];
+#endif
 
 static int ensure_directory(const char* path)
 {
@@ -45,42 +49,24 @@ static int write_input(Message* message, const char* path)
 {
     // O arquivo anterior pode estar com lock transitorio (antivirus escaneando o
     // mp4 recem-criado, exclusao pendente apos rmdir, ou leitura em voo). Remove
-    // atributos, apaga e tenta reabrir algumas vezes ate liberar (errno 13 EACCES).
+    // atributos, apaga e tenta algumas vezes ate liberar.
+    //
+    // app_corpo_salvar: upload grande ja chegou em arquivo temporario e aqui so e MOVIDO
+    // (sem copiar nada); upload pequeno, em memoria, e gravado. Antes o corpo inteiro ficava
+    // em memoria (um video de 1 GB = 1 GB de RAM) e era regravado aqui.
 #ifdef _WIN32
     SetFileAttributesA(path, FILE_ATTRIBUTE_NORMAL);   // tira somente-leitura antes de apagar
 #endif
     DeleteFileA(path);
 
-    FILE* file = 0;
-    errno_t open_error = 0;
     for (int attempt = 0; attempt < 15; attempt++)
     {
-        open_error = fopen_s(&file, path, "wb");
-        if (open_error == 0 && file)
-            break;
+        if (app_corpo_salvar(message, path)) return 1;
         Sleep(200);
     }
-    if (open_error != 0 || !file)
-    {
-        sprintf_s(g_last_error, sizeof(g_last_error), "fopen falhou path='%s' errno=%d (apos retries)", path, (int)open_error);
-        printf("[hls] %s\n", g_last_error);
-        return 0;
-    }
-    if (!message->Content.Content)
-    {
-        fclose(file);
-        sprintf_s(g_last_error, sizeof(g_last_error), "Content.Data nulo (length=%d)", message->Content.Length);
-        printf("[hls] %s\n", g_last_error);
-        return 0;
-    }
-    size_t written = fwrite(message->Content.Content, 1, message->Content.Length, file);
-    fclose(file);
-    if (written != (size_t)message->Content.Length)
-    {
-        sprintf_s(g_last_error, sizeof(g_last_error), "fwrite parcial path='%s' escrito=%zu esperado=%d", path, written, message->Content.Length);
-        printf("[hls] %s\n", g_last_error);
-    }
-    return written == (size_t)message->Content.Length;
+    sprintf_s(g_last_error, sizeof(g_last_error), "nao gravou o corpo em '%s' (%lld bytes, apos retries)", path, (long long)message->ContentLength);
+    printf("[hls] %s\n", g_last_error);
+    return 0;
 }
 
 // Le um header HTTP pelo nome (case-insensitive) de message->Fields.
@@ -171,37 +157,10 @@ static int compute_tracks(int source_width, int source_height, HlsTrack* tracks)
 
 // ---- SSE (Server-Sent Events) ---------------------------------------------
 
-static void sse_write_raw(Message* message, const char* text, int length)
-{
-    SOCKET sock = (SOCKET)(UINT_PTR)message->Client->Handle;
-    send(sock, text, length, 0);
-}
-
-static void sse_headers(Message* message)
-{
-    const char* headers =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/event-stream\r\n"
-        "Cache-Control: no-cache\r\n"
-        "Connection: keep-alive\r\n"
-        "X-Accel-Buffering: no\r\n"
-        "Access-Control-Allow-Origin: *\r\n"
-        "\r\n";
-    sse_write_raw(message, headers, (int)strlen(headers));
-}
-
-// Envia um evento SSE ("data: <json>\n\n").
-static void sse_event(Message* message, const char* json)
-{
-    sse_write_raw(message, "data: ", 6);
-    sse_write_raw(message, json, (int)strlen(json));
-    sse_write_raw(message, "\n\n", 2);
-}
-
 // ---- Adaptador: eventos do gateway (GwEvent) -> SSE do protocolo do front ----
 typedef struct
 {
-    Message*    msg;
+    AppJob*     job;           // publica no topico do job (quem acompanha assina)
     int         mode;          // 0 = convert, 1 = hls, 2 = dash
     const char* folder;
     const char* codec;         // convert
@@ -212,6 +171,9 @@ typedef struct
     unsigned long long start_ms;             // cronometro: tick no START, elapsed no DONE
 }
 SseAdapter;
+
+// Evento que ACUMULA no topico: todo assinante novo recebe, em ordem.
+static void sse_event(SseAdapter* a, const char* json) { app_job_publicar(a->job, 0, json); }
 
 static void sse_feedback(void* user, const GwEvent* ev)
 {
@@ -226,14 +188,14 @@ static void sse_feedback(void* user, const GwEvent* ev)
                           proto, a->folder, ev->Total, a->duration, a->seg_ms / 1000);
             else
                 sprintf_s(buf, sizeof(buf), "{\"type\":\"start\",\"codec\":\"%s\",\"ext\":\"%s\"}", a->codec, a->ext);
-            sse_event(a->msg, buf); break;
+            sse_event(a, buf); break;
 
         case GW_EV_TRACK_START:
             if (a->mode == 1 || a->mode == 2)
             {
                 sprintf_s(buf, sizeof(buf), "{\"type\":\"track-start\",\"index\":%d,\"name\":\"%s\",\"width\":%d,\"height\":%d,\"bandwidth\":%d,\"encoder\":\"%s\"}",
                           ev->TrackIndex, ev->Name ? ev->Name : "", ev->Width, ev->Height, ev->Bandwidth, ev->Message ? ev->Message : "");
-                sse_event(a->msg, buf);
+                sse_event(a, buf);
             }
             break;
 
@@ -246,7 +208,7 @@ static void sse_feedback(void* user, const GwEvent* ev)
                 else
                     sprintf_s(buf, sizeof(buf), "{\"type\":\"track-done\",\"index\":%d,\"name\":\"%s\",\"width\":%d,\"height\":%d,\"bandwidth\":%d}",
                               ev->TrackIndex, ev->Name ? ev->Name : "", ev->Width, ev->Height, ev->Bandwidth);
-                sse_event(a->msg, buf);
+                sse_event(a, buf);
                 a->tn += sprintf_s(a->tracks_json + a->tn, sizeof(a->tracks_json) - a->tn, "%s{\"name\":\"%s\",\"width\":%d,\"height\":%d,\"bandwidth\":%d}",
                                    a->tn ? "," : "", ev->Name ? ev->Name : "", ev->Width, ev->Height, ev->Bandwidth);
             }
@@ -261,17 +223,17 @@ static void sse_feedback(void* user, const GwEvent* ev)
             else
                 sprintf_s(buf, sizeof(buf), "{\"type\":\"done\",\"codec\":\"%s\",\"file\":\"/hls/%s/%s\",\"elapsed\":%.1f}",
                           a->codec, a->folder, ev->Playlist ? ev->Playlist : "output.mp4", elapsed);
-            sse_event(a->msg, buf); break;
+            sse_event(a, buf); break;
         }
 
         case GW_EV_ERROR:
-            sprintf_s(buf, sizeof(buf), "{\"type\":\"error\",\"message\":\"%s\"}", ev->Message ? ev->Message : "erro"); sse_event(a->msg, buf); break;
+            sprintf_s(buf, sizeof(buf), "{\"type\":\"error\",\"message\":\"%s\"}", ev->Message ? ev->Message : "erro"); sse_event(a, buf); break;
 
         case GW_EV_CANCELLED:
             // Nao e "done": a saida nao foi publicada. O front precisa distinguir para
             // nao tentar abrir um manifesto que nao existe.
             sprintf_s(buf, sizeof(buf), "{\"type\":\"cancelled\",\"message\":\"%s\"}", ev->Message ? ev->Message : "interrompida");
-            sse_event(a->msg, buf); break;
+            sse_event(a, buf); break;
 
         case GW_EV_PROGRESS:
             // Progresso ao vivo. Dois modos:
@@ -286,11 +248,18 @@ static void sse_feedback(void* user, const GwEvent* ev)
                 if (pct >= 0)
                 {
                     if (pct > 100) pct = 100;
+                    char slot[96];
                     if (ev->Name && ev->Name[0])
+                    {
                         sprintf_s(buf, sizeof(buf), "{\"type\":\"progress\",\"name\":\"%s\",\"percent\":%d}", ev->Name, pct);
+                        sprintf_s(slot, sizeof(slot), "progress:%s", ev->Name);
+                    }
                     else
+                    {
                         sprintf_s(buf, sizeof(buf), "{\"type\":\"progress\",\"percent\":%d}", pct);
-                    sse_event(a->msg, buf);
+                        sprintf_s(slot, sizeof(slot), "progress");
+                    }
+                    app_job_publicar(a->job, slot, buf);   // SUBSTITUI: so o ultimo de cada pista fica retido
                 }
             }
             break;
@@ -354,9 +323,14 @@ static int run_gateway_session(const char* session_id, MediaSource* src, const M
                                const char* base_dir, const GwFeedback* fb)
 {
     GwControl* ctl = frag_session_job_begin(session_id);
-    if (!ctl && frag_session_running(session_id))
+    if (!ctl)
     {
-        gw_error(fb, "ja existe uma fragmentacao em andamento nesta sessao");
+        // Sem controle NAO roda. Antes so recusava se ja houvesse job; qualquer outro motivo
+        // (pasta sem sessao, todas as vagas ocupadas) seguia com ctl nulo -- job fantasma,
+        // sem cancelamento e sem exclusao mutua.
+        gw_error(fb, frag_session_running(session_id)
+                     ? "ja existe uma fragmentacao em andamento nesta pasta"
+                     : "limite de fragmentacoes simultaneas atingido; tente de novo em instantes");
         src->Close(src);
         return -1;
     }
@@ -377,7 +351,7 @@ static int run_gateway_session(const char* session_id, MediaSource* src, const M
 
 Element* hls_prepare_video(Message* message)
 {
-    if (!message || message->Content.Length <= 0)
+    if (!message || message->ContentLength <= 0)
     {
         message->Response = message_response_create_text(HTTP_STATUS_BAD_REQUEST, "Video body is empty.");
         return 0;
@@ -393,7 +367,7 @@ Element* hls_prepare_video(Message* message)
     sprintf_s(base, sizeof(base), "web/hls/%s", folder);
     sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
 
-    printf("[hls] prepare folder='%s' base='%s' content_length=%d\n", folder, base, message->Content.Length);
+    printf("[hls] prepare folder='%s' base='%s' content_length=%llu\n", folder, base, (unsigned long long)message->ContentLength);
 
     if (!ensure_directory("web/hls"))
     {
@@ -442,7 +416,7 @@ Element* hls_prepare_video(Message* message)
     // Estatisticas do fluxo de origem para o painel (sem ffprobe).
     char v_fps[16]; sprintf_s(v_fps, sizeof(v_fps), "%.3f", fps_d);
     const char* v_pixfmt = "yuv420p";   // H.264/H.265 8-bit tipico (parse nao le pix_fmt)
-    int  v_bitrate = (duration > 0.0) ? (int)((double)message->Content.Length * 8.0 / duration) : 0; // total aprox.
+    int  v_bitrate = (duration > 0.0) ? (int)((double)message->ContentLength * 8.0 / duration) : 0; // total aprox.
     char a_codec[16] = { 0 };
     int  a_channels = 0, a_sample = 0, a_bitrate = 0;
     mp4_audio_info(source_path, a_codec, &a_sample, &a_channels);
@@ -473,43 +447,68 @@ Element* hls_prepare_video(Message* message)
     return 0;
 }
 
-// ---- Passo 2: fragmentacao com progresso via SSE --------------------------
-// GET /api/video/prepare-stream/<folder>  (EventSource)
+// ---- Passo 2: fragmentacao com progresso (job + assinatura) ---------------
+//
+// O trabalho roda num JOB (pista longa do servidor), um por tipo+pasta, que PUBLICA os
+// eventos no topico de mesmo nome. A rota so inicia o job (se ainda nao roda) e ASSINA o
+// topico: retorna na hora, e o fluxo SSE fica aberto no reator sem ocupar thread nenhuma.
+// Recarregar a pagina no meio reassina: chega o estado atual (retido) e segue dali.
+// Antes o job rodava DENTRO do handler, escrevendo no socket: a thread ficava presa os
+// minutos da conversao, e quem se desconectava perdia o acompanhamento.
 
-Element* hls_stream_video(Message* message)
+typedef struct
 {
-    // A pasta chega como ultimo segmento da rota (query-string nao e suportada).
-    char folder[128] = { 0 };
-    if (message->Route.Count > 0)
-    {
-        StringX* last = (StringX*)message->Route.Items[message->Route.Count - 1];
-        char raw[128] = { 0 };
-        int n = last->Length < (int)sizeof(raw) - 1 ? last->Length : (int)sizeof(raw) - 1;
-        memcpy(raw, last->Content, n);
-        raw[n] = '\0';
-        sanitize_folder(raw, folder, sizeof(folder));
-    }
-    else
-    {
-        sanitize_folder("", folder, sizeof(folder));
-    }
-
+    char folder[128];
     char base[MAX_PATH];
     char source_path[MAX_PATH];
-    sprintf_s(base, sizeof(base), "web/hls/%s", folder);
-    sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
+    char codec[32];      // convert
+    int  is_av1;         // dash
+}
+VideoJob;
 
-    sse_headers(message);
-    message->StreamHandled = true;
+static VideoJob* video_job_novo(const char* folder)
+{
+    VideoJob* v = (VideoJob*)calloc(1, sizeof(VideoJob));
+    if (!v) return 0;
+    sprintf_s(v->folder, sizeof(v->folder), "%s", folder);
+    sprintf_s(v->base, sizeof(v->base), "web/hls/%s", folder);
+    sprintf_s(v->source_path, sizeof(v->source_path), "%s/source.mp4", v->base);
+    return v;
+}
+
+// Um job por topico: se ja roda, app_job_iniciar libera 'v' e so a assinatura vale.
+static void inicia_e_assina(Message* message, const char* topico, AppJobFn fn, VideoJob* v)
+{
+    if (!v) { message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Sem memoria."); return; }
+    app_job_iniciar(message->Client->Server, topico, fn, v, free);
+    app_assinar(message, topico);
+}
+
+static const char ERRO_FONTE[] = "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}";
+
+// Le a pasta (penultimo segmento) e/ou o codec (ultimo segmento) da rota.
+static void route_segment(Message* message, int from_end, char* out, size_t out_size)
+{
+    if (out_size > 0) out[0] = '\0';
+    int idx = message->Route.Count - 1 - from_end;
+    if (idx < 0 || idx >= message->Route.Count) return;
+    StringX* s = (StringX*)message->Route.Items[idx];
+    int n = s->Length < (int)out_size - 1 ? s->Length : (int)out_size - 1;
+    memcpy(out, s->Content, n);
+    out[n] = '\0';
+}
+
+// ---- HLS (H.264 multi-resolucao) ------------------------------------------
+// GET /api/video/prepare-stream/<folder>  (EventSource)
+
+static void job_hls(AppJob* job, void* arg)
+{
+    VideoJob* v = (VideoJob*)arg;
 
     // Metadados por parse EMBUTIDO (sem ffprobe).
     int sw = 0, sh = 0; double duration = 0.0;
-    mp4_video_info(source_path, &sw, &sh, 0, 0, &duration);
-    if (sw <= 0 || sh <= 0 || duration <= 0.0)
-    {
-        sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}");
-        return 0;
-    }
+    mp4_video_info(v->source_path, &sw, &sh, 0, 0, &duration);
+    if (sw <= 0 || sh <= 0 || duration <= 0.0) { app_job_publicar(job, 0, ERRO_FONTE); return; }
 
     // HLS MULTI-RESOLUCAO via GATEWAY DE SYNC: source_mp4 -> decode/scale/OpenH264 -> sink_hls.
     HlsTrack tracks[HLS_MAX_TRACKS];
@@ -526,34 +525,66 @@ Element* hls_stream_video(Message* message)
     profile.Container = CONT_HLS_FMP4; profile.VideoCodec = MEDIA_CODEC_H264; profile.AudioCodec = MEDIA_CODEC_AAC;
     profile.SegmentMs = HLS_SEGMENT_SECONDS * 1000; profile.Mode = GW_VOD;
     profile.Renditions = pts; profile.RenditionCount = track_count;
-    apply_session_output(folder, &profile);
+    apply_session_output(v->folder, &profile);
 
     SseAdapter ad; memset(&ad, 0, sizeof(ad));
-    ad.msg = message; ad.mode = 1; ad.folder = folder; ad.duration = duration; ad.seg_ms = profile.SegmentMs;
+    ad.job = job; ad.mode = 1; ad.folder = v->folder; ad.duration = duration; ad.seg_ms = profile.SegmentMs;
     GwFeedback fb = { sse_feedback, &ad };
 
-    MediaSource* src = source_file_open(source_path);
-    if (!src) { sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}"); return 0; }
-    run_gateway_session(folder, src, &profile, base, &fb);   // fecha a fonte
+    MediaSource* src = source_file_open(v->source_path);
+    if (!src) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+    run_gateway_session(v->folder, src, &profile, v->base, &fb);   // fecha a fonte
+}
+
+Element* hls_stream_video(Message* message)
+{
+    // A pasta chega como ultimo segmento da rota (query-string nao e suportada).
+    char raw[128] = { 0 }, folder[128];
+    route_segment(message, 0, raw, sizeof(raw));
+    sanitize_folder(raw, folder, sizeof(folder));
+
+    char topico[192];
+    sprintf_s(topico, sizeof(topico), "hls/%s", folder);
+    inicia_e_assina(message, topico, job_hls, video_job_novo(folder));
     return 0;
 }
 
-// Le a pasta (penultimo segmento) e/ou o codec (ultimo segmento) da rota.
-static void route_segment(Message* message, int from_end, char* out, size_t out_size)
-{
-    if (out_size > 0) out[0] = '\0';
-    int idx = message->Route.Count - 1 - from_end;
-    if (idx < 0 || idx >= message->Route.Count) return;
-    StringX* s = (StringX*)message->Route.Items[idx];
-    int n = s->Length < (int)out_size - 1 ? s->Length : (int)out_size - 1;
-    memcpy(out, s->Content, n);
-    out[n] = '\0';
-}
-
-// ---- DASH + VP9 (streaming adaptativo, WebM) ------------------------------
+// ---- DASH + VP9/AV1 (streaming adaptativo, WebM) --------------------------
 // GET /api/video/prepare-dash/<folder>[/<codec>]  (EventSource)
 // Gera manifest.mpd + segmentos WebM ({VP9|AV1}) via pipeline EMBUTIDO (sem ffmpeg).
 // Reproduzido no front com dash.js.
+
+static void job_dash(AppJob* job, void* arg)
+{
+    VideoJob* v = (VideoJob*)arg;
+
+    // Metadados por parse EMBUTIDO do MP4 (sem ffprobe). O audio e detectado dentro do pipeline.
+    int    source_width = 0, source_height = 0;
+    double duration = 0.0;
+    mp4_video_info(v->source_path, &source_width, &source_height, 0, 0, &duration);
+    if (source_width <= 0 || source_height <= 0 || duration <= 0.0) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+
+    // DASH-WebM via GATEWAY: source_mp4 -> decode/scale/encode {VP9|AV1} + AAC->Opus -> sink_dash.
+    HlsTrack tracks[HLS_MAX_TRACKS];
+    int track_count = compute_tracks(source_width, source_height, tracks);
+
+    PipeTrack pts[HLS_MAX_TRACKS];
+    for (int i = 0; i < track_count; i++)
+    { pts[i].Width = tracks[i].Width; pts[i].Height = tracks[i].Height; pts[i].BitrateBps = tracks[i].Bandwidth; pts[i].Name = tracks[i].Name; }
+
+    MediaProfile profile; memset(&profile, 0, sizeof(profile));
+    profile.Container = CONT_DASH_WEBM; profile.VideoCodec = v->is_av1 ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9; profile.AudioCodec = MEDIA_CODEC_OPUS;
+    profile.SegmentMs = 2000; profile.Mode = GW_VOD; profile.Renditions = pts; profile.RenditionCount = track_count;
+    apply_session_output(v->folder, &profile);
+
+    SseAdapter ad; memset(&ad, 0, sizeof(ad));
+    ad.job = job; ad.mode = 2; ad.folder = v->folder; ad.duration = duration; ad.seg_ms = profile.SegmentMs;
+    GwFeedback fb = { sse_feedback, &ad };
+
+    MediaSource* src = source_file_open(v->source_path);
+    if (!src) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+    run_gateway_session(v->folder, src, &profile, v->base, &fb);   // fecha a fonte
+}
 
 Element* dash_stream_video(Message* message)
 {
@@ -576,44 +607,11 @@ Element* dash_stream_video(Message* message)
     char folder[128];
     sanitize_folder(folder_raw, folder, sizeof(folder));
 
-    char base[MAX_PATH];
-    char source_path[MAX_PATH];
-    sprintf_s(base, sizeof(base), "web/hls/%s", folder);
-    sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
-
-    sse_headers(message);
-    message->StreamHandled = true;
-
-    // Metadados por parse EMBUTIDO do MP4 (sem ffprobe). O audio e detectado dentro do pipeline.
-    int    source_width = 0, source_height = 0;
-    double duration = 0.0;
-    mp4_video_info(source_path, &source_width, &source_height, 0, 0, &duration);
-    if (source_width <= 0 || source_height <= 0 || duration <= 0.0)
-    {
-        sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}");
-        return 0;
-    }
-
-    // DASH-WebM via GATEWAY: source_mp4 -> decode/scale/encode {VP9|AV1} + AAC->Opus -> sink_dash.
-    HlsTrack tracks[HLS_MAX_TRACKS];
-    int track_count = compute_tracks(source_width, source_height, tracks);
-
-    PipeTrack pts[HLS_MAX_TRACKS];
-    for (int i = 0; i < track_count; i++)
-    { pts[i].Width = tracks[i].Width; pts[i].Height = tracks[i].Height; pts[i].BitrateBps = tracks[i].Bandwidth; pts[i].Name = tracks[i].Name; }
-
-    MediaProfile profile; memset(&profile, 0, sizeof(profile));
-    profile.Container = CONT_DASH_WEBM; profile.VideoCodec = is_av1 ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9; profile.AudioCodec = MEDIA_CODEC_OPUS;
-    profile.SegmentMs = 2000; profile.Mode = GW_VOD; profile.Renditions = pts; profile.RenditionCount = track_count;
-    apply_session_output(folder, &profile);
-
-    SseAdapter ad; memset(&ad, 0, sizeof(ad));
-    ad.msg = message; ad.mode = 2; ad.folder = folder; ad.duration = duration; ad.seg_ms = profile.SegmentMs;
-    GwFeedback fb = { sse_feedback, &ad };
-
-    MediaSource* src = source_file_open(source_path);
-    if (!src) { sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}"); return 0; }
-    run_gateway_session(folder, src, &profile, base, &fb);   // fecha a fonte
+    VideoJob* v = video_job_novo(folder);
+    if (v) v->is_av1 = is_av1;
+    char topico[192];
+    sprintf_s(topico, sizeof(topico), "dash/%s/%s", folder, is_av1 ? "av1" : "vp9");
+    inicia_e_assina(message, topico, job_dash, v);
     return 0;
 }
 
@@ -621,6 +619,64 @@ Element* dash_stream_video(Message* message)
 // GET /api/video/convert/<folder>/<codec>   (EventSource)
 // Transcodifica source.mp4 inteiro para um arquivo no codec escolhido.
 // codec: h264/h265 -> .mp4 ; vp9/av1 -> .webm. Sem HLS/DASH (arquivo direto).
+
+static void job_convert(AppJob* job, void* arg)
+{
+    VideoJob* v = (VideoJob*)arg;
+    const char* codec = v->codec;
+
+    // Validacao + codec da fonte (parse embutido, sem ffprobe).
+    int sw = 0, sh = 0; double dur = 0.0; char src_codec[16] = { 0 };
+    mp4_video_info(v->source_path, &sw, &sh, 0, src_codec, &dur);
+    if (dur <= 0.0) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+
+    const char* ext = 0;
+    char out_path[MAX_PATH];
+
+    if (strcmp(codec, "vp9") == 0 || strcmp(codec, "av1") == 0)
+    {
+        ext = "webm";
+        char start[128]; sprintf_s(start, sizeof(start), "{\"type\":\"start\",\"codec\":\"%s\",\"ext\":\"%s\"}", codec, ext);
+        app_job_publicar(job, 0, start);
+
+        sprintf_s(out_path, sizeof(out_path), "%s/output.%s", v->base, ext);
+        MediaCodec mc = (strcmp(codec, "av1") == 0) ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9;
+        if (embed_transcode_webm(v->source_path, out_path, mc) != 0)
+        {
+            app_job_publicar(job, 0, "{\"type\":\"error\",\"message\":\"Conversao embutida falhou (verifique libs VP9/AV1/Opus).\"}");
+            return;
+        }
+    }
+    else if (strcmp(codec, "h264") == 0 || strcmp(codec, "h265") == 0)
+    {
+        // H.264/H.265 via GATEWAY: source_mp4 -> (decode->encode | passthrough) -> sink_mp4 (.mp4).
+        // Fonte no mesmo codec (ex.: HEVC->h265) => passthrough (remux); senao reencoda (OpenH264/x265).
+        MediaProfile profile; memset(&profile, 0, sizeof(profile));
+        profile.Container = CONT_MP4_FILE;
+        profile.VideoCodec = (strcmp(codec, "h265") == 0) ? MEDIA_CODEC_H265 : MEDIA_CODEC_H264;
+        profile.AudioCodec = MEDIA_CODEC_AAC; profile.SegmentMs = 2000; profile.Mode = GW_VOD;
+        apply_session_output(v->folder, &profile);
+
+        SseAdapter ad; memset(&ad, 0, sizeof(ad));
+        ad.job = job; ad.mode = 0; ad.folder = v->folder; ad.codec = codec; ad.ext = "mp4";
+        GwFeedback fb = { sse_feedback, &ad };
+
+        MediaSource* src = source_file_open(v->source_path);
+        if (!src) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+        run_gateway_session(v->folder, src, &profile, v->base, &fb);   // fecha a fonte
+        return;
+    }
+    else
+    {
+        app_job_publicar(job, 0, "{\"type\":\"error\",\"message\":\"Codec desconhecido (use h264/h265/vp9/av1).\"}");
+        return;
+    }
+
+    char done[256];
+    sprintf_s(done, sizeof(done),
+        "{\"type\":\"done\",\"codec\":\"%s\",\"file\":\"/hls/%s/output.%s\"}", codec, v->folder, ext);
+    app_job_publicar(job, 0, done);
+}
 
 Element* convert_file(Message* message)
 {
@@ -641,68 +697,10 @@ Element* convert_file(Message* message)
     }
     codec[ci] = '\0';
 
-    char base[MAX_PATH];
-    char source_path[MAX_PATH];
-    sprintf_s(base, sizeof(base), "web/hls/%s", folder);
-    sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
-
-    sse_headers(message);
-    message->StreamHandled = true;
-
-    // Validacao + codec da fonte (parse embutido, sem ffprobe).
-    int sw = 0, sh = 0; double dur = 0.0; char src_codec[16] = { 0 };
-    mp4_video_info(source_path, &sw, &sh, 0, src_codec, &dur);
-    if (dur <= 0.0)
-    {
-        sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}");
-        return 0;
-    }
-
-    const char* ext = 0;
-    char out_path[MAX_PATH];
-
-    if (strcmp(codec, "vp9") == 0 || strcmp(codec, "av1") == 0)
-    {
-        ext = "webm";
-        char start[128]; sprintf_s(start, sizeof(start), "{\"type\":\"start\",\"codec\":\"%s\",\"ext\":\"%s\"}", codec, ext);
-        sse_event(message, start);
-
-        sprintf_s(out_path, sizeof(out_path), "%s/output.%s", base, ext);
-        MediaCodec mc = (strcmp(codec, "av1") == 0) ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9;
-        if (embed_transcode_webm(source_path, out_path, mc) != 0)
-        {
-            sse_event(message, "{\"type\":\"error\",\"message\":\"Conversao embutida falhou (verifique libs VP9/AV1/Opus).\"}");
-            return 0;
-        }
-    }
-    else if (strcmp(codec, "h264") == 0 || strcmp(codec, "h265") == 0)
-    {
-        // H.264/H.265 via GATEWAY: source_mp4 -> (decode->encode | passthrough) -> sink_mp4 (.mp4).
-        // Fonte no mesmo codec (ex.: HEVC->h265) => passthrough (remux); senao reencoda (OpenH264/x265).
-        MediaProfile profile; memset(&profile, 0, sizeof(profile));
-        profile.Container = CONT_MP4_FILE;
-        profile.VideoCodec = (strcmp(codec, "h265") == 0) ? MEDIA_CODEC_H265 : MEDIA_CODEC_H264;
-        profile.AudioCodec = MEDIA_CODEC_AAC; profile.SegmentMs = 2000; profile.Mode = GW_VOD;
-        apply_session_output(folder, &profile);
-
-        SseAdapter ad; memset(&ad, 0, sizeof(ad));
-        ad.msg = message; ad.mode = 0; ad.folder = folder; ad.codec = codec; ad.ext = "mp4";
-        GwFeedback fb = { sse_feedback, &ad };
-
-        MediaSource* src = source_file_open(source_path);
-        if (!src) { sse_event(message, "{\"type\":\"error\",\"message\":\"Fonte nao encontrada. Refaca o upload.\"}"); return 0; }
-        run_gateway_session(folder, src, &profile, base, &fb);   // fecha a fonte
-        return 0;
-    }
-    else
-    {
-        sse_event(message, "{\"type\":\"error\",\"message\":\"Codec desconhecido (use h264/h265/vp9/av1).\"}");
-        return 0;
-    }
-
-    char done[256];
-    sprintf_s(done, sizeof(done),
-        "{\"type\":\"done\",\"codec\":\"%s\",\"file\":\"/hls/%s/output.%s\"}", codec, folder, ext);
-    sse_event(message, done);
+    VideoJob* v = video_job_novo(folder);
+    if (v) sprintf_s(v->codec, sizeof(v->codec), "%s", codec);
+    char topico[192];
+    sprintf_s(topico, sizeof(topico), "convert/%s/%s", folder, codec);
+    inicia_e_assina(message, topico, job_convert, v);
     return 0;
 }

@@ -15,6 +15,7 @@
 
 #include "event_server.h"
 #include "server_type.h"
+#include "yason.h"   // Element: arvore do corpo JSON que message_release libera
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,7 +36,7 @@ void message_field_param_data(byte* data, int data_leng, int position, int lengt
 }
 
 
-void message_field_param_scalar(byte* data, MessageFieldParam* param)
+void message_field_param_scalar(const char* data, MessageFieldParam* param)
 {
     param->IsScalar   = true;
     param->IsEndGroup = true;
@@ -104,24 +105,36 @@ void message_field_param_add(byte* data, int begin, int end, bool first, bool is
 
 void message_field_param_release(MessageFieldParam* param);
 
+static void param_strings_release(MessageFieldParam* p)
+{
+    // Pelo Content e nao pelo Max: o parser de query grava Max = Length, e um valor vazio
+    // (Length 0) ficava com o buffer alocado e o teste "Max > 0" pulava a liberacao.
+    if (p->Name.Content)  string_release_data(&p->Name);
+    if (p->Value.Content) string_release_data(&p->Value);
+    p->Name.Max = p->Name.Length = 0;
+    p->Value.Max = p->Value.Length = 0;
+}
+
+// Libera os textos do no 'param' e TODOS os nos encadeados depois dele (Next). O proprio
+// 'param' nao e liberado: ele pode estar embutido (MessageField.Param) ou ser a cabeca
+// alocada de Message.Param, e cada dono decide.
+//
+// A versao antiga recursava liberando so os TEXTOS dos nos seguintes, nunca os nos: todo
+// cabecalho com lista (Accept, Accept-Encoding, sec-ch-ua...) vazava um no por item, a cada
+// requisicao. Iterativo tambem para nao depender da profundidade da pilha.
 void message_field_param_release(MessageFieldParam* param)
 {
-    if (param->Name.Max > 0)
-    {
-        string_release_data(&param->Name);
-        param->Name.Max = 0;
-        param->Name.Length = 0;
-    }
-    if (param->Value.Max > 0)
-    {
-        string_release_data(&param->Value);
-        param->Value.Max = 0;
-        param->Value.Length = 0;
-    }
+    if (!param) return;
+    param_strings_release(param);
 
-    if (param->Next)
+    MessageFieldParam* n = param->Next;
+    param->Next = 0;
+    while (n)
     {
-        message_field_param_release(param->Next);
+        MessageFieldParam* prox = n->Next;
+        param_strings_release(n);
+        memop_free_raw(n);
+        n = prox;
     }
 }
 
@@ -212,9 +225,27 @@ void message_field_list_release(MessageFieldList* list, bool only_data)
             memop_free_raw(list);
         }
     }
-    return 0;
+    return;
 }
 
+
+// Libera uma arvore do yason (o corpo JSON parseado em Message.Object). O yason nao exporta
+// uma funcao para isso; esta e a mesma logica do yb_free do MediaFragmenter.
+static void element_free(Element* e)
+{
+    if (!e) return;
+    for (int i = 0; i < e->Children.Count; i++) element_free(e->Children.Items[i]);
+    memop_free_raw(e->Children.Items);
+    string_release(&e->Name);
+    string_release(&e->Value);
+    string_release(&e->Comment);
+    memop_free_raw(e);
+}
+
+static void stringx_ptr_release(StringX** pp)
+{
+    if (pp && *pp) { string_release_data(*pp); memop_free_raw(*pp); *pp = 0; }
+}
 
 Message* message_create()
 {
@@ -233,7 +264,25 @@ void message_release(Message* m)
     if (m->Route.Max > 0)
     {
         string_array_release(&m->Route, true);
+        // string_array_release(only_data) libera os itens mas mantem o VETOR de ponteiros,
+        // porque a lista pode estar embutida. Aqui ela esta, e a mensagem vai embora junto:
+        // o vetor e nosso.
+        memop_free_raw(m->Route.Items);
+        m->Route.Items = 0;
+        m->Route.Max = 0;
     }
+
+    if (m->UserAgent.Content) string_release_data(&m->UserAgent);
+
+    stringx_ptr_release(&m->SessionUID);
+    stringx_ptr_release(&m->EventUID);
+    stringx_ptr_release(&m->OriginEventUID);
+
+    // Corpo JSON parseado pelo despacho (appserver_received) -- ninguem liberava.
+    if (m->Object) { element_free((Element*)m->Object); m->Object = 0; }
+
+    // Resposta montada pelo handler (message_response_create_*) -- ninguem liberava.
+    if (m->Response) { message_response_release(m->Response); m->Response = 0; }
 
     if (m->Version.Max > 0)
     {
@@ -250,6 +299,13 @@ void message_release(Message* m)
         string_release_data(&m->Content);
     }
 
+    // Corpo grande em arquivo temporario: se o handler nao o levou (app_corpo_salvar), apaga.
+    if (m->ContentFile.Content)
+    {
+        if (m->ContentFile.Length > 0) remove(m->ContentFile.Content);
+        string_release_data(&m->ContentFile);
+    }
+
     // Campos de WebSocket, alocados em message_parser.c (message_set_string).
     StringX** ws_fields[3] = { &m->SecWebsocketKey, &m->SecWebsocketAccept, &m->Upgrade };
     for (int i = 0; i < 3; i++)
@@ -257,7 +313,9 @@ void message_release(Message* m)
 
     if (m->Param)
     {
-        message_field_param_release(m->Param);
+        message_field_param_release(m->Param);   // libera a cadeia inteira...
+        memop_free_raw(m->Param);                // ...e a cabeca, alocada pelo parser
+        m->Param = 0;
     }
     memop_free_raw(m);
 }
@@ -279,6 +337,22 @@ void appclient_list_add(AppClientList* list, AppClientInfo* cli)
 
         list->Items[list->Count] = cli;
         list->Count++;
+    }
+}
+
+// O servidor guardava todo cliente na lista e nunca tirava: a lista crescia para sempre e,
+// depois que o cliente fosse liberado, guardaria ponteiros soltos.
+void appclient_list_remove(AppClientList* list, AppClientInfo* cli)
+{
+    if (!list || !cli) return;
+    for (int i = 0; i < list->Count; i++)
+    {
+        if (list->Items[i] == cli)
+        {
+            list->Items[i] = list->Items[list->Count - 1];
+            list->Count--;
+            return;
+        }
     }
 }
 
@@ -399,7 +473,7 @@ void serverinfo_list_release(AppServerList* list)
         memop_free_raw(list->Items);
         memop_free_raw(list);
     }
-    return 0;
+    return;
 }
 
 
@@ -629,6 +703,25 @@ MessageResponseInfo* message_response_create(int status, ContentTypeOption type)
     ar->ContentType = type;
     ar->Status = status;
     return ar;
+}
+
+void message_response_release(MessageResponseInfo* r)
+{
+    if (!r) return;
+    if (r->Content.Data) memop_free_raw(r->Content.Data);
+    message_field_list_release(&r->Fields, true);
+    memop_free_raw(r);
+}
+
+// ---- query string -----------------------------------------------------------------------
+const char* message_query_get(Message* m, const char* name)
+{
+    if (!m || !name) return 0;
+    size_t n = strlen(name);
+    for (MessageFieldParam* p = m->Param; p; p = p->Next)
+        if (p->Name.Content && p->Name.Length == n && memcmp(p->Name.Content, name, n) == 0)
+            return p->Value.Content ? p->Value.Content : "";
+    return 0;
 }
 
 MessageResponseInfo* message_response_create_content(int status, ContentTypeOption type, char* content, int size)

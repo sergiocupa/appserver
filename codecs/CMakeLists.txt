@@ -103,13 +103,42 @@ add_subdirectory("${DEPS}/svtav1" "${CMAKE_BINARY_DIR}/_svtav1" EXCLUDE_FROM_ALL
 
 # ============================================================================
 #  3) x265  (HEVC; CMake proprio tem ENABLE_NEON p/ aarch64)
-#     ENABLE_ASSEMBLY OFF no 1o momento: evita depender de nasm(x86)/gas(arm).
-#     Para maxima performance, ligar depois com o assembler instalado.
+#     x64: assembly LIGADO quando ha NASM na maquina. Sem ele o x265 cai no C puro --
+#     e antes caia SEMPRE, porque isto estava forcado em OFF: o H.265 no Linux rodava
+#     sem nenhum SIMD, enquanto o Windows usava SSE2..AVX2.
+#     arm64: continua OFF. O assembly de aarch64 do x265 usa o gas e nao foi verificado
+#     aqui; ligar sem testar seria trocar um build conhecido por um palpite.
 # ============================================================================
 set(ENABLE_SHARED   OFF CACHE BOOL "" FORCE)
 set(ENABLE_CLI      OFF CACHE BOOL "" FORCE)
 set(ENABLE_TESTS    OFF CACHE BOOL "" FORCE)
-set(ENABLE_ASSEMBLY OFF CACHE BOOL "" FORCE)
+set(CODECS_X265_ASM OFF)
+if(CODECS_ARCH STREQUAL "x64")
+  find_program(CODECS_NASM nasm)
+  if(CODECS_NASM)
+    set(CODECS_X265_ASM ON)
+  else()
+    message(WARNING "x265 sem assembly: 'nasm' nao encontrado (instale nasm >= 2.13).")
+  endif()
+endif()
+set(ENABLE_ASSEMBLY ${CODECS_X265_ASM} CACHE BOOL "" FORCE)
+set(ENABLE_PIC      ON                 CACHE BOOL "" FORCE)   # vai dentro de um .so (plugin)
+# O plugin de H.265 e definido no CMakeLists da raiz: ele precisa saber se o assembly
+# entrou, para o descritor (ISA minima/maxima) dizer a verdade.
+set(CODECS_X265_ASM ${CODECS_X265_ASM} CACHE INTERNAL "x265 compilado com assembly")
+message(STATUS "codecs: x265 assembly = ${CODECS_X265_ASM}")
+# Visibilidade OCULTA para os simbolos do x265. O cpu-a.asm faz uma chamada direta
+# (call intel_cpu_indicator_init) a uma funcao C; dentro de um .so (o plugin de H.265), com
+# visibilidade padrao, esse simbolo pode ser substituido por outra biblioteca e o ligador
+# recusa a realocacao R_X86_64_PC32 ("recompile with -fPIC", mesmo ja com -fPIC). Oculto, o
+# simbolo e local ao .so e a chamada direta vale -- e a mesma correcao que o x264 usa. De
+# quebra, o plugin para de exportar centenas de simbolos internos do x265.
+# CMP0063 NEW: sem isto, o cmake_minimum_required antigo do x265 faz a visibilidade ser
+# ignorada em biblioteca ESTATICA.
+set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
+set(CMAKE_C_VISIBILITY_PRESET      hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET    hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 add_subdirectory("${DEPS}/x265/source" "${CMAKE_BINARY_DIR}/_x265" EXCLUDE_FROM_ALL)
 
 # ============================================================================

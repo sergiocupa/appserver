@@ -501,7 +501,13 @@ static FragJob* job_find(const char* id)
 GwControl* frag_session_job_begin(const char* id)
 {
     if (!g_ready) frag_session_init(0);
-    if (!id_is_safe(id) || !frag_session_exists(id)) return 0;
+    // So o nome e validado. Exigir a sessao (session.json) deixava a pasta padrao "current",
+    // que nao tem sessao, SEM job registrado: rodava sem poder ser cancelada e sem exclusao
+    // mutua -- e o EventSource do navegador reconecta sozinho quando a conexao cai, o que
+    // disparava uma SEGUNDA fragmentacao gravando por cima da primeira na mesma pasta.
+    // Sem sessao, o job continua exclusivo e cancelavel; so o estado (set_state) nao tem onde
+    // ser gravado, e session_edit ja ignora pasta sem session.json.
+    if (!id_is_safe(id)) return 0;
 
     thread_mutex_lock_inline(&g_lock);
     if (job_find(id)) { thread_mutex_unlock_inline(&g_lock); return 0; }   // ja rodando

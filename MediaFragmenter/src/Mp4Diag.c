@@ -11,11 +11,11 @@ void mp4diag_display_frame_index(FrameIndexList* frames)
     for (int i = 0; i < frames->Count; i++)
     {
         FrameIndex* f = frames->Frames[i];
-        printf("Frame %d | Offset %llu | Size %llu\n", i, f->Offset, f->Size);
+        printf("Frame %d | Offset %llu | Size %llu\n", i, (unsigned long long)f->Offset, (unsigned long long)f->Size);
         for (int j = 0; j < f->Nals.Count; j++)
         {
             NALUIndex* ni = f->Nals.Items[j];
-            printf("  NAL %d | Offset %llu | Size %llu | Type %d\n", j, ni->Offset, ni->Size, ni->Type);
+            printf("  NAL %d | Offset %llu | Size %llu | Type %d\n", j, (unsigned long long)ni->Offset, (unsigned long long)ni->Size, ni->Type);
         }
     }
 }

@@ -18,6 +18,7 @@
 #include "memory_pool.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
   #include <windows.h>
@@ -37,7 +38,15 @@
   }
 #endif
 
-#define ENTRADA   "E:\\videos\\8293503-hd_1920_1080_30fps.mp4"
+// Video de referencia. BENCH_VIDEO troca o caminho (no Linux/WSL o padrao do Windows nao
+// existe, e sem ele os benchmarks sao PULADOS -- e o executor diz isso).
+#define ENTRADA_PADRAO "E:\\videos\\8293503-hd_1920_1080_30fps.mp4"
+static const char* entrada(void)
+{
+    const char* v = getenv("BENCH_VIDEO");
+    return (v && v[0]) ? v : ENTRADA_PADRAO;
+}
+#define ENTRADA   entrada()
 #define MAX_QUADROS 150          // ~10 s a 30 fps: amostra grande o bastante para estabilizar
 
 typedef struct

@@ -15,7 +15,7 @@
 
 #include "event_server.h"
 #include "utils/message_assembler.h"
-#include "appclient.h"
+#include "http/http_conexao.h"
 #include "utils/activity_binder.h"
 #include "yason.h"
 
@@ -32,30 +32,24 @@ void event_sender(ResourceBuffer* object, MessageResultCallback callback)
 
 }
 
+typedef struct { ResourceBuffer* Obj; MessageResultCallback Cb; AppServerInfo* Srv; } Difusao;
+
+static void difunde_um(AppClientInfo* c, void* arg)
+{
+    Difusao* d = (Difusao*)arg;
+    MessageEvent* item = memop_calloc_raw(1, sizeof(MessageEvent));
+    item->Client = c;
+    item->Callback = d->Cb;
+    event_list_add(d->Srv->Events, item);
+    appclient_send(c, d->Obj->Data, d->Obj->Length, c->IsWebSocketMode);
+}
+
+// Percorre os clientes SOB O LOCK da lista: antes a lista era lida sem lock enquanto a
+// thread de cada conexao a alterava (cliente entrando/saindo no meio da varredura).
 void event_sender_server(ResourceBuffer* object, MessageResultCallback callback, AppClientInfo* client)
 {
-    AppServerInfo* server = client->Server;
-
-    int ix = 0;
-	while (ix < server->Clients->Count)
-	{
-		AppClientInfo* c = server->Clients->Items[ix];
-
-        MessageEvent* item = memop_calloc_raw(1, sizeof(MessageEvent));
-        item->Client = c;
-		item->Callback = callback;
-       // item->UID = "";
-
-
-        event_list_add(server->Events, item);
-
-
-        appclient_send(c, object->Data, object->Length, c->IsWebSocketMode);
-		ix++;
-	}
-
-
-
+    Difusao d = { object, callback, client->Server };
+    appclient_para_cada(client->Server, difunde_um, &d);
 }
 
 

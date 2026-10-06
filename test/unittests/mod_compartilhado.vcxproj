@@ -37,9 +37,11 @@
   </ItemDefinitionGroup>
   <ItemGroup><ClCompile Include="mod_compartilhado.c" /></ItemGroup>
   <ItemGroup>
+    <!-- SetConfiguration: a DLL do xplatbase, SEMPRE. Neste projeto a configuracao Debug/Release do Xplatbase.vcxproj e BIBLIOTECA ESTATICA; a DLL e "Debug DLL"/"Release DLL", e so a solution fazia esse mapeamento. Compilando este projeto avulso (msbuild no .vcxproj) a referencia caia na estatica, o executavel saia com uma copia do xplatbase dentro, e ao carregar um plugin de codec surgia a segunda instancia: em Debug o detector chama abort() e o processo congelava. Aconteceu de verdade no appservertester. -->
     <ProjectReference Include="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\Xplatbase.vcxproj">
       <Project>{f217b4d5-f6bc-4fce-af5e-beef9fe1f3e8}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <SetConfiguration>Configuration=$(Configuration) DLL</SetConfiguration>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

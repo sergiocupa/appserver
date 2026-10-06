@@ -216,18 +216,20 @@ ResourceBuffer _file_read_bin(const char* path_file)
 }
 
 
+// Separador '/': o Windows aceita nas APIs de arquivo, e com '\\' fixo o Linux nunca
+// achava arquivo estatico nenhum (todo GET de pagina dava 404).
 void binder_append_route(StringX* content, ListX* route, int route_start, bool append_backslash)
 {
     if (route && route->Count > route_start)
     {
-        if (append_backslash) string_append_char(content, '\\');
+        if (append_backslash) string_append_char(content, '/');
 
         int CNT = route->Count - 1;
         int im = route_start;
         while (im < CNT)
         {
             string_append_s(content, route->Items[im]);
-            string_append_char(content, '\\');
+            string_append_char(content, '/');
             im++;
         }
         string_append_s(content, route->Items[im]);
@@ -264,23 +266,37 @@ bool binder_prefix_exist(ListX* prefix, ListX* route, int* ix)
 
 
 
-FunctionBind* binder_extension_exist(FunctionBindList* binders, ListX* prefix, StringX* extension)
+// Bind registrado por EXTENSAO (app_add_receiver_extension): casa quando o ultimo segmento
+// da rota termina com a extensao do bind (sem diferenciar maiusculas). 'last_segment' e o
+// ultimo item da rota da requisicao.
+//
+// A versao anterior passava a StringX do segmento onde se esperava a LISTA da rota
+// (binder_prefix_exist), e a LISTA de rota do bind onde se esperava uma string
+// (string_ends_off_s): lia campos de um tipo como se fossem de outro. Nunca explodiu so
+// porque ninguem a chamava -- o registro por extensao existia na API publica, mas o
+// despacho nunca consultava. O prefixo nao entra aqui: extensao identifica arquivo em
+// qualquer caminho (era o uso do DashServerTest, com ".mpd" e ".m4s").
+FunctionBind* binder_extension_exist(FunctionBindList* binders, ListX* prefix, StringX* last_segment)
 {
-    if (extension->Length > 0)
+    (void)prefix;
+    if (!binders || !last_segment || !last_segment->Content || last_segment->Length == 0) return 0;
+
+    for (int ax = 0; ax < binders->Count; ax++)
     {
-        int ix = 0;
-        bool found = binder_prefix_exist(prefix, extension, &ix);
-        if (found)
+        FunctionBind* bind = binders->Items[ax];
+        uint64 el = bind->Extension.Length;
+        if (el == 0 || !bind->Extension.Content || el > last_segment->Length) continue;
+
+        const char* fim_seg = last_segment->Content + (last_segment->Length - el);
+        uint64 i = 0;
+        for (; i < el; i++)
         {
-            int ax = 0;
-            while (ax < binders->Count)
-            {
-                FunctionBind* bind = binders->Items[ax];
-                int found = string_ends_off_s(&bind->Route, extension);
-                if (found) return bind;   // era "return 1": ponteiro 0x1 para quem chamasse
-                ax++;
-            }
+            char a = fim_seg[i], b = bind->Extension.Content[i];
+            if (a >= 'A' && a <= 'Z') a = (char)(a - 'A' + 'a');
+            if (b >= 'A' && b <= 'Z') b = (char)(b - 'A' + 'a');
+            if (a != b) break;
         }
+        if (i == el) return bind;
     }
     return 0;
 }
@@ -356,7 +372,9 @@ FunctionBind* binder_route_exist(FunctionBindList* binders, ListX* prefix, ListX
 }
 
 
-bool binder_get_web_resource(ListX* route, StringX* abs_path, ResourceBuffer* buffer)
+// Caminho do arquivo estatico da rota, validado (sem "..", sem "\\" nem ":" num segmento),
+// e o tipo dele. NAO le o arquivo: quem envia decide entre memoria e streaming.
+bool binder_web_path(ListX* route, StringX* abs_path, StringX* path, ContentTypeOption* type)
 {
     if (!route || !abs_path || abs_path->Length <= 0) return false;
 
@@ -366,53 +384,40 @@ bool binder_get_web_resource(ListX* route, StringX* abs_path, ResourceBuffer* bu
         bool invalid = string_equals_c(segment, "..");
         for (int c = 0; !invalid && c < segment->Length; c++)
         {
-            if (segment->Content[c] == '\\' || segment->Content[c] == ':')
-            {
-                invalid = true;
-            }
+            if (segment->Content[c] == '\\' || segment->Content[c] == ':') invalid = true;
         }
-        if (invalid)
-        {
-            return false;
-        }
+        if (invalid) return false;
     }
 
+    string_append_s(path, abs_path);
+    if (route->Count > 0) binder_append_route(path, route, 0, true);
+    else string_appends(path, "/index.html", (int)strlen("/index.html"), 0, (int)strlen("/index.html"));
+
+    if (!_file_exists(path->Content)) return false;
+    if (type) *type = get_type_file(path);
+    return true;
+}
+
+bool binder_get_web_resource(ListX* route, StringX* abs_path, ResourceBuffer* buffer)
+{
     StringX path;
     string_init(&path);
-    string_append_s(&path, abs_path);
-    if (route->Count > 0)
+    ContentTypeOption type = CONTENT_TYPE_NONE;
+    bool result = binder_web_path(route, abs_path, &path, &type);
+    if (result && buffer)
     {
-        binder_append_route(&path, route, 0, true);
-    }
-    else
-    {
-        string_appends(&path, "\\index.html", (int)strlen("\\index.html"), 0, (int)strlen("\\index.html"));
-    }
-
-    bool result = false;
-    if (_file_exists(path.Content))
-    {
-        if (!buffer)
+        bool is_text = type == TEXT_HTML || type == TEXT_CSS || type == TEXT_JAVASCRIPT || type == TEXT_PLAIN || type == APPLICATION_JAVASCRIPT || type == APPLICATION_JSON || type == APPLICATION_XML || type == APPLICATION_MPEGURL;
+        byte* data = 0;
+        int length = 0;
+        bool loaded = is_text ? file_read_text(path.Content, (char**)&data, &length) : file_read_bin(path.Content, &data, &length);
+        if (loaded)
         {
-            result = true;
+            buffer->Type = type;
+            buffer->Length = length;
+            buffer->Data = data;
         }
-        else
-        {
-            ContentTypeOption type = get_type_file(&path);
-            bool is_text = type == TEXT_HTML || type == TEXT_CSS || type == TEXT_JAVASCRIPT || type == TEXT_PLAIN || type == APPLICATION_JAVASCRIPT || type == APPLICATION_JSON || type == APPLICATION_XML || type == APPLICATION_MPEGURL;
-            byte* data = 0;
-            int length = 0;
-            bool loaded = is_text ? file_read_text(path.Content, (char**)&data, &length) : file_read_bin(path.Content, &data, &length);
-            if (loaded)
-            {
-                buffer->Type = type;
-                buffer->Length = length;
-                buffer->Data = data;
-                result = true;
-            }
-        }
+        result = loaded;
     }
-
     string_release_data(&path);
     return result;
 }

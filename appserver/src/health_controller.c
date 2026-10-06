@@ -23,7 +23,8 @@
 //  dois registros ela suspende thread de uma copia enquanto le o pool da outra.
 //  Enquanto a duplicacao existir, a varredura fica atras de confirmacao no painel.
 //
-//  AVISO 2: esta rota NAO tem autenticacao. Ela expoe contadores internos do processo
+//  AVISO 2: a rota nao tem autenticacao. Por isso, por padrao, so atende a propria maquina
+//  (ver origem_permitida); Config.HealthAllowRemote (ou APPSERVER_HEALTH_ALLOW_REMOTE=1) libera o acesso remoto. Ela expoe contadores internos do processo
 //  (memoria, CPU, caminho do log de vazamento). Antes de expor este servidor fora de uma
 //  rede de confianca, ela precisa entrar no mesmo controle das demais rotas de api.
 
@@ -32,6 +33,8 @@
 #include "utils/health_monitor.h"
 
 #include <stdio.h>
+#include "memory_pool.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* O fim do log basta para ver a varredura que acabou de rodar; o arquivo inteiro pode
@@ -90,8 +93,29 @@ static void responde_json(Message* message, int status, const char* json, int le
 }
 
 
+// A rota expoe contadores internos do processo e dispara uma varredura que suspende
+// threads: nao e para qualquer um na rede. Por padrao so atende quem esta na PROPRIA
+// maquina (127.x). Para liberar acesso remoto (painel aberto de outra maquina numa rede de
+// confianca): APPSERVER_HEALTH_ALLOW_REMOTE=1.
+static int origem_permitida(Message* message)
+{
+    // HealthAllowRemote: appserver_config_default le APPSERVER_HEALTH_ALLOW_REMOTE.
+    if (message && message->Client && message->Client->Server && message->Client->Server->Config.HealthAllowRemote) return 1;
+
+    const StringX* r = (message && message->Client) ? &message->Client->RemoteHost : 0;
+    if (!r || !r->Content) return 0;
+    return strncmp(r->Content, "127.", 4) == 0;
+}
+
 Element* appserver_health_route(Message* message)
 {
+    if (!origem_permitida(message))
+    {
+        const char* e = "{\"error\":\"a rota de saude so atende a propria maquina\"}";
+        responde_json(message, HTTP_STATUS_FORBIDDEN, e, (int)strlen(e));
+        return 0;
+    }
+
     int base = indice_de(message, "health");
     if (base < 0)
     {
@@ -106,17 +130,33 @@ Element* appserver_health_route(Message* message)
     /* ---- varredura de vazamento, sob demanda ---- */
     if (strcmp(acao, "leak-scan") == 0)
     {
-        static char log[LEAK_TAIL_BYTES];
-        static char esc[LEAK_TAIL_BYTES * 2 + 8];
-        static char json[LEAK_TAIL_BYTES * 2 + 256];
+        // Alocados POR REQUISICAO. Eram 'static': duas varreduras simultaneas escreviam no
+        // mesmo buffer e uma devolvia o texto da outra (ou texto pela metade).
+        enum { ESC_MAX = LEAK_TAIL_BYTES * 6 + 8, JSON_MAX = LEAK_TAIL_BYTES * 6 + 256 };
+        char* log  = (char*)memop_alloc_raw(LEAK_TAIL_BYTES);
+        char* esc  = (char*)memop_alloc_raw(ESC_MAX);
+        char* json = (char*)memop_alloc_raw(JSON_MAX);
+        if (!log || !esc || !json)
+        {
+            if (log) memop_free_raw(log);
+            if (esc) memop_free_raw(esc);
+            if (json) memop_free_raw(json);
+            const char* e = "{\"error\":\"sem memoria\"}";
+            responde_json(message, HTTP_STATUS_INTERNAL_ERROR, e, (int)strlen(e));
+            return 0;
+        }
 
-        int n = health_monitor_leak_scan(log, (int)sizeof(log));
-        json_escapa(log, n, esc, (int)sizeof(esc));
+        int n = health_monitor_leak_scan(log, LEAK_TAIL_BYTES);
+        json_escapa(log, n, esc, ESC_MAX);
 
-        int len = snprintf(json, sizeof(json),
+        int len = snprintf(json, JSON_MAX,
             "{\"ran\":%s,\"bytes\":%d,\"log\":\"%s\"}",
             n > 0 ? "true" : "false", n, esc);
-        responde_json(message, HTTP_STATUS_OK, json, len);
+        responde_json(message, HTTP_STATUS_OK, json, len);   // copia o conteudo
+
+        memop_free_raw(log);
+        memop_free_raw(esc);
+        memop_free_raw(json);
         return 0;
     }
 
@@ -138,7 +178,8 @@ Element* appserver_health_route(Message* message)
               "\"memory\":{"
                   "\"rssBytes\":%llu,\"virtualBytes\":%llu,"
                   "\"poolLiveBlocks\":%lld,\"poolAllocCount\":%llu,\"poolFreeCount\":%llu,"
-                  "\"poolReservedBytes\":%llu,\"poolCachedChunks\":%llu,\"poolPurgeCount\":%llu"
+                  "\"poolReservedBytes\":%llu,\"poolCachedChunks\":%llu,\"poolPurgeCount\":%llu,"
+                  "\"poolLanesCreated\":%llu,\"poolLanesDestroyed\":%llu,\"poolRemoteFrees\":%llu"
               "},"
               "\"gpu\":{\"available\":%s,\"percent\":%.1f,\"videoPercent\":%.1f,\"memoryBytes\":%llu},"
               "\"leak\":{\"level\":%d,\"floorDelta\":%lld,\"floorPerMin\":%lld,\"windowSec\":%d},"
@@ -150,6 +191,8 @@ Element* appserver_health_route(Message* message)
             (unsigned long long)h.PoolAllocCount, (unsigned long long)h.PoolFreeCount,
             (unsigned long long)h.PoolReservedBytes, (unsigned long long)h.PoolCachedChunks,
             (unsigned long long)h.PoolPurgeCount,
+            (unsigned long long)h.PoolLanesCreated, (unsigned long long)h.PoolLanesDestroyed,
+            (unsigned long long)h.PoolRemoteFrees,
             h.GpuAvailable ? "true" : "false", h.GpuPercent, h.GpuEncodePercent,
             (unsigned long long)h.GpuMemoryBytes,
             h.LeakLevel, (long long)h.LeakFloorDelta, (long long)h.LeakFloorPerMin, h.LeakWindowSec,

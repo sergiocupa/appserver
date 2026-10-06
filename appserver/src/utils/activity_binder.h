@@ -26,6 +26,7 @@ extern "C" {
 	FunctionBind* binder_extension_exist(FunctionBindList* binders, ListX* prefix, StringX* extension);
 	FunctionBind* binder_route_exist(FunctionBindList* binders, ListX* prefix, ListX* route, int* route_rest);
 	bool binder_get_web_resource(ListX* route, StringX* abs_path, ResourceBuffer* buffer);
+	bool binder_web_path(ListX* route, StringX* abs_path, StringX* path, ContentTypeOption* type);
 
 
 #ifdef __cplusplus

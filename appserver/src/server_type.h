@@ -21,7 +21,8 @@ extern "C" {
 #endif
 
     // Migrado para xplatbase (ListX/StringX/memory_pool/numeric/threads) — camada utilitaria unica.
-    #include "xplatbase.h"
+    #include "atomics.h"   // xatomic_int: contadores de vida do cliente
+#include "xplatbase.h"
     #include "utils/xpb_compat.h"   // funcoes stringlib/sha/base64/file reimplementadas sobre StringX
     #include "../submodules/yason/yason/src/yason_element.h"
     
@@ -62,7 +63,10 @@ extern "C" {
         HTTP_STATUS_UNAUTHORIZED        = 401,
         HTTP_STATUS_FORBIDDEN           = 403,
         HTTP_STATUS_NOT_FOUND           = 404,
+        HTTP_STATUS_METHOD_NOT_ALLOWED  = 405,
         HTTP_STATUS_PRECONDITION_FAILED = 412,
+        HTTP_STATUS_PAYLOAD_TOO_LARGE   = 413,
+        HTTP_STATUS_HEADERS_TOO_LARGE   = 431,
         HTTP_STATUS_INTERNAL_ERROR      = 500,
         HTTP_STATUS_NOT_IMPLEMENTED     = 501,
         HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
@@ -109,7 +113,13 @@ extern "C" {
         CMD_POST           = 3,
         CMD_ACTION         = 4,
         CMD_CALLBACK       = 5,
-        CMD_ACKNOWLEDGMENT = 6
+        CMD_ACKNOWLEDGMENT = 6,
+        // Metodos HTTP que antes caiam em CMD_NONE e viravam 500. HEAD e o que player,
+        // CDN e ferramenta de diagnostico usam para sondar um recurso sem baixa-lo.
+        CMD_HEAD           = 7,
+        CMD_PUT            = 8,
+        CMD_DELETE         = 9,
+        CMD_PATCH          = 10
     }
     MessageCommand;
 
@@ -190,9 +200,12 @@ extern "C" {
         StringX               Host;
         MessageConnection    ConnectionOption;
         StringX               UserAgent;
-        StringX               Content;
+        StringX               Content;       // corpo em memoria (ate Config.BodyToDiskBytes)
+        StringX               ContentFile;   // corpo em arquivo temporario (acima); ver app_corpo_*
         ContentTypeOption    ContentType;
-        int                  ContentLength;
+        // int64: com int, um upload acima de 2 GiB estourava para negativo e o parser se
+        // perdia no calculo do que faltava receber.
+        int64                ContentLength;
         MessageFieldList     Fields;
         StringX*              SessionUID;
         StringX*              EventUID;
@@ -205,6 +218,7 @@ extern "C" {
                              
         AppClientInfo*       Client;
         void*                Object;
+        struct AppCanal*     Canal;          // canal SSE aberto pelo handler (app_canal_sse)
 
         MessageResponseInfo* Response;
 
@@ -249,28 +263,30 @@ extern "C" {
 
 
 
-    typedef struct _MessageParser
-    {
-        int                         Position;
-        Message* Partial;
-        StringX* Buffer;
-        RequestCallback MessageMatch;
-    }
-    MessageParser;
+    struct HttpParser;   // http/http_parser.h
 
 
 
 
     struct _AppClientInfo
     {
-        bool           IsConnected;
-		bool           IsWebSocketMode;
-        StringX         LocalHost;
-        StringX         RemoteHost;
-        void*          Handle;
-        void*          ReceivedThread;
-        AppServerInfo* Server;
-        MessageParser* Parser;
+        bool               IsConnected;
+        bool               IsWebSocketMode;
+        StringX            LocalHost;
+        StringX            RemoteHost;
+        void*              Handle;       // numero do socket: so para log
+        AppServerInfo*     Server;
+        struct HttpParser* Parser;
+        struct NetConexao* Net;          // transporte (camada 1)
+        struct HttpWs*     Ws;           // quadros WebSocket (modo WebSocket)
+        struct AppCanal*   Canal;        // canal SSE aberto nesta conexao
+        bool               EmCanal;      // a conexao virou fluxo SSE: entrada e ignorada
+
+        // Requisicoes que chegaram enquanto uma rota longa tinha a vez (http_conexao.c).
+        xmutex_t           Lock;
+        Message**          Fila;
+        int                NFila, CapFila, IniFila;
+        bool               Ocupada;
     };
 
 
@@ -305,6 +321,9 @@ extern "C" {
         ListX Route;
         StringX      Extension;
         StringX      AbsPathWebContent;
+        bool        Longa;           // roda na pista longa (app_add_receiver_longa)
+        xatomic_int Lentas;          // execucoes recentes acima de Config.RotaLentaUs (0..8)
+        volatile bool Lenta;         // aprendida: rota curta que demora -> fora do reator
         ThunkArgs   Thung;
 		MessageMatchReceiverCalback CallbackFunc;
     }
@@ -328,17 +347,71 @@ extern "C" {
     AppServerList;
 
 
+    /* Configuracao do servidor. Parta SEMPRE de appserver_config_default() e mude so o
+     * que precisar: assim um campo novo nunca chega zerado a quem ja usava a struct.
+     * As strings sao copiadas pelo appserver_create; o chamador pode liberar as suas. */
+    typedef struct AppCanal AppCanal;   // http/http_canal.c
+
+    // Onde uma requisicao roda (camada 3 decide, camada 2 executa):
+    //   CURTA: na mesma thread que leu (o reator, no modo sincrono)
+    //   LENTA: rota curta que demora (aprendido pelo tempo medido): numa tarefa do pool
+    //   LONGA: na pista longa (app_add_receiver_longa); a conexao espera a vez
+    enum { ROTA_CURTA = 0, ROTA_LENTA = 1, ROTA_LONGA = 2 };
+
+    typedef struct _AppServerConfig
+    {
+        const char* AgentName;            // nome no cabecalho Server/User-Agent
+        int         Port;
+        const char* Prefix;               // prefixo das rotas de api ("api" -> /api/...)
+        const char* WebContentPath;       // pasta dos arquivos estaticos; 0 ou "" = sem
+        bool        EnableHealthMonitor;  // rota embutida /<prefix>/health (ver appserver.h)
+        bool        HealthAllowRemote;    // health atende fora de 127.x (env APPSERVER_HEALTH_ALLOW_REMOTE=1)
+        int         MaxClients;           // conexoes simultaneas; acima disso responde 503
+        int         IdleTimeoutMs;        // conexao sem requisicao em andamento fecha depois disto
+        int         MaxHeaderBytes;       // bloco de cabecalhos maior -> 431
+        int64       MaxBodyBytes;         // corpo maior -> 413 (env APPSERVER_MAX_BODY_MB)
+        int64       BodyToDiskBytes;      // corpo acima disto vai para arquivo em TempDir
+        const char* TempDir;              // 0 = pasta temporaria do sistema
+        int64       MaxOutputQueueBytes;  // fila de saida por conexao; cliente lento acima disso cai
+        int         SseHeartbeatMs;       // comentario periodico nos canais SSE (0 = sem)
+        ThreadPool* Pool;                 // 0 = pool global do xplatbase
+        bool        LogRequests;          // uma linha no stdout por requisicao e por resposta
+        int         RotaLentaUs;          // rota curta acima disto (3 vezes seguidas) sai do reator
+        int         MaxSincronoPorVolta;  // conexoes que o reator atende ele mesmo por volta (1); o resto vai ao pool
+        int         PerfilPool;           // perfil do pool de tarefas (xplatbase): -1 = nao mexe (padrao),
+                                          // POOL_PERFIL_PERFORMANCE ou POOL_PERFIL_ECONOMIA (aparelho com bateria)
+        bool        JobsEmPerformance;    // com perfil economia: o pool fica em performance enquanto houver job rodando
+        int         LongWorkers;          // maximo de threads da pista longa (criadas sob demanda; paradas, dormem)
+        int         SseVoltaUs;           // SSE: quem publica entrega sozinho ate este tempo (1000); o resto vai
+                                          // em pistas para o pool. 0 = sempre em serie
+        int         SseMaxPorPista;       // SSE: maximo de assinantes por pista (64; 0 = so o tempo decide)
+    }
+    AppServerConfig;
+
+
     struct _AppServerInfo
     {
+        AppServerConfig           Config;   // copia; strings apontam para os campos abaixo
+        char                      TempDir[1024];
         bool                      IsRunning;
         int                       Port;
         StringX                    AgentName;
         ContentTypeOption         DefaultWebApiObjectType;
         StringX                    AbsLocal;
         ListX*              Prefix;
-        void*                     Handle;
-        void*                     AcceptThread;
+        struct NetServidor*       Net;           // transporte: reator + conexoes
+        struct Pista*             PistaLonga;    // rotas longas e jobs (utils/pista.c), criada no 1o uso
+        RequestCallback           Despachar;     // executa uma requisicao (camada 3)
+        int                     (*Classificar)(Message* m);   // ROTA_CURTA / ROTA_LENTA / ROTA_LONGA
+        xmutex_t                  ClientsLock;
         AppClientList*            Clients;
+        xmutex_t                  CanaisLock;    // canais SSE abertos (heartbeat)
+        struct AppCanal*          Canais;
+        xmutex_t                  TopicosLock;   // topicos e jobs (app_topico.c)
+        void*                     Topicos;
+        xatomic_int               SsePistas;     // diagnostico: pistas de entrega SSE mandadas ao pool
+        xmutex_t                  PerfilLock;    // pedidos de performance (app_perfil_performance_*)
+        int                       PerfilPedidos;
         FunctionBindList*         BindList;
         MessageEventList*         Events;
     };
@@ -393,6 +466,13 @@ extern "C" {
     void event_list_remove(MessageEventList* list, MessageEvent* item);
 
     MessageResponseInfo* message_response_create(int status, ContentTypeOption type);
+    void                 message_response_release(MessageResponseInfo* r);
+
+    // Parametro da query string (?nome=valor&...), ja decodificado. Devolve NULL se ausente.
+    // O ponteiro vale enquanto a mensagem viver.
+    const char*          message_query_get(Message* m, const char* name);
+
+    void                 appclient_list_remove(AppClientList* list, AppClientInfo* cli);
     MessageResponseInfo* message_response_create_content(int status, ContentTypeOption type, char* content, int size);
     MessageResponseInfo* message_response_create_text(int status, char* content);
 

@@ -62,9 +62,6 @@
     <ClCompile Include="src\Mp4Diag.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mp4BuilderTest.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Mp4MetadataUtil.c">
       <Filter>src</Filter>
     </ClCompile>

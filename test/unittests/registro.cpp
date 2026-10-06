@@ -54,6 +54,66 @@ public:
     CASO(EscreveELeBlocoGrande,         teste_memoria_escreve_e_le)
 };
 
+TEST_CLASS(ServidorRede)
+{
+public:
+    CASO(PollAcordar,           teste_poll_acordar)
+    CASO(PollLeituraEDesarme,   teste_poll_leitura_e_desarme)
+    CASO(PollEscritaEVarios,    teste_poll_escrita_e_varios)
+};
+
+TEST_CLASS(ParserHttp)
+{
+public:
+    CASO(PedacosDeUmByte, teste_parser_pedacos_de_um_byte)
+    CASO(PipeliningEmOrdem, teste_parser_pipelining_em_ordem)
+    CASO(CorpoGrandeEmMemoria, teste_parser_corpo_grande_em_memoria)
+    CASO(CorpoGrandeVaiParaDisco, teste_parser_corpo_grande_vai_para_disco)
+    CASO(CorpoSalvarMoveOArquivo, teste_parser_corpo_salvar_move_o_arquivo)
+    CASO(LimitesEErros, teste_parser_limites_e_erros)
+    CASO(DestruirNoMeioApagaTemporario, teste_parser_destruir_no_meio_apaga_temporario)
+};
+
+TEST_CLASS(Reator)
+{
+public:
+    CASO(EcoEmOrdem, teste_reator_eco_em_ordem)
+    CASO(ConexoesSemThread, teste_reator_conexoes_sem_thread)
+    CASO(PausaERetoma, teste_reator_pausa_e_retoma)
+    CASO(ClienteQueNaoLeCai, teste_reator_cliente_que_nao_le_cai)
+    CASO(FechaOcioso, teste_reator_fecha_ocioso)
+    CASO(SincronoComUmCliente, teste_reator_sincrono_com_um_cliente)
+    CASO(ParaleloSobDisputa, teste_reator_paralelo_sob_disputa)
+    CASO(DisputaLeveFicaNoReator, teste_reator_disputa_leve_fica_no_reator)
+    CASO(MuitosClientesUsamOPool, teste_reator_muitos_clientes_usam_o_pool)
+    CASO(PistaSobDemandaEReuso, teste_pista_sob_demanda_e_reuso)
+    CASO(ParadoNaoAcorda, teste_reator_parado_nao_acorda)
+    CASO(EnviaArquivo, teste_reator_envia_arquivo)
+    CASO(EnviaArquivoClienteParado, teste_reator_envia_arquivo_cliente_parado)
+    CASO(ArquivosSimultaneos, teste_reator_arquivos_simultaneos)
+};
+
+TEST_CLASS(WebSocketETopicos)
+{
+public:
+    CASO(QuadrosPartidosEJuntos, teste_ws_quadros_partidos_e_juntos)
+    CASO(FragmentadaPingEClose, teste_ws_fragmentada_ping_e_close)
+    CASO(TopicoRetidoEAoVivo, teste_topico_retido_e_ao_vivo)
+    CASO(TopicoAssinantesSemThread, teste_topico_assinantes_sem_thread)
+    CASO(RotaLentaAprendida, teste_rota_lenta_aprendida)
+    CASO(PerfilEconomiaEJobs, teste_perfil_economia_e_jobs)
+    CASO(SsePoucosAssinantesSemPista, teste_sse_poucos_assinantes_sem_pista)
+    CASO(SsePistasOrdemETodos, teste_sse_pistas_ordem_e_todos)
+    CASO(SsePistasAssinantesSaem, teste_sse_pistas_assinantes_saem)
+    CASO(SsePistasDoisPublicadores, teste_sse_pistas_dois_publicadores)
+};
+
+TEST_CLASS(Arquitetura)
+{
+public:
+    CASO(FronteirasEntreCamadas, teste_fronteiras_entre_camadas)
+};
+
 TEST_CLASS(PoolDeTarefas)
 {
 public:

@@ -1747,7 +1747,7 @@ int mp4builder_create_init(VideoMetadata* metadata, MP4InitConfig* config, Media
 
     if (!output->Data)
     {
-        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
+        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", (size_t)output->Size);
         memop_free_raw(ftyp.Data);
         memop_free_raw(moov.Data);
         return -7;
@@ -1885,7 +1885,7 @@ int mp4builder_create_fragment(
 
     if (!output->Data)
     {
-        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", output->Size);
+        fprintf(stderr, "ERRO: Falha ao alocar %zu bytes\n", (size_t)output->Size);
         memop_free_raw(h264_data.Data);
         memop_free_raw(moof.Data);
         memop_free_raw(mdat.Data);

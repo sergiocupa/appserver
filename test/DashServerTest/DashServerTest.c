@@ -372,7 +372,12 @@ int main()
     app_add_receiver_extension(bind, ".mpd", get_mpd, true);
     app_add_receiver_extension(bind, ".m4s", fragment_m4s, true);
 
-    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind, false);   // sem painel de saude
+    AppServerConfig cfg = appserver_config_default();
+    cfg.AgentName      = "video-service";
+    cfg.Port           = 1234;
+    cfg.Prefix         = "api";
+    cfg.WebContentPath = "web";   // EnableHealthMonitor fica false: sem painel de saude
+    AppServerInfo* server = appserver_create(&cfg, bind);
 
     getchar();
     return 0;

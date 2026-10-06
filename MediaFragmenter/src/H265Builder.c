@@ -385,8 +385,8 @@ int h265_create_fragment(
 
         if (start_frame >= (int)frame_list->Count)
         {
-            fprintf(stderr, "ERRO: Offset %.2fs → frame %d (total: %d)\n",
-                timeline_offset, start_frame, frame_list->Count);
+            fprintf(stderr, "ERRO: Offset %.2fs → frame %d (total: %llu)\n",
+                timeline_offset, start_frame, (unsigned long long)frame_list->Count);
             return -5;
         }
     }
@@ -398,8 +398,8 @@ int h265_create_fragment(
 
         if (start_frame < 0 || start_frame >= (int)frame_list->Count)
         {
-            fprintf(stderr, "ERRO: frame_offset %d inválido (0-%d)\n",
-                start_frame, frame_list->Count - 1);
+            fprintf(stderr, "ERRO: frame_offset %d inválido (0-%llu)\n",
+                start_frame, (unsigned long long)(frame_list->Count - 1));
             return -6;
         }
 

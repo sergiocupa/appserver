@@ -83,6 +83,21 @@
     <ClCompile Include="test_instancia_modulos.c">
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
+    <ClCompile Include="test_http_parser.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_net_servidor.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_ws_topicos.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_fronteiras.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_servidor.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
     <ClCompile Include="registro.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -94,12 +109,21 @@
          construir os testes ANTES do xplatbase. Ai ou o link falha, ou uma DLL velha
          e copiada para a pasta de saida e o executor morre sem reportar nada.
          Os dois casos aconteceram aqui. -->
+    <!-- SetConfiguration: a DLL do xplatbase, SEMPRE. Neste projeto a configuracao Debug/Release do Xplatbase.vcxproj e BIBLIOTECA ESTATICA; a DLL e "Debug DLL"/"Release DLL", e so a solution fazia esse mapeamento. Compilando este projeto avulso (msbuild no .vcxproj) a referencia caia na estatica, o executavel saia com uma copia do xplatbase dentro, e ao carregar um plugin de codec surgia a segunda instancia: em Debug o detector chama abort() e o processo congelava. Aconteceu de verdade no appservertester. -->
     <ProjectReference Include="..\..\appserver\submodules\xplatbase\Xplatbase\Xplatbase\Xplatbase.vcxproj">
       <Project>{f217b4d5-f6bc-4fce-af5e-beef9fe1f3e8}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <SetConfiguration>Configuration=$(Configuration) DLL</SetConfiguration>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <!-- parser HTTP e Message (test_http_parser.c) -->
+    <ProjectReference Include="..\..\appserver\appserver.vcxproj">
+      <Project>{9a8943e1-d7e9-49fc-9e9c-ae719d47d450}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\appserver\submodules\yason\yason\yason.vcxproj">
+      <Project>{1adf34c7-64e8-4af8-866d-c9b882bf7ba7}</Project>
+    </ProjectReference>
     <ProjectReference Include="mod_compartilhado.vcxproj">
       <Project>{cec46acc-ae15-4406-87bb-74b89e836671}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

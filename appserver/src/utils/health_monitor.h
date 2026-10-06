@@ -45,6 +45,9 @@ typedef struct HealthSample
     uint64  PoolReservedBytes; /* segmentos de 4MB reservados do SO agora */
     uint64  PoolCachedChunks;  /* chunks de 64KB livres no cache global */
     uint64  PoolPurgeCount;
+    uint64  PoolLanesCreated;  /* lanes por thread criadas / destruidas desde o inicio */
+    uint64  PoolLanesDestroyed;
+    uint64  PoolRemoteFrees;   /* liberacoes feitas por thread diferente da que alocou */
 
     /* ---- GPU ---- */
     int     GpuAvailable;      /* 0 = nao ha fonte de GPU nesta plataforma/maquina */

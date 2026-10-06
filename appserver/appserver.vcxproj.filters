@@ -7,6 +7,12 @@
     <Filter Include="src">
       <UniqueIdentifier>{e474680e-7cdd-48af-8b06-18e9bb3fc820}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\net">
+      <UniqueIdentifier>{7c1e2d3a-5b4f-4a61-9e80-2f3d4c5b6a71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\http">
+      <UniqueIdentifier>{3e9b0c52-8d7a-4f1e-b6a4-91c2d7e5f834}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\utils">
       <UniqueIdentifier>{0058662a-fc2d-41d4-9972-4bc354d87d3e}</UniqueIdentifier>
     </Filter>
@@ -14,9 +20,6 @@
   <ItemGroup>
     <ClInclude Include="include\appserver.h">
       <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="src\appclient.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\server_type.h">
       <Filter>src</Filter>
@@ -27,14 +30,35 @@
     <ClInclude Include="src\utils\message_assembler.h">
       <Filter>src\utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\message_parser.h">
-      <Filter>src\utils</Filter>
+    <ClInclude Include="src\http\http_resposta.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http\http_parser.h">
+      <Filter>src\http</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\program_util.h">
       <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\websocket_util.h">
       <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\net\net_servidor.h">
+      <Filter>src\net</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http\http_conexao.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http\http_canal.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http\http_ws.h">
+      <Filter>src\http</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\pista.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\net\net_poll.h">
+      <Filter>src\net</Filter>
     </ClInclude>
     <ClInclude Include="src\event_server.h">
       <Filter>src</Filter>
@@ -47,9 +71,6 @@
     <ClCompile Include="src\appserver.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\appclient.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\server_type.c">
       <Filter>src</Filter>
     </ClCompile>
@@ -59,11 +80,35 @@
     <ClCompile Include="src\utils\message_assembler.c">
       <Filter>src\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\message_parser.c">
-      <Filter>src\utils</Filter>
+    <ClCompile Include="src\http\http_resposta.c">
+      <Filter>src\http</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\http_parser.c">
+      <Filter>src\http</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\websocket_util.c">
       <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\net\net_servidor.c">
+      <Filter>src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\http_conexao.c">
+      <Filter>src\http</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\http_canal.c">
+      <Filter>src\http</Filter>
+    </ClCompile>
+    <ClCompile Include="src\http\http_ws.c">
+      <Filter>src\http</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app_topico.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\pista.c">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\net\net_poll.c">
+      <Filter>src\net</Filter>
     </ClCompile>
     <ClCompile Include="src\event_server.c">
       <Filter>src</Filter>

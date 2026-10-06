@@ -81,7 +81,7 @@ void streamm_create_session(char* uid, StreamBufferCalback dispatch_callback)
 
 	session->DispatchCallback = dispatch_callback;
 	session->IsRunning        = true;
-	session->RunThread        = _beginthread(session_run, 0, (void*)session);
+	session->RunThread        = (void*)_beginthread(session_run, 0, (void*)session);
 
 }
 

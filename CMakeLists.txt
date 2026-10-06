@@ -131,17 +131,24 @@ target_link_libraries(yason PUBLIC xplatbase)
 #  Servidor HTTP (lib appserver)
 # ============================================================================
 add_library(appserver_lib STATIC
-  appserver/src/appclient.c
   appserver/src/appserver.c
   appserver/src/event_server.c
   appserver/src/health_controller.c
+  appserver/src/net/net_poll.c
+  appserver/src/http/http_parser.c
+  appserver/src/http/http_resposta.c
+  appserver/src/http/http_conexao.c
+  appserver/src/http/http_canal.c
+  appserver/src/http/http_ws.c
+  appserver/src/app_topico.c
+  appserver/src/net/net_servidor.c
   appserver/src/server_type.c
   appserver/src/utils/activity_binder.c
   appserver/src/utils/callback_binder.c
   appserver/src/utils/health_monitor.c
   appserver/src/utils/message_assembler.c
-  appserver/src/utils/message_parser.c
   appserver/src/utils/websocket_util.c
+  appserver/src/utils/pista.c
   appserver/src/utils/xpb_compat.c)
 target_include_directories(appserver_lib PUBLIC ${ROOT}/appserver/include ${ROOT}/appserver/src ${ROOT}/appserver/src/utils)
 target_compile_definitions(appserver_lib PRIVATE XPLATBASE_NO_AUTO_INIT)
@@ -272,6 +279,9 @@ codec_plugin(codec_h264 CODEC_H264_PLUGIN
   codecs/media/codec_h264.c codecs/media/codec_h264_dec.c codecs/media/image_plane.c)
 codec_plugin(codec_h265 CODEC_H265_PLUGIN
   codecs/media/codec_h265.c codecs/media/codec_h265_dec.c codecs/media/image_plane.c)
+if(CODECS_X265_ASM)
+  target_compile_definitions(codec_h265 PRIVATE X265_HAS_ASM=1)   # descritor: ISA real
+endif()
 codec_plugin(codec_vp9 CODEC_VP9_PLUGIN codecs/media/codec_vp9.c)
 codec_plugin(codec_av1 CODEC_AV1_PLUGIN codecs/media/codec_av1.c)
 codec_plugin(codec_opus CODEC_OPUS_PLUGIN codecs/media/codec_opus.c)
@@ -359,6 +369,20 @@ set_target_properties(appservertester PROPERTIES LINKER_LANGUAGE CXX)   # x265/l
 app_compat(appservertester)
 
 # ============================================================================
+#  Benchmark do servidor (test/httpbench): servidor minimo + cliente de carga.
+#  O cliente sobe o servidor como processo filho e mede threads/CPU/memoria dele.
+# ============================================================================
+add_executable(bench_server test/httpbench/bench_server.c)
+target_link_libraries(bench_server PRIVATE appserver_lib)
+app_compat(bench_server)
+
+add_executable(httpbench
+  test/httpbench/httpbench.c
+  ${ROOT}/appserver/submodules/xplatbase/Tester/unittests/bench_estatistica.c)
+target_include_directories(httpbench PRIVATE ${ROOT}/appserver/submodules/xplatbase/Tester/unittests)
+target_link_libraries(httpbench PRIVATE Threads::Threads m)
+
+# ============================================================================
 #  Testes unitarios (os MESMOS arquivos .c que o Visual Studio roda no Windows)
 #  Aqui quem chama e o runner_main.c; la, o registro.cpp entrega ao Gerenciador.
 # ============================================================================
@@ -374,11 +398,16 @@ add_executable(unittests
   test/unittests/test_plugins.c
   test/unittests/bench_h264.c
   test/unittests/test_instancia_modulos.c
+  test/unittests/test_servidor.c
+  test/unittests/test_http_parser.c
+  test/unittests/test_net_servidor.c
+  test/unittests/test_ws_topicos.c
+  test/unittests/test_fronteiras.c
   test/unittests/runner_main.c)
 target_include_directories(unittests PRIVATE
   ${ROOT}/test/unittests ${ROOT}/codecs/media ${ROOT}/MediaGateway/media
   ${ROOT}/MediaFragmenter/include ${ROOT}/MediaFragmenter/src)
-target_link_libraries(unittests PRIVATE mediafragmenter mediagateway xplatbase)
+target_link_libraries(unittests PRIVATE mediafragmenter mediagateway appserver_lib xplatbase)
 set_target_properties(unittests PROPERTIES LINKER_LANGUAGE CXX)   # x265/libyuv sao C++
 app_compat(unittests)
 
@@ -390,6 +419,34 @@ foreach(caso
     "PoolDeMemoria.ContabilizaAlocacaoELiberacao"
     "PoolDeMemoria.EscreveELeBlocoGrande"
     "PoolDeTarefas.ExecutaTodasAsTarefas"
+    "Arquitetura.FronteirasEntreCamadas"
+    "WebSocketETopicos.QuadrosPartidosEJuntos"
+    "WebSocketETopicos.FragmentadaPingEClose"
+    "WebSocketETopicos.TopicoRetidoEAoVivo"
+    "WebSocketETopicos.TopicoAssinantesSemThread"
+    "WebSocketETopicos.RotaLentaAprendida"
+    "WebSocketETopicos.PerfilEconomiaEJobs"
+    "Reator.EcoEmOrdem"
+    "Reator.ConexoesSemThread"
+    "Reator.PausaERetoma"
+    "Reator.ClienteQueNaoLeCai"
+    "Reator.FechaOcioso"
+    "Reator.SincronoComUmCliente"
+    "Reator.ParaleloSobDisputa"
+    "Reator.DisputaLeveFicaNoReator"
+    "Reator.MuitosClientesUsamOPool"
+    "Reator.PistaSobDemandaEReuso"
+    "Reator.ParadoNaoAcorda"
+    "Reator.EnviaArquivo"
+    "ParserHttp.PedacosDeUmByte"
+    "ParserHttp.PipeliningEmOrdem"
+    "ParserHttp.CorpoGrandeVaiParaDisco"
+    "ParserHttp.CorpoSalvarMoveOArquivo"
+    "ParserHttp.LimitesEErros"
+    "ParserHttp.DestruirNoMeioApagaTemporario"
+    "ServidorRede.PollAcordar"
+    "ServidorRede.PollLeituraEDesarme"
+    "ServidorRede.PollEscritaEVarios"
     "Pipeline.WebmRoundtripVp9"
     "Pipeline.WebmRoundtripAv1"
     "Pipeline.GatewayDashVp9"
@@ -413,6 +470,7 @@ foreach(caso
     "Hardware.EncoderPorHardwareH264"
     "Hardware.DecodificaOQueOEncoderProduziu")
   add_test(NAME ${caso} COMMAND unittests ${caso})
+  set_tests_properties(${caso} PROPERTIES SKIP_RETURN_CODE 77)   # pulado aparece como Skipped, nao Passed
 endforeach()
 
 # ---- modulos auxiliares dos testes de instancia unica ----------------------
@@ -443,4 +501,5 @@ foreach(caso
     "InstanciaEntreModulos.DuplicataEDenunciada"
     "InstanciaEntreModulos.CicloCarregaDescarrega")
   add_test(NAME ${caso} COMMAND unittests ${caso})
+  set_tests_properties(${caso} PROPERTIES SKIP_RETURN_CODE 77)   # pulado aparece como Skipped, nao Passed
 endforeach()

@@ -30,9 +30,11 @@ ipch/
 *.VC.db
 *.VC.VC.opendb
 
-# *.vcxproj.user NAO esta bloqueado: seis deles ja estao versionados neste
-# repositorio. Bloquear agora deixaria os antigos dentro e os novos fora.
-# Para tirar de vez:  git rm --cached **/*.vcxproj.user  e acrescentar *.user aqui.
+# Preferencias locais do Visual Studio (depurador, argumentos): cada maquina tem as suas.
+# ATENCAO: 8 deles JA estao versionados, e o .gitignore nao afeta arquivo versionado --
+# eles continuam rastreados ate sairem do index (os arquivos ficam no disco):
+#     git rm --cached -- "*.vcxproj.user"
+*.vcxproj.user
 
 # ---- CMake e Ninja, quando configurados dentro da arvore -------------------
 # O build normal e fora (build-linux/, ~/build/...), mas um `cmake .` sem

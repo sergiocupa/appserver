@@ -126,18 +126,31 @@ int main()
     app_add_web_resource(bind, "service/videolist", video_list);
     app_add_receiver(bind, "index", app_root, true);
     app_add_receiver(bind, "service/login", app_login, true);
-    app_add_receiver(bind, "video/prepare", hls_prepare_video, true);
+    // Longas: rodam na pista longa, fora dos workers que atendem as rotas curtas.
+    //   video/prepare  : grava o upload e analisa o MP4 antes de responder
+    //   media/devices  : enumera hardware (pode levar segundos no Windows)
+    // Os fluxos (prepare-stream, prepare-dash, convert) sao CURTOS: iniciam um job e assinam
+    // o topico dele; o trabalho de minutos roda no job, nao no handler.
+    app_add_receiver_longa(bind, "video/prepare", hls_prepare_video);
     app_add_receiver(bind, "video/prepare-stream", hls_stream_video, true);
     app_add_receiver(bind, "video/prepare-dash", dash_stream_video, true);
     app_add_receiver(bind, "video/convert", convert_file, true);
     app_add_receiver(bind, "session", session_route, true);
-    app_add_receiver(bind, "media/devices", device_route, true);
+    app_add_receiver_longa(bind, "media/devices", device_route);
     app_add_receiver(bind, "live", live_route, true);
 
 
     Notification = app_add_emitter(bind, "service/notification");
 
-    AppServerInfo* server = appserver_create("video-service", 1234, "api", "web", bind, true);   // com painel de saude: a pagina web tem o health-box
+    AppServerConfig cfg = appserver_config_default();
+    cfg.AgentName           = "video-service";
+    cfg.Port                = 1234;
+    cfg.Prefix              = "api";
+    cfg.WebContentPath      = "web";
+    cfg.EnableHealthMonitor = true;   // com painel de saude: a pagina web tem o health-box
+    // Aparelho com bateria: pool em economia; os jobs de video pedem performance enquanto rodam.
+    cfg.PerfilPool          = POOL_PERFIL_ECONOMIA;
+    AppServerInfo* server = appserver_create(&cfg, bind);
 
 
     //int data = 12344;

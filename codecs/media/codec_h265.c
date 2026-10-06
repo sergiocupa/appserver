@@ -184,16 +184,18 @@ extern const H26xDecBackend h265_dec_backend;   // codec_h265_dec.c
 
 // O assembly do x265 depende de QUAL build entrou no binario.
 //  - Windows (x265/_vsbuild): ENABLE_ASSEMBLY=ON com NASM 2.16.03.
-//  - Linux (codecs/CMakeLists.txt): ainda FORCA ENABLE_ASSEMBLY=OFF; ligar exige nasm (x64)
-//    ou gas (arm64) no host. Ate la o x265 no Linux e degrau THREADS.
-#ifdef _WIN32
+//  - Linux (codecs/CMakeLists.txt): ENABLE_ASSEMBLY=ON no x64 quando ha NASM; arm64 segue
+//    sem assembly (o do x265 para aarch64 usa gas e nao foi verificado aqui).
+#if defined(_WIN32) || (defined(X265_HAS_ASM) && (defined(__x86_64__) || defined(_M_X64)))
+  // Windows: _vsbuild gerado com ENABLE_ASSEMBLY=ON. Linux x64: CMake liga quando ha NASM
+  // e define X265_HAS_ASM so nesse caso -- o descritor acompanha o que entrou no binario.
   #define X265_ISA_MIN ISA_SSE2
   #define X265_ISA_MAX ISA_AVX2
   #define X265_NOTE    "x265, assembly compilado (SSE2..AVX2)"
 #else
   #define X265_ISA_MIN ISA_NONE
   #define X265_ISA_MAX ISA_NONE
-  #define X265_NOTE    "x265 SEM assembly no build Linux (ENABLE_ASSEMBLY=OFF)"
+  #define X265_NOTE    "x265 SEM assembly (sem NASM no build, ou arquitetura sem suporte aqui)"
 #endif
 
 static MediaEncoder* h265_plugin_enc(const MediaEncoderParams* p, char* detail, int size)

@@ -29,6 +29,7 @@
   }
 #else
   #include <time.h>
+  #include <sys/stat.h>   // mkdir (pasta web do teste de Range)
   static void dorme_ms(int ms) { struct timespec t = { ms / 1000, (ms % 1000) * 1000000L }; nanosleep(&t, 0); }
   static int threads_do_processo(void)
   {
@@ -492,4 +493,156 @@ void teste_sse_pistas_dois_publicadores(TestResult* r)
         else for (int e = 0; e < n0; e++) T_ASSERT(r, l[e] == l0[e] && v[e] == v0[e], "assinante %d viu ordem diferente do 0 na posicao %d", i, e);
         closesocket(k[i]);
     }
+}
+
+
+// =========================================================================================
+//  Arquivos estaticos: pedido parcial (cabecalho Range)
+// =========================================================================================
+// Players de video (MP4) pedem faixas para avancar no meio do arquivo (RFC 7233). Confere 206,
+// Content-Range e o trecho exato nos dois tamanhos de arquivo (o pequeno sai da memoria quando
+// e inteiro, o grande em blocos), 416 para faixa fora do arquivo, varias faixas ignoradas (200
+// com o arquivo inteiro, que a RFC permite) e "Accept-Ranges: bytes" na resposta normal.
+
+static char g_web[512];
+
+static AppServerInfo* servidor_web(void)
+{
+    static AppServerInfo* srv;
+    if (srv) return srv;
+#ifdef _WIN32
+    char tmp[MAX_PATH]; GetTempPathA(MAX_PATH, tmp);
+    snprintf(g_web, sizeof(g_web), "%sappsrv_teste_web", tmp);
+    CreateDirectoryA(g_web, 0);
+#else
+    snprintf(g_web, sizeof(g_web), "/tmp/appsrv_teste_web");
+    mkdir(g_web, 0755);
+#endif
+    FunctionBindList* bind = bind_list_create();
+    AppServerConfig cfg = appserver_config_default();
+    cfg.AgentName = "web"; cfg.Port = 0; cfg.Prefix = "api"; cfg.LogRequests = false;
+    cfg.WebContentPath = g_web;
+    srv = appserver_create(&cfg, bind);
+    return srv;
+}
+
+static char* cria_arquivo_web(const char* nome, int tam)
+{
+    char cam[700]; snprintf(cam, sizeof(cam), "%s/%s", g_web, nome);
+    char* d = (char*)malloc((size_t)tam);
+    for (int i = 0; i < tam; i++) d[i] = (char)('A' + (i * 7 + (i >> 8)) % 26);
+    FILE* f = fopen(cam, "wb"); if (f) { fwrite(d, 1, (size_t)tam, f); fclose(f); }
+    return d;
+}
+
+typedef struct { int Status; long long Tam; char ContentRange[128]; int AceitaFaixa; char* Corpo; int NCorpo; } RespRange;
+
+// GET /<nome> com "Range: <faixa>" (faixa 0 = sem Range); le cabecalho e corpo (Content-Length)
+static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange* o)
+{
+    memset(o, 0, sizeof(*o));
+    SOCKET k = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in a; memset(&a, 0, sizeof(a));
+    a.sin_family = AF_INET; a.sin_addr.s_addr = htonl(INADDR_LOOPBACK); a.sin_port = htons((unsigned short)porta);
+    if (connect(k, (struct sockaddr*)&a, sizeof(a)) != 0) { closesocket(k); return 0; }
+    net_set_recv_timeout(k, 3000);
+    char req[512];
+    int n = faixa ? snprintf(req, sizeof(req), "GET /%s HTTP/1.1\r\nHost: t\r\nRange: %s\r\n\r\n", nome, faixa)
+                  : snprintf(req, sizeof(req), "GET /%s HTTP/1.1\r\nHost: t\r\n\r\n", nome);
+    send(k, req, n, 0);
+    int cap = 4 << 20, tot = 0;
+    char* b = (char*)malloc((size_t)cap + 1);
+    char* fimcab = 0;
+    while (tot < cap)
+    {
+        int r = recv(k, b + tot, cap - tot, 0);
+        if (r <= 0) break;
+        tot += r; b[tot] = 0;
+        if (!fimcab) fimcab = strstr(b, "\r\n\r\n");
+        if (fimcab)
+        {
+            const char* cl = strstr(b, "Content-Length:"); if (!cl) cl = strstr(b, "content-length:");
+            long long len = cl ? atoll(cl + 15) : 0;
+            if (tot - (int)(fimcab + 4 - b) >= len) break;
+        }
+    }
+    closesocket(k);
+    if (!fimcab) { free(b); return 0; }
+    *fimcab = 0;
+    o->Status = atoi(b + 9);
+    const char* cl = strstr(b, "Content-Length:"); if (!cl) cl = strstr(b, "content-length:");
+    o->Tam = cl ? atoll(cl + 15) : -1;
+    const char* cr = strstr(b, "Content-Range:"); if (!cr) cr = strstr(b, "content-range:");
+    if (cr) { cr += 14; while (*cr == ' ') cr++; int i = 0; while (cr[i] && cr[i] != '\r' && i < 127) { o->ContentRange[i] = cr[i]; i++; } }
+    o->AceitaFaixa = strstr(b, "Accept-Ranges: bytes") != 0;
+    o->NCorpo = tot - (int)(fimcab + 4 - b);
+    o->Corpo = (char*)malloc((size_t)o->NCorpo + 1);
+    memcpy(o->Corpo, fimcab + 4, (size_t)o->NCorpo);
+    free(b);
+    return 1;
+}
+
+void teste_estatico_range(TestResult* r)
+{
+    t_start(r);
+    AppServerInfo* s = servidor_web();
+    T_ASSERT(r, s != 0, "servidor nao subiu");
+    int porta = net_servidor_porta(s->Net);
+    enum { PEQ = 100000, GRD = 1500000 };
+    char* peq = cria_arquivo_web("range_pequeno.bin", PEQ);
+    char* grd = cria_arquivo_web("range_grande.bin", GRD);
+
+    // 206: o trecho exato
+    struct { const char* Arq; const char* Faixa; long long Ini, Fim, Total; const char* Dado; } casos[] = {
+        { "range_pequeno.bin", "bytes=1000-1999",     1000,      1999,    PEQ, peq },
+        { "range_pequeno.bin", "bytes=-100",          PEQ - 100, PEQ - 1, PEQ, peq },
+        { "range_pequeno.bin", "bytes=99000-200000",  99000,     PEQ - 1, PEQ, peq },   // fim alem do arquivo: corta
+        { "range_grande.bin",  "bytes=700000-700999", 700000,    700999,  GRD, grd },
+        { "range_grande.bin",  "bytes=1400000-",      1400000,   GRD - 1, GRD, grd },
+        { "range_grande.bin",  "bytes=0-0",           0,         0,       GRD, grd },
+    };
+    for (int i = 0; i < (int)(sizeof(casos) / sizeof(casos[0])); i++)
+    {
+        RespRange o;
+        T_ASSERT(r, pede_faixa(porta, casos[i].Arq, casos[i].Faixa, &o), "%s %s: sem resposta", casos[i].Arq, casos[i].Faixa);
+        long long n = casos[i].Fim - casos[i].Ini + 1;
+        char cr[128]; snprintf(cr, sizeof(cr), "bytes %lld-%lld/%lld", casos[i].Ini, casos[i].Fim, casos[i].Total);
+        T_ASSERT(r, o.Status == 206, "%s %s: status %d (esperado 206)", casos[i].Arq, casos[i].Faixa, o.Status);
+        T_ASSERT(r, !strcmp(o.ContentRange, cr), "%s %s: Content-Range '%s' (esperado '%s')", casos[i].Arq, casos[i].Faixa, o.ContentRange, cr);
+        T_ASSERT(r, o.Tam == n && o.NCorpo == (int)n, "%s %s: corpo %d / Content-Length %lld (esperado %lld)", casos[i].Arq, casos[i].Faixa, o.NCorpo, o.Tam, n);
+        T_ASSERT(r, !memcmp(o.Corpo, casos[i].Dado + casos[i].Ini, (size_t)n), "%s %s: trecho diferente do arquivo", casos[i].Arq, casos[i].Faixa);
+        free(o.Corpo);
+    }
+
+    // 416: faixa que comeca depois do fim
+    RespRange o;
+    T_ASSERT(r, pede_faixa(porta, "range_pequeno.bin", "bytes=200000-", &o), "416: sem resposta");
+    char esp[64]; snprintf(esp, sizeof(esp), "bytes */%d", PEQ);
+    T_ASSERT(r, o.Status == 416 && !strcmp(o.ContentRange, esp) && o.Tam == 0, "fora do arquivo: status %d, Content-Range '%s', Content-Length %lld (esperado 416, '%s', 0)", o.Status, o.ContentRange, o.Tam, esp);
+    free(o.Corpo);
+
+    // varias faixas e outra unidade: ignoradas -> 200 com o arquivo inteiro
+    const char* ignoradas[] = { "bytes=0-9,20-29", "itens=1-2" };
+    for (int i = 0; i < 2; i++)
+    {
+        T_ASSERT(r, pede_faixa(porta, "range_pequeno.bin", ignoradas[i], &o), "%s: sem resposta", ignoradas[i]);
+        T_ASSERT(r, o.Status == 200 && o.NCorpo == PEQ && !memcmp(o.Corpo, peq, PEQ), "%s: status %d, %d bytes (esperado 200 com o arquivo inteiro)", ignoradas[i], o.Status, o.NCorpo);
+        free(o.Corpo);
+    }
+
+    // resposta normal anuncia que aceita faixas (o navegador so busca no video se vir isso)
+    const char* arqs[] = { "range_pequeno.bin", "range_grande.bin" };
+    int tams[] = { PEQ, GRD };
+    for (int i = 0; i < 2; i++)
+    {
+        T_ASSERT(r, pede_faixa(porta, arqs[i], 0, &o), "%s sem Range: sem resposta", arqs[i]);
+        T_ASSERT(r, o.Status == 200 && o.NCorpo == tams[i], "%s sem Range: status %d, %d bytes", arqs[i], o.Status, o.NCorpo);
+        T_ASSERT(r, o.AceitaFaixa, "%s: resposta 200 sem 'Accept-Ranges: bytes'", arqs[i]);
+        free(o.Corpo);
+    }
+
+    free(peq); free(grd);
+    char cam[700];
+    snprintf(cam, sizeof(cam), "%s/range_pequeno.bin", g_web); remove(cam);
+    snprintf(cam, sizeof(cam), "%s/range_grande.bin", g_web);  remove(cam);
 }

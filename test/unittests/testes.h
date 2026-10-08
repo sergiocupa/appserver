@@ -54,6 +54,7 @@ void teste_sse_poucos_assinantes_sem_pista(TestResult* r);
 void teste_sse_pistas_ordem_e_todos(TestResult* r);
 void teste_sse_pistas_assinantes_saem(TestResult* r);
 void teste_sse_pistas_dois_publicadores(TestResult* r);
+void teste_estatico_range(TestResult* r);
 
 // ---- servidor: fronteiras entre camadas (le os fontes) ----------------------
 void teste_fronteiras_entre_camadas(TestResult* r);

@@ -32,6 +32,8 @@ extern "C" {
         bool              Fechar;      // "Connection: close": a conexao acaba depois desta resposta
         HeaderAppender    Extra;       // cabecalhos a mais (CORS do preflight, upgrade de WebSocket)
         void*             ExtraArgs;
+        bool              AceitaFaixa; // "Accept-Ranges: bytes" (arquivo estatico: o cliente pode pedir faixas)
+        int64             FaixaIni, FaixaFim, FaixaTotal;   // Content-Range: do 206 (ini-fim/total) e do 416 (*/total)
     }
     HttpCabecalho;
 

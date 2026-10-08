@@ -71,5 +71,23 @@ chama `platform_init` no `DllMain`).
 
 ## Resultados
 
-`resultados/`: `base_*` (so o servidor antigo), `final_*` e `fim_*` (antes x depois, pareado),
-`sse_fim_*` (entrega SSE em serie x em pistas, mesmo binario).
+`resultados/` e local (ignorado pelo git): cada execucao grava `<prefixo>.txt` e `.tsv`. O
+sufixo diz o sistema (`_windows`/`_linux`) e o perfil do pool (`_economia`/`_performance`);
+`_15r` = 15 rodadas.
+
+| prefixo | o que compara |
+|---|---|
+| `final2_*` | **original x atual, todos os cenarios (06/10, depois de todas as correcoes): a referencia** |
+| `base_*` | so o servidor antigo (29/09) |
+| `final_*`, `fim_*` | original x servidor novo em 29/09 e 05/10 (no Windows, `fim_*` tem o Warsaw injetado so no novo) |
+| `volta_*`, `balanco_*`, `leitores_*`, `bateria_*` | variantes intermediarias do reator, entre si |
+| `sse_fim_*` | entrega SSE em serie x em pistas, mesmo binario (`--env-a`) |
+| `sse_justo_*` | SSE justo: servidor ANTIGO (commit 82169db + xplatbase 166831d) com uma thread por assinante mas UM evento para todos (publicador acorda as threads) x atual. `sse_justo_validacao_*` confirma que o antigo recompilado equivale ao original guardado. Contra o original puro o atraso nao e comparavel: la cada thread gerava o proprio evento, sem distribuicao |
+| `sse_*` (sem `fim`) | primeira medicao das pistas SSE, AINDA com o defeito do pool corrigido no xplatbase b398dcd: os numeros de CPU nao valem |
+| `pool_parado_*` | pool parado no perfil economia, antes x depois (xplatbase e0337cb) |
+| `post_reserva_*` | corpo em memoria reservado pelo Content-Length, antes x depois |
+| `arquivo_parado_*` | bloco do envio de arquivo solto quando o cliente para de ler (Windows), antes x depois |
+| `ref_item2_*`, `ref_itens34_*` | REFERENCIAS (15 rodadas, original x base de 06/10) dos pontos ainda em aberto: Linux PERFORMANCE com conexao nova por requisicao, rotas lentas e clientes lentos; Windows clientes lentos e SSE com 50 assinantes. Base guardada em `x64/Release/bench_base_0610/` e `~/build/bench_base_0610/` (WSL): para medir uma correcao, comparar base x novo, pareado |
+| `fim3_0710_*` | base de 06/10 x novo de 07/10 (rota antes do arquivo estatico, `Range`, xplatbase com timer solto em ECONOMIA parado e giro curto do core acordado sem tarefa), todos os cenarios. Novo guardado em `x64/Release/bench_novo_0710/` (exe + `Xplatbase.dll` da origem) |
+| `orig3_0710_*` | original x novo de 07/10, so pings (`ping_ka_c1`, `ping_nova_c8`, `lento_mix`, `cliente_lento`) |
+| `saida_tarefa_*` | envio com orcamento e tarefa de envio no pool, antes x depois; `saida_tarefa_original_*` = original x depois (arquivo de 4 MB) |

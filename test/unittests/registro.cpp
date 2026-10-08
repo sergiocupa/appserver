@@ -108,6 +108,12 @@ public:
     CASO(SsePistasDoisPublicadores, teste_sse_pistas_dois_publicadores)
 };
 
+TEST_CLASS(ArquivosEstaticos)
+{
+public:
+    CASO(RangeArquivoEstatico, teste_estatico_range)
+};
+
 TEST_CLASS(Arquitetura)
 {
 public:

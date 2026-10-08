@@ -18,6 +18,8 @@ const char* http_status_texto(HttpStatusCode st)
 	case HTTP_STATUS_NONE:                break;
 	case HTTP_STATUS_OK:                  return "OK";
 	case HTTP_STATUS_ACCEPT:              return "Accepted";
+	case HTTP_STATUS_PARTIAL_CONTENT:     return "Partial Content";
+	case HTTP_STATUS_RANGE_NOT_SATISFIABLE: return "Range Not Satisfiable";
 	case HTTP_STATUS_BAD_REQUEST:         return "Bad Request";
 	case HTTP_STATUS_UNAUTHORIZED:        return "Unauthorized";
 	case HTTP_STATUS_FORBIDDEN:           return "Forbidden";
@@ -84,6 +86,11 @@ void http_resposta_cabecalho(ResourceBuffer* out, const HttpCabecalho* c)
 	resource_buffer_append_string(out, "Access-Control-Allow-Origin: *\r\n");
 	if (c->Extra) c->Extra(c->ExtraArgs, out);
 	if (c->Tipo != CONTENT_TYPE_NONE) resource_buffer_append_format(out, "Content-Type: %s\r\n", http_tipo_texto(c->Tipo));
+	if (c->AceitaFaixa) resource_buffer_append_string(out, "Accept-Ranges: bytes\r\n");
+	if (c->Status == HTTP_STATUS_PARTIAL_CONTENT)
+		resource_buffer_append_format(out, "Content-Range: bytes %lld-%lld/%lld\r\n", (long long)c->FaixaIni, (long long)c->FaixaFim, (long long)c->FaixaTotal);
+	else if (c->Status == HTTP_STATUS_RANGE_NOT_SATISFIABLE)
+		resource_buffer_append_format(out, "Content-Range: bytes */%lld\r\n", (long long)c->FaixaTotal);
 	if (c->Tamanho >= 0) resource_buffer_append_format(out, "Content-Length: %lld\r\n", (long long)c->Tamanho);
 	if (c->Fechar) resource_buffer_append_string(out, "Connection: close\r\n");
 	resource_buffer_append_string(out, "\r\n");

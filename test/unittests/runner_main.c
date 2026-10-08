@@ -57,6 +57,7 @@ static const Caso CASOS[] = {
     { "WebSocketETopicos.SsePistasOrdemETodos", teste_sse_pistas_ordem_e_todos },
     { "WebSocketETopicos.SsePistasAssinantesSaem", teste_sse_pistas_assinantes_saem },
     { "WebSocketETopicos.SsePistasDoisPublicadores", teste_sse_pistas_dois_publicadores },
+    { "ArquivosEstaticos.RangeArquivoEstatico", teste_estatico_range },
     { "Arquitetura.FronteirasEntreCamadas", teste_fronteiras_entre_camadas },
     { "PoolDeTarefas.ExecutaTodasAsTarefas",               teste_pool_executa_tarefas },
     { "Pipeline.WebmRoundtripVp9",                         teste_webm_roundtrip_vp9 },

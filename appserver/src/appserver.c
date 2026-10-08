@@ -269,6 +269,49 @@ static int64 tamanho_arquivo(const char* caminho)
     return t;
 }
 
+// Pedido parcial (RFC 7233), uma faixa: "bytes=a-b", "bytes=a-" ou "bytes=-n". Players de
+// video (MP4) pedem faixas para avancar no meio do arquivo. Devolve 1 = faixa valida em
+// [*ini, *fim]; -1 = fora do arquivo (416); 0 = sem Range, ou um que se pode ignorar (outra
+// unidade, varias faixas, sintaxe estranha): responde 200 com o arquivo inteiro, que a RFC
+// permite.
+static int faixa_pedida(Message* m, int64 total, int64* ini, int64* fim)
+{
+    const char* v = 0; int n = 0;
+    for (int i = 0; i < m->Fields.Count; i++)
+    {
+        MessageField* f = (MessageField*)m->Fields.Items[i];
+        if (f->Name.Length == 5 && f->Raw.Length > 0 &&
+            (f->Name.Content[0] == 'R' || f->Name.Content[0] == 'r') && !strncmp(f->Name.Content + 1, "ange", 4))
+        { v = f->Raw.Content; n = (int)f->Raw.Length; break; }
+    }
+    if (!v || n < 7 || strncmp(v, "bytes=", 6)) return 0;
+    v += 6; n -= 6;
+    for (int i = 0; i < n; i++) if (v[i] == ',') return 0;   // varias faixas: so a resposta inteira
+    int64 a = -1, b = -1; int i = 0;
+    if (v[0] != '-') { a = 0; while (i < n && v[i] >= '0' && v[i] <= '9') a = a * 10 + (v[i++] - '0'); }
+    if (i >= n || v[i] != '-') return 0;
+    i++;
+    if (i < n) { b = 0; int ini_b = i; while (i < n && v[i] >= '0' && v[i] <= '9') b = b * 10 + (v[i++] - '0'); if (i == ini_b) return 0; }
+    if (i != n) return 0;
+    if (a < 0)
+    {
+        if (b <= 0) return b == 0 ? -1 : 0;   // "bytes=-0": nada satisfaz
+        if (total == 0) return -1;
+        *ini = b >= total ? 0 : total - b; *fim = total - 1;
+        return 1;
+    }
+    if (b >= 0 && b < a) return 0;          // sintaticamente invalida: ignora
+    if (a >= total) return -1;
+    *ini = a; *fim = (b < 0 || b >= total) ? total - 1 : b;
+    return 1;
+}
+
+static void cabecalho_aceita_faixa(void* args, ResourceBuffer* http)
+{
+    (void)args;
+    resource_buffer_append_string(http, "Accept-Ranges: bytes\r\n");
+}
+
 bool appserver_web_process(AppServerInfo* server, Message* request)
 {
     StringX path;
@@ -279,12 +322,33 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     int64 tam = tamanho_arquivo(path.Content);
     if (tam < 0) { string_release_data(&path); return false; }
 
+    int64 ini = 0, fim = 0;
+    int faixa = faixa_pedida(request, tam, &ini, &fim);
+    if (faixa != 0)
+    {
+        // 206 com o trecho (sai pela fila da conexao, como o arquivo grande) ou 416
+        HttpCabecalho c = http_cabecalho(faixa > 0 ? HTTP_STATUS_PARTIAL_CONTENT : HTTP_STATUS_RANGE_NOT_SATISFIABLE, server->Config.AgentName);
+        c.AceitaFaixa = true;
+        c.FaixaTotal  = tam;
+        if (faixa > 0) { c.Tipo = tipo; c.Tamanho = fim - ini + 1; c.FaixaIni = ini; c.FaixaFim = fim; }
+        ResourceBuffer h; resource_buffer_init(&h);
+        http_resposta_cabecalho(&h, &c);
+        appclient_send(request->Client, h.Data, h.Length, false);
+        resource_buffer_release(&h, true);
+        if (server->Config.LogRequests)
+            printf("RESPONSE | Client: %d | Status: %d | Range: %lld-%lld/%lld\n", (int)(intptr_t)request->Client->Handle,
+                   (int)c.Status, (long long)ini, (long long)fim, (long long)tam);
+        if (faixa > 0 && request->Cmd != CMD_HEAD) appclient_send_file(request->Client, path.Content, ini, fim - ini + 1);
+        string_release_data(&path);
+        return true;
+    }
+
     if (tam <= WEB_EM_MEMORIA_MAX)
     {
         ResourceBuffer buffer;
         memset(&buffer, 0, sizeof(ResourceBuffer));
         bool ok = binder_get_web_resource(&request->Route, &server->AbsLocal, &buffer);
-        if (ok) appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, 0, 0);
+        if (ok) appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, cabecalho_aceita_faixa, 0);
         if (buffer.Data) memop_free_raw(buffer.Data);
         string_release_data(&path);
         return ok;
@@ -293,6 +357,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     HttpCabecalho c = http_cabecalho(HTTP_STATUS_OK, server->Config.AgentName);
     c.Tipo    = tipo;
     c.Tamanho = tam;
+    c.AceitaFaixa = true;
     ResourceBuffer h; resource_buffer_init(&h);
     http_resposta_cabecalho(&h, &c);
     appclient_send(request->Client, h.Data, h.Length, false);
@@ -360,14 +425,18 @@ void appserver_received(Message* request)
         appserver_http_default_options(server, request);
         return;
     }
-    if ((request->Cmd == CMD_GET || request->Cmd == CMD_HEAD) && appserver_web_process(server, request))
+    // Rota registrada primeiro: com ela, nada de procurar arquivo estatico. A busca custa uma
+    // consulta ao sistema de arquivos que FALHA (GetFileAttributes + abertura) a cada GET de
+    // API -- medido no Windows: com o reator atendendo os pings em serie, era a maior parte do
+    // tempo dele (70-95% ocupado em CreateFile/NtQueryAttributesFile), p99 do ping +49% com
+    // clientes lentos. Arquivo estatico e rota por extensao seguem na ordem de antes.
+    int rest = -1;
+    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route, &rest);
+
+    if (!bind && (request->Cmd == CMD_GET || request->Cmd == CMD_HEAD) && appserver_web_process(server, request))
     {
         return;
     }
-
-
-    int rest = -1;
-    FunctionBind* bind = binder_route_exist(server->BindList, server->Prefix, &request->Route, &rest);
 
     // Rota registrada por EXTENSAO (app_add_receiver_extension): a API era publica, mas
     // ninguem consultava o registro -- registrar um handler de ".m4s" nao tinha efeito.

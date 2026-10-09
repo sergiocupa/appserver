@@ -91,4 +91,5 @@ sufixo diz o sistema (`_windows`/`_linux`) e o perfil do pool (`_economia`/`_per
 | `fim3_0710_*` | base de 06/10 x novo de 07/10 (rota antes do arquivo estatico, `Range`, xplatbase com timer solto em ECONOMIA parado e giro curto do core acordado sem tarefa), todos os cenarios. Novo guardado em `x64/Release/bench_novo_0710/` (exe + `Xplatbase.dll` da origem) |
 | `orig3_0710_*` | original x novo de 07/10, so pings (`ping_ka_c1`, `ping_nova_c8`, `lento_mix`, `cliente_lento`) |
 | `giro_0810_*` | xplatbase f2ecda3 x giro limitado no PERFORMANCE (quem submete nao acorda core se ja ha um girando; despertar em cadeia), mesmo appserver, todos os cenarios. `giro_conf_0810_*` = confirmacao com 10 rodadas dos pontos inconclusivos; `orig_giro_0810_*` = original x giro limitado, so pings |
+| `range_cond_0810_*` | arquivos estaticos antes x depois de ETag/Last-Modified, 304 condicional, If-Range e varias faixas (multipart/byteranges): custo no caminho do estatico |
 | `saida_tarefa_*` | envio com orcamento e tarefa de envio no pool, antes x depois; `saida_tarefa_original_*` = original x depois (arquivo de 4 MB) |

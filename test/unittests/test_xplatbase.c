@@ -24,6 +24,7 @@ void teste_instancia_vem_da_compartilhada(TestResult* r)
 {
     const char* modulo;
     t_start(r);
+    PULA_SE_XPLATBASE_ESTATICO(r);
 
     modulo = xplat_instance_module();
     T_ASSERT(r, modulo != 0 && modulo[0] != '\0', "modulo da instancia nao identificado");

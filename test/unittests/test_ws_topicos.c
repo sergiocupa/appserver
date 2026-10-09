@@ -501,8 +501,9 @@ void teste_sse_pistas_dois_publicadores(TestResult* r)
 // =========================================================================================
 // Players de video (MP4) pedem faixas para avancar no meio do arquivo (RFC 7233). Confere 206,
 // Content-Range e o trecho exato nos dois tamanhos de arquivo (o pequeno sai da memoria quando
-// e inteiro, o grande em blocos), 416 para faixa fora do arquivo, varias faixas ignoradas (200
-// com o arquivo inteiro, que a RFC permite) e "Accept-Ranges: bytes" na resposta normal.
+// e inteiro, o grande em blocos), varias faixas em multipart/byteranges, 416 para faixa fora do
+// arquivo, os Range ignorados (200 com o arquivo inteiro, que a RFC permite) e
+// "Accept-Ranges: bytes" na resposta normal.
 
 static char g_web[512];
 
@@ -535,10 +536,20 @@ static char* cria_arquivo_web(const char* nome, int tam)
     return d;
 }
 
-typedef struct { int Status; long long Tam; char ContentRange[128]; int AceitaFaixa; char* Corpo; int NCorpo; } RespRange;
+typedef struct { int Status; long long Tam; char ContentRange[128]; char ContentType[160]; char ETag[64]; char UltimaMod[64];
+                 int AceitaFaixa; char* Corpo; int NCorpo; } RespRange;
 
-// GET /<nome> com "Range: <faixa>" (faixa 0 = sem Range); le cabecalho e corpo (Content-Length)
-static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange* o)
+static void valor_cabecalho(const char* cab, const char* nome, char* out, int cap)
+{
+    out[0] = 0;
+    const char* p = strstr(cab, nome); if (!p) return;
+    p += strlen(nome); while (*p == ' ') p++;
+    int i = 0; while (p[i] && p[i] != '\r' && i < cap - 1) { out[i] = p[i]; i++; } out[i] = 0;
+}
+
+// GET /<nome> com cabecalhos a mais (linhas "Nome: valor\r\n"; 0 = nenhum); le cabecalho e
+// corpo (Content-Length; 304 nao tem corpo)
+static int pede(int porta, const char* nome, const char* extras, RespRange* o)
 {
     memset(o, 0, sizeof(*o));
     SOCKET k = socket(AF_INET, SOCK_STREAM, 0);
@@ -546,9 +557,8 @@ static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange*
     a.sin_family = AF_INET; a.sin_addr.s_addr = htonl(INADDR_LOOPBACK); a.sin_port = htons((unsigned short)porta);
     if (connect(k, (struct sockaddr*)&a, sizeof(a)) != 0) { closesocket(k); return 0; }
     net_set_recv_timeout(k, 3000);
-    char req[512];
-    int n = faixa ? snprintf(req, sizeof(req), "GET /%s HTTP/1.1\r\nHost: t\r\nRange: %s\r\n\r\n", nome, faixa)
-                  : snprintf(req, sizeof(req), "GET /%s HTTP/1.1\r\nHost: t\r\n\r\n", nome);
+    char req[2048];
+    int n = snprintf(req, sizeof(req), "GET /%s HTTP/1.1\r\nHost: t\r\n%s\r\n", nome, extras ? extras : "");
     send(k, req, n, 0);
     int cap = 4 << 20, tot = 0;
     char* b = (char*)malloc((size_t)cap + 1);
@@ -561,8 +571,8 @@ static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange*
         if (!fimcab) fimcab = strstr(b, "\r\n\r\n");
         if (fimcab)
         {
-            const char* cl = strstr(b, "Content-Length:"); if (!cl) cl = strstr(b, "content-length:");
-            long long len = cl ? atoll(cl + 15) : 0;
+            const char* cl = strstr(b, "Content-Length:");
+            long long len = cl && cl < fimcab ? atoll(cl + 15) : 0;
             if (tot - (int)(fimcab + 4 - b) >= len) break;
         }
     }
@@ -570,16 +580,56 @@ static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange*
     if (!fimcab) { free(b); return 0; }
     *fimcab = 0;
     o->Status = atoi(b + 9);
-    const char* cl = strstr(b, "Content-Length:"); if (!cl) cl = strstr(b, "content-length:");
+    const char* cl = strstr(b, "Content-Length:");
     o->Tam = cl ? atoll(cl + 15) : -1;
-    const char* cr = strstr(b, "Content-Range:"); if (!cr) cr = strstr(b, "content-range:");
-    if (cr) { cr += 14; while (*cr == ' ') cr++; int i = 0; while (cr[i] && cr[i] != '\r' && i < 127) { o->ContentRange[i] = cr[i]; i++; } }
+    valor_cabecalho(b, "Content-Range:", o->ContentRange, sizeof(o->ContentRange));
+    valor_cabecalho(b, "Content-Type:", o->ContentType, sizeof(o->ContentType));
+    valor_cabecalho(b, "ETag:", o->ETag, sizeof(o->ETag));
+    valor_cabecalho(b, "Last-Modified:", o->UltimaMod, sizeof(o->UltimaMod));
     o->AceitaFaixa = strstr(b, "Accept-Ranges: bytes") != 0;
     o->NCorpo = tot - (int)(fimcab + 4 - b);
     o->Corpo = (char*)malloc((size_t)o->NCorpo + 1);
     memcpy(o->Corpo, fimcab + 4, (size_t)o->NCorpo);
+    o->Corpo[o->NCorpo] = 0;
     free(b);
     return 1;
+}
+
+static int pede_faixa(int porta, const char* nome, const char* faixa, RespRange* o)
+{
+    char ex[512] = "";
+    if (faixa) snprintf(ex, sizeof(ex), "Range: %s\r\n", faixa);
+    return pede(porta, nome, ex, o);
+}
+
+// Confere um corpo multipart/byteranges: k partes, cada uma com Content-Range "bytes a-b/total"
+// e exatamente os bytes do arquivo; fronteira final no fim. 0 = ok; senao, a parte que falhou.
+static int confere_multipart(const RespRange* o, const char* dado, const long long* ini, const long long* fim, int k, long long total, char* msg, int cap)
+{
+    const char* bd = strstr(o->ContentType, "boundary=");
+    if (strncmp(o->ContentType, "multipart/byteranges", 20) || !bd) { snprintf(msg, cap, "Content-Type '%s'", o->ContentType); return -1; }
+    char delim[96]; snprintf(delim, sizeof(delim), "\r\n--%s", bd + 9);
+    const char* p = o->Corpo; const char* fimc = o->Corpo + o->NCorpo;
+    for (int i = 0; i < k; i++)
+    {
+        if ((size_t)(fimc - p) < strlen(delim) || memcmp(p, delim, strlen(delim))) { snprintf(msg, cap, "parte %d: sem fronteira", i); return i + 1; }
+        const char* hc = p + strlen(delim) + 2;
+        const char* fh = strstr(hc, "\r\n\r\n");
+        if (!fh) { snprintf(msg, cap, "parte %d: sem fim de cabecalho", i); return i + 1; }
+        char cr[128] = "", esp[128];
+        const char* q = strstr(hc, "Content-Range:");
+        if (q && q < fh) { q += 14; while (*q == ' ') q++; int j = 0; while (q[j] != '\r' && j < 127) { cr[j] = q[j]; j++; } cr[j] = 0; }
+        snprintf(esp, sizeof(esp), "bytes %lld-%lld/%lld", ini[i], fim[i], total);
+        if (strcmp(cr, esp)) { snprintf(msg, cap, "parte %d: Content-Range '%s' (esperado '%s')", i, cr, esp); return i + 1; }
+        long long nb = fim[i] - ini[i] + 1;
+        const char* d = fh + 4;
+        if (d + nb > fimc || memcmp(d, dado + ini[i], (size_t)nb)) { snprintf(msg, cap, "parte %d: trecho diferente do arquivo", i); return i + 1; }
+        p = d + nb;
+    }
+    char fin[100]; snprintf(fin, sizeof(fin), "%s--\r\n", delim);
+    if ((size_t)(fimc - p) != strlen(fin) || memcmp(p, fin, strlen(fin))) { snprintf(msg, cap, "fronteira final ausente ou sobra no corpo"); return k + 1; }
+    if (o->Tam != o->NCorpo) { snprintf(msg, cap, "Content-Length %lld, corpo %d", o->Tam, o->NCorpo); return k + 2; }
+    return 0;
 }
 
 void teste_estatico_range(TestResult* r)
@@ -600,6 +650,7 @@ void teste_estatico_range(TestResult* r)
         { "range_grande.bin",  "bytes=700000-700999", 700000,    700999,  GRD, grd },
         { "range_grande.bin",  "bytes=1400000-",      1400000,   GRD - 1, GRD, grd },
         { "range_grande.bin",  "bytes=0-0",           0,         0,       GRD, grd },
+        { "range_pequeno.bin", "bytes=0-9,200000-",   0,         9,       PEQ, peq },   // so uma das faixas cabe: 206 simples
     };
     for (int i = 0; i < (int)(sizeof(casos) / sizeof(casos[0])); i++)
     {
@@ -614,16 +665,40 @@ void teste_estatico_range(TestResult* r)
         free(o.Corpo);
     }
 
-    // 416: faixa que comeca depois do fim
-    RespRange o;
-    T_ASSERT(r, pede_faixa(porta, "range_pequeno.bin", "bytes=200000-", &o), "416: sem resposta");
-    char esp[64]; snprintf(esp, sizeof(esp), "bytes */%d", PEQ);
-    T_ASSERT(r, o.Status == 416 && !strcmp(o.ContentRange, esp) && o.Tam == 0, "fora do arquivo: status %d, Content-Range '%s', Content-Length %lld (esperado 416, '%s', 0)", o.Status, o.ContentRange, o.Tam, esp);
-    free(o.Corpo);
+    // 206 multipart/byteranges: varias faixas, nos dois tamanhos (com espaco depois da virgula)
+    {
+        long long pi[] = { 0, 20, PEQ - 5 }, pf[] = { 9, 29, PEQ - 1 };
+        long long gi[] = { 100, 1400000 }, gf[] = { 199, 1400099 };
+        struct { const char* Arq; const char* Faixa; const char* Dado; long long* Ini; long long* Fim; int K; long long Total; } mp[] = {
+            { "range_pequeno.bin", "bytes=0-9,20-29,-5",            peq, pi, pf, 3, PEQ },
+            { "range_grande.bin",  "bytes=100-199, 1400000-1400099", grd, gi, gf, 2, GRD },
+        };
+        for (int i = 0; i < 2; i++)
+        {
+            RespRange o; char msg[200];
+            T_ASSERT(r, pede_faixa(porta, mp[i].Arq, mp[i].Faixa, &o), "%s %s: sem resposta", mp[i].Arq, mp[i].Faixa);
+            T_ASSERT(r, o.Status == 206 && !o.ContentRange[0], "%s %s: status %d, Content-Range no topo '%s' (esperado 206 sem)", mp[i].Arq, mp[i].Faixa, o.Status, o.ContentRange);
+            int e = confere_multipart(&o, mp[i].Dado, mp[i].Ini, mp[i].Fim, mp[i].K, mp[i].Total, msg, sizeof(msg));
+            T_ASSERT(r, e == 0, "%s %s: %s", mp[i].Arq, mp[i].Faixa, msg);
+            free(o.Corpo);
+        }
+    }
 
-    // varias faixas e outra unidade: ignoradas -> 200 com o arquivo inteiro
-    const char* ignoradas[] = { "bytes=0-9,20-29", "itens=1-2" };
+    // 416: nenhuma faixa dentro do arquivo
+    const char* fora[] = { "bytes=200000-", "bytes=200000-,300000-300010" };
+    RespRange o;
+    char esp[64]; snprintf(esp, sizeof(esp), "bytes */%d", PEQ);
     for (int i = 0; i < 2; i++)
+    {
+        T_ASSERT(r, pede_faixa(porta, "range_pequeno.bin", fora[i], &o), "%s: sem resposta", fora[i]);
+        T_ASSERT(r, o.Status == 416 && !strcmp(o.ContentRange, esp) && o.Tam == 0, "%s: status %d, Content-Range '%s', Content-Length %lld (esperado 416, '%s', 0)", fora[i], o.Status, o.ContentRange, o.Tam, esp);
+        free(o.Corpo);
+    }
+
+    // ignoradas -> 200 com o arquivo inteiro: outra unidade, sintaxe invalida, mais de 16 faixas,
+    // faixas sobrepostas pedindo mais que o arquivo
+    const char* ignoradas[] = { "itens=1-2", "bytes=5-2", "bytes=0-0,1-1,2-2,3-3,4-4,5-5,6-6,7-7,8-8,9-9,10-10,11-11,12-12,13-13,14-14,15-15,16-16", "bytes=0-,0-" };
+    for (int i = 0; i < 4; i++)
     {
         T_ASSERT(r, pede_faixa(porta, "range_pequeno.bin", ignoradas[i], &o), "%s: sem resposta", ignoradas[i]);
         T_ASSERT(r, o.Status == 200 && o.NCorpo == PEQ && !memcmp(o.Corpo, peq, PEQ), "%s: status %d, %d bytes (esperado 200 com o arquivo inteiro)", ignoradas[i], o.Status, o.NCorpo);
@@ -645,4 +720,67 @@ void teste_estatico_range(TestResult* r)
     char cam[700];
     snprintf(cam, sizeof(cam), "%s/range_pequeno.bin", g_web); remove(cam);
     snprintf(cam, sizeof(cam), "%s/range_grande.bin", g_web);  remove(cam);
+}
+
+// Validadores e pedidos condicionais (RFC 7232): ETag e Last-Modified nas respostas; 304 para
+// If-None-Match (comparacao fraca) e If-Modified-Since; If-Range so entrega a faixa se o arquivo
+// e o mesmo (etiqueta forte ou data igual) -- senao, o arquivo inteiro. Nos dois tamanhos (o
+// pequeno sai da memoria, o grande em blocos).
+void teste_estatico_condicional(TestResult* r)
+{
+    t_start(r);
+    AppServerInfo* s = servidor_web();
+    T_ASSERT(r, s != 0, "servidor nao subiu");
+    int porta = net_servidor_porta(s->Net);
+    enum { PEQ = 50000, GRD = 1200000 };
+    char* dados[2] = { cria_arquivo_web("cond_pequeno.bin", PEQ), cria_arquivo_web("cond_grande.bin", GRD) };
+    const char* arqs[2] = { "cond_pequeno.bin", "cond_grande.bin" };
+    int tams[2] = { PEQ, GRD };
+    for (int a = 0; a < 2; a++)
+    {
+        RespRange o; char ex[512], etag[64], mod[64];
+        T_ASSERT(r, pede(porta, arqs[a], 0, &o), "%s: sem resposta", arqs[a]);
+        T_ASSERT(r, o.Status == 200 && o.ETag[0] == '"' && o.UltimaMod[0], "%s: status %d, ETag '%s', Last-Modified '%s' (esperado 200 com os dois)", arqs[a], o.Status, o.ETag, o.UltimaMod);
+        strcpy(etag, o.ETag); strcpy(mod, o.UltimaMod); free(o.Corpo);
+
+        // 304: o cliente ja tem esta versao
+        const char* iguais[] = { "If-None-Match: %s\r\n", "If-None-Match: \"outra\", W/%s\r\n", "If-None-Match: *\r\n", "If-Modified-Since: %s\r\n" };
+        for (int i = 0; i < 4; i++)
+        {
+            snprintf(ex, sizeof(ex), iguais[i], i == 3 ? mod : etag);
+            T_ASSERT(r, pede(porta, arqs[a], ex, &o), "%s %s: sem resposta", arqs[a], ex);
+            T_ASSERT(r, o.Status == 304 && o.NCorpo == 0 && !strcmp(o.ETag, etag), "%s com '%.*s': status %d, %d bytes, ETag '%s' (esperado 304 sem corpo)", arqs[a], (int)strlen(ex) - 2, ex, o.Status, o.NCorpo, o.ETag);
+            free(o.Corpo);
+        }
+        // 200: versao diferente (ou data anterior a modificacao)
+        const char* difs[] = { "If-None-Match: \"outra\"\r\n", "If-Modified-Since: Sun, 06 Nov 1994 08:49:37 GMT\r\n", "If-Modified-Since: data-estranha\r\n" };
+        for (int i = 0; i < 3; i++)
+        {
+            T_ASSERT(r, pede(porta, arqs[a], difs[i], &o), "%s %s: sem resposta", arqs[a], difs[i]);
+            T_ASSERT(r, o.Status == 200 && o.NCorpo == tams[a] && !memcmp(o.Corpo, dados[a], (size_t)tams[a]), "%s com '%s': status %d, %d bytes (esperado 200 inteiro)", arqs[a], difs[i], o.Status, o.NCorpo);
+            free(o.Corpo);
+        }
+        // If-Range: mesma versao -> 206 com a faixa; outra -> 200 com o arquivo inteiro
+        const char* ir_ok[] = { etag, mod };
+        for (int i = 0; i < 2; i++)
+        {
+            snprintf(ex, sizeof(ex), "Range: bytes=10-19\r\nIf-Range: %s\r\n", ir_ok[i]);
+            T_ASSERT(r, pede(porta, arqs[a], ex, &o), "%s If-Range %s: sem resposta", arqs[a], ir_ok[i]);
+            T_ASSERT(r, o.Status == 206 && o.NCorpo == 10 && !memcmp(o.Corpo, dados[a] + 10, 10), "%s If-Range '%s': status %d, %d bytes (esperado 206 com 10)", arqs[a], ir_ok[i], o.Status, o.NCorpo);
+            free(o.Corpo);
+        }
+        char fraca[80]; snprintf(fraca, sizeof(fraca), "W/%s", etag);
+        const char* ir_nao[] = { "\"outra\"", fraca, "Sun, 06 Nov 1994 08:49:37 GMT" };
+        for (int i = 0; i < 3; i++)
+        {
+            snprintf(ex, sizeof(ex), "Range: bytes=10-19\r\nIf-Range: %s\r\n", ir_nao[i]);
+            T_ASSERT(r, pede(porta, arqs[a], ex, &o), "%s If-Range %s: sem resposta", arqs[a], ir_nao[i]);
+            T_ASSERT(r, o.Status == 200 && o.NCorpo == tams[a], "%s If-Range '%s': status %d, %d bytes (esperado 200 inteiro)", arqs[a], ir_nao[i], o.Status, o.NCorpo);
+            free(o.Corpo);
+        }
+    }
+    free(dados[0]); free(dados[1]);
+    char cam[700];
+    snprintf(cam, sizeof(cam), "%s/cond_pequeno.bin", g_web); remove(cam);
+    snprintf(cam, sizeof(cam), "%s/cond_grande.bin", g_web);  remove(cam);
 }

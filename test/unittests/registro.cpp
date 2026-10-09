@@ -112,6 +112,7 @@ TEST_CLASS(ArquivosEstaticos)
 {
 public:
     CASO(RangeArquivoEstatico, teste_estatico_range)
+    CASO(CondicionalArquivoEstatico, teste_estatico_condicional)
 };
 
 TEST_CLASS(Arquitetura)

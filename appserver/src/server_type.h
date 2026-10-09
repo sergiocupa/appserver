@@ -60,6 +60,7 @@ extern "C" {
         HTTP_STATUS_OK                  = 200,
         HTTP_STATUS_ACCEPT              = 202,
         HTTP_STATUS_PARTIAL_CONTENT     = 206,
+        HTTP_STATUS_NOT_MODIFIED        = 304,
         HTTP_STATUS_RANGE_NOT_SATISFIABLE = 416,
         HTTP_STATUS_BAD_REQUEST         = 400,
         HTTP_STATUS_UNAUTHORIZED        = 401,

@@ -65,6 +65,7 @@ void teste_modulo_compartilhado_mesmo_pool(TestResult* r)
     unsigned long long alocou, liberou;
 
     t_start(r);
+    PULA_SE_XPLATBASE_ESTATICO(r);
 
     m = abre(MOD_COMPARTILHADO);
     T_ASSERT(r, m != 0, "nao foi possivel carregar %s", MOD_COMPARTILHADO);
@@ -109,6 +110,7 @@ void teste_modulo_compartilhado_mesmo_registro_de_threads(TestResult* r)
     int antes, com_thread, depois, ok;
 
     t_start(r);
+    PULA_SE_XPLATBASE_ESTATICO(r);
 
     m = abre(MOD_COMPARTILHADO);
     T_ASSERT(r, m != 0, "nao foi possivel carregar %s", MOD_COMPARTILHADO);
@@ -181,6 +183,7 @@ void teste_modulo_usa_mesmo_pool_de_tarefas(TestResult* r)
     const int QUANTAS = 32;
 
     t_start(r);
+    PULA_SE_XPLATBASE_ESTATICO(r);
 
     m = abre(MOD_COMPARTILHADO);
     T_ASSERT(r, m != 0, "nao foi possivel carregar %s", MOD_COMPARTILHADO);

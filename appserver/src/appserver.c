@@ -31,6 +31,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <time.h>
+#include <sys/stat.h>
 
 
 
@@ -256,60 +259,189 @@ void appserver_http_default_options(AppServerInfo* server, Message* request)
 // de downloads simultaneos.
 #define WEB_EM_MEMORIA_MAX (256 * 1024)
 
-static int64 tamanho_arquivo(const char* caminho)
+// Arquivo estatico: tamanho e data de modificacao (os validadores do cache e do If-Range), numa
+// chamada so e sem abrir o arquivo. Pasta ou outra coisa que nao seja arquivo comum: false.
+typedef struct { int64 Tam; int64 Mod; } InfoArquivo;   // Mod = segundos desde 1970 (UTC)
+
+static bool info_arquivo(const char* caminho, InfoArquivo* o)
 {
-    FILE* f = fopen(caminho, "rb");
-    if (!f) return -1;
 #ifdef _WIN32
-    _fseeki64(f, 0, SEEK_END); int64 t = _ftelli64(f);
+    struct _stat64 st;
+    if (_stat64(caminho, &st) != 0 || (st.st_mode & _S_IFMT) != _S_IFREG) return false;
 #else
-    fseeko(f, 0, SEEK_END); int64 t = (int64)ftello(f);
+    struct stat st;
+    if (stat(caminho, &st) != 0 || !S_ISREG(st.st_mode)) return false;
 #endif
-    fclose(f);
-    return t;
+    o->Tam = (int64)st.st_size;
+    o->Mod = (int64)st.st_mtime;
+    return true;
 }
 
-// Pedido parcial (RFC 7233), uma faixa: "bytes=a-b", "bytes=a-" ou "bytes=-n". Players de
-// video (MP4) pedem faixas para avancar no meio do arquivo. Devolve 1 = faixa valida em
-// [*ini, *fim]; -1 = fora do arquivo (416); 0 = sem Range, ou um que se pode ignorar (outra
-// unidade, varias faixas, sintaxe estranha): responde 200 com o arquivo inteiro, que a RFC
-// permite.
-static int faixa_pedida(Message* m, int64 total, int64* ini, int64* fim)
+// Valor de um cabecalho do pedido (nome sem diferenciar maiusculas); 0 = ausente.
+static const char* campo_pedido(Message* m, const char* nome, int* n)
 {
-    const char* v = 0; int n = 0;
+    int ln = (int)strlen(nome);
     for (int i = 0; i < m->Fields.Count; i++)
     {
         MessageField* f = (MessageField*)m->Fields.Items[i];
-        if (f->Name.Length == 5 && f->Raw.Length > 0 &&
-            (f->Name.Content[0] == 'R' || f->Name.Content[0] == 'r') && !strncmp(f->Name.Content + 1, "ange", 4))
-        { v = f->Raw.Content; n = (int)f->Raw.Length; break; }
+        if ((int)f->Name.Length != ln || f->Raw.Length <= 0) continue;
+        int k = 0;
+        while (k < ln && tolower((unsigned char)f->Name.Content[k]) == tolower((unsigned char)nome[k])) k++;
+        if (k == ln) { *n = (int)f->Raw.Length; return f->Raw.Content; }
     }
-    if (!v || n < 7 || strncmp(v, "bytes=", 6)) return 0;
-    v += 6; n -= 6;
-    for (int i = 0; i < n; i++) if (v[i] == ',') return 0;   // varias faixas: so a resposta inteira
-    int64 a = -1, b = -1; int i = 0;
-    if (v[0] != '-') { a = 0; while (i < n && v[i] >= '0' && v[i] <= '9') a = a * 10 + (v[i++] - '0'); }
-    if (i >= n || v[i] != '-') return 0;
-    i++;
-    if (i < n) { b = 0; int ini_b = i; while (i < n && v[i] >= '0' && v[i] <= '9') b = b * 10 + (v[i++] - '0'); if (i == ini_b) return 0; }
-    if (i != n) return 0;
-    if (a < 0)
-    {
-        if (b <= 0) return b == 0 ? -1 : 0;   // "bytes=-0": nada satisfaz
-        if (total == 0) return -1;
-        *ini = b >= total ? 0 : total - b; *fim = total - 1;
-        return 1;
-    }
-    if (b >= 0 && b < a) return 0;          // sintaticamente invalida: ignora
-    if (a >= total) return -1;
-    *ini = a; *fim = (b < 0 || b >= total) ? total - 1 : b;
-    return 1;
+    return 0;
 }
 
-static void cabecalho_aceita_faixa(void* args, ResourceBuffer* http)
+// Data HTTP (IMF-fixdate, RFC 7231): "Sun, 06 Nov 1994 08:49:37 GMT".
+static const char* const DIAS_HTTP  = "SunMonTueWedThuFriSat";
+static const char* const MESES_HTTP = "JanFebMarAprMayJunJulAugSepOctNovDec";
+
+static void data_http(int64 t, char* out, int cap)
 {
-    (void)args;
+    time_t tt = (time_t)t; struct tm g;
+#ifdef _WIN32
+    if (gmtime_s(&g, &tt) != 0) { out[0] = 0; return; }
+#else
+    if (!gmtime_r(&tt, &g)) { out[0] = 0; return; }
+#endif
+    snprintf(out, (size_t)cap, "%.3s, %02d %.3s %04d %02d:%02d:%02d GMT", DIAS_HTTP + 3 * g.tm_wday, g.tm_mday,
+             MESES_HTTP + 3 * g.tm_mon, g.tm_year + 1900, g.tm_hour, g.tm_min, g.tm_sec);
+}
+
+static int le_num(const char* v, int n, int* i, int digitos)
+{
+    int x = 0, k = 0;
+    while (*i < n && k < digitos && v[*i] >= '0' && v[*i] <= '9') { x = x * 10 + (v[(*i)++] - '0'); k++; }
+    return k == digitos ? x : -1;
+}
+
+// Le uma data HTTP no formato que o proprio servidor manda (IMF-fixdate), que e o que o
+// navegador devolve em If-Modified-Since / If-Range. Outro formato: false (condicao ignorada).
+static bool le_data_http(const char* v, int n, int64* t)
+{
+    if (n < 29 || v[3] != ',' || v[4] != ' ') return false;
+    int i = 5, d, y, H, M, S, mes = -1;
+    if ((d = le_num(v, n, &i, 2)) < 0 || v[i++] != ' ') return false;
+    for (int k = 0; k < 12; k++) if (!strncmp(v + i, MESES_HTTP + 3 * k, 3)) { mes = k; break; }
+    if (mes < 0) return false;
+    i += 3; if (v[i++] != ' ') return false;
+    if ((y = le_num(v, n, &i, 4)) < 0 || v[i++] != ' ') return false;
+    if ((H = le_num(v, n, &i, 2)) < 0 || v[i++] != ':') return false;
+    if ((M = le_num(v, n, &i, 2)) < 0 || v[i++] != ':') return false;
+    if ((S = le_num(v, n, &i, 2)) < 0 || i + 4 > n || strncmp(v + i, " GMT", 4)) return false;
+    struct tm g; memset(&g, 0, sizeof(g));
+    g.tm_year = y - 1900; g.tm_mon = mes; g.tm_mday = d; g.tm_hour = H; g.tm_min = M; g.tm_sec = S;
+#ifdef _WIN32
+    time_t tt = _mkgmtime(&g);
+#else
+    time_t tt = timegm(&g);
+#endif
+    if (tt == (time_t)-1) return false;
+    *t = (int64)tt;
+    return true;
+}
+
+// If-None-Match: "*" ou lista de etiquetas; comparacao FRACA (ignora o W/), como a RFC 7232
+// manda para este cabecalho.
+static bool etag_na_lista(const char* v, int n, const char* etag)
+{
+    int le = (int)strlen(etag), i = 0;
+    while (i < n)
+    {
+        while (i < n && (v[i] == ' ' || v[i] == '\t' || v[i] == ',')) i++;
+        if (i >= n) break;
+        if (v[i] == '*') return true;
+        if (i + 1 < n && v[i] == 'W' && v[i + 1] == '/') i += 2;
+        int ini = i;
+        if (i < n && v[i] == '"') { i++; while (i < n && v[i] != '"') i++; if (i < n) i++; }
+        else while (i < n && v[i] != ',') i++;
+        if (i - ini == le && !memcmp(v + ini, etag, (size_t)le)) return true;
+    }
+    return false;
+}
+
+// If-Range: so vale a faixa se o arquivo ainda e o mesmo que o cliente tem. Etiqueta: comparacao
+// FORTE (uma fraca, W/, nunca casa); data: igual a de modificacao. Sem casar, a resposta e o
+// arquivo inteiro (200): o cliente que retomava um download recebe o arquivo novo, em vez de um
+// pedaco dele grudado no antigo.
+static bool if_range_vale(const char* v, int n, const char* etag, int64 mod)
+{
+    if (n > 0 && v[0] == '"') return n == (int)strlen(etag) && !memcmp(v, etag, (size_t)n);
+    if (n > 1 && v[0] == 'W' && v[1] == '/') return false;
+    int64 t;
+    return le_data_http(v, n, &t) && t == mod;
+}
+
+// Pedido parcial (RFC 7233): "bytes=a-b", "bytes=a-", "bytes=-n", separados por virgula.
+// Players de video (MP4) pedem uma faixa para avancar no meio do arquivo; leitores de PDF pedem
+// varias de uma vez. Devolve k > 0 = k faixas satisfaziveis em f[]; -1 = nenhuma dentro do
+// arquivo (416); 0 = sem Range ou um que se ignora (outra unidade, sintaxe invalida, mais de
+// FAIXAS_MAX, ou faixas sobrepostas pedindo mais que o arquivo): 200 com o arquivo inteiro, que
+// a RFC permite. Faixas fora do arquivo no meio de outras validas sao descartadas.
+#define FAIXAS_MAX 16
+typedef struct { int64 Ini, Fim; } Faixa;
+
+static int faixas_pedidas(const char* v, int n, int64 total, Faixa* f)
+{
+    if (!v || n < 7 || strncmp(v, "bytes=", 6)) return 0;
+    v += 6; n -= 6;
+    int k = 0, pedidas = 0, i = 0; int64 soma = 0;
+    while (i < n)
+    {
+        while (i < n && (v[i] == ' ' || v[i] == '\t')) i++;
+        int64 a = -1, b = -1;
+        if (i < n && v[i] >= '0' && v[i] <= '9') { a = 0; while (i < n && v[i] >= '0' && v[i] <= '9') a = a * 10 + (v[i++] - '0'); }
+        if (i >= n || v[i] != '-') return 0;
+        i++;
+        if (i < n && v[i] >= '0' && v[i] <= '9') { b = 0; while (i < n && v[i] >= '0' && v[i] <= '9') b = b * 10 + (v[i++] - '0'); }
+        while (i < n && (v[i] == ' ' || v[i] == '\t')) i++;
+        if (i < n && v[i] != ',') return 0;
+        if (i < n) i++;
+        if (++pedidas > FAIXAS_MAX) return 0;
+        if (a < 0 && b < 0) return 0;              // "-" sozinho
+        if (a >= 0 && b >= 0 && b < a) return 0;   // sintaticamente invalida: ignora o Range
+        int64 x, y;
+        if (a < 0)
+        {
+            if (b == 0 || total == 0) continue;    // "bytes=-0": nada satisfaz
+            x = b >= total ? 0 : total - b; y = total - 1;
+        }
+        else
+        {
+            if (a >= total) continue;
+            x = a; y = (b < 0 || b >= total) ? total - 1 : b;
+        }
+        f[k].Ini = x; f[k].Fim = y; k++; soma += y - x + 1;
+    }
+    if (pedidas == 0) return 0;
+    if (k == 0) return -1;
+    if (k > 1 && soma > total) return 0;
+    return k;
+}
+
+// Validadores do arquivo (ETag forte = tamanho-data, Last-Modified) na resposta 200 em memoria.
+typedef struct { const char* ETag; const char* Mod; } Validadores;
+
+static void cabecalho_arquivo(void* args, ResourceBuffer* http)
+{
+    Validadores* v = (Validadores*)args;
     resource_buffer_append_string(http, "Accept-Ranges: bytes\r\n");
+    if (v) resource_buffer_append_format(http, "ETag: %s\r\nLast-Modified: %s\r\n", v->ETag, v->Mod);
+}
+
+static void envia_cabecalho(Message* request, const HttpCabecalho* c)
+{
+    ResourceBuffer h; resource_buffer_init(&h);
+    http_resposta_cabecalho(&h, c);
+    appclient_send(request->Client, h.Data, h.Length, false);
+    resource_buffer_release(&h, true);
+}
+
+// Cabecalho de uma parte do multipart/byteranges (o corpo comeca com CRLF: preambulo vazio).
+static int parte_cabecalho(char* out, int cap, const char* fronteira, const char* tipo, const Faixa* f, int64 total)
+{
+    return snprintf(out, (size_t)cap, "\r\n--%s\r\nContent-Type: %s\r\nContent-Range: bytes %lld-%lld/%lld\r\n\r\n",
+                    fronteira, tipo, (long long)f->Ini, (long long)f->Fim, (long long)total);
 }
 
 bool appserver_web_process(AppServerInfo* server, Message* request)
@@ -319,26 +451,82 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     ContentTypeOption tipo = CONTENT_TYPE_NONE;
     if (!binder_web_path(&request->Route, &server->AbsLocal, &path, &tipo)) { string_release_data(&path); return false; }
 
-    int64 tam = tamanho_arquivo(path.Content);
-    if (tam < 0) { string_release_data(&path); return false; }
+    InfoArquivo info;
+    if (!info_arquivo(path.Content, &info)) { string_release_data(&path); return false; }
+    int64 tam = info.Tam;
+    char etag[48], mod[40];
+    snprintf(etag, sizeof(etag), "\"%llx-%llx\"", (unsigned long long)tam, (unsigned long long)info.Mod);
+    data_http(info.Mod, mod, sizeof(mod));
+    bool com_corpo = request->Cmd != CMD_HEAD;
+    int n = 0; const char* v;
 
-    int64 ini = 0, fim = 0;
-    int faixa = faixa_pedida(request, tam, &ini, &fim);
-    if (faixa != 0)
+    // 304 (RFC 7232, secao 6): If-None-Match decide; sem ele, If-Modified-Since. O navegador
+    // revalida o que ja tem no cache e o arquivo nao trafega de novo.
+    bool igual = false;
+    if ((v = campo_pedido(request, "If-None-Match", &n))) igual = etag_na_lista(v, n, etag);
+    else if ((v = campo_pedido(request, "If-Modified-Since", &n))) { int64 t; igual = le_data_http(v, n, &t) && info.Mod <= t; }
+    if (igual)
+    {
+        HttpCabecalho c = http_cabecalho(HTTP_STATUS_NOT_MODIFIED, server->Config.AgentName);
+        c.Tamanho = -1; c.ETag = etag; c.UltimaMod = mod;
+        envia_cabecalho(request, &c);
+        if (server->Config.LogRequests)
+            printf("RESPONSE | Client: %d | Status: 304 | %s\n", (int)(intptr_t)request->Client->Handle, path.Content);
+        string_release_data(&path);
+        return true;
+    }
+
+    Faixa fx[FAIXAS_MAX]; int k = 0;
+    if ((v = campo_pedido(request, "Range", &n)))
+    {
+        int ni = 0; const char* vi = campo_pedido(request, "If-Range", &ni);
+        if (!vi || if_range_vale(vi, ni, etag, info.Mod)) k = faixas_pedidas(v, n, tam, fx);
+    }
+
+    if (k == -1 || k == 1)
     {
         // 206 com o trecho (sai pela fila da conexao, como o arquivo grande) ou 416
-        HttpCabecalho c = http_cabecalho(faixa > 0 ? HTTP_STATUS_PARTIAL_CONTENT : HTTP_STATUS_RANGE_NOT_SATISFIABLE, server->Config.AgentName);
-        c.AceitaFaixa = true;
-        c.FaixaTotal  = tam;
-        if (faixa > 0) { c.Tipo = tipo; c.Tamanho = fim - ini + 1; c.FaixaIni = ini; c.FaixaFim = fim; }
-        ResourceBuffer h; resource_buffer_init(&h);
-        http_resposta_cabecalho(&h, &c);
-        appclient_send(request->Client, h.Data, h.Length, false);
-        resource_buffer_release(&h, true);
+        HttpCabecalho c = http_cabecalho(k == 1 ? HTTP_STATUS_PARTIAL_CONTENT : HTTP_STATUS_RANGE_NOT_SATISFIABLE, server->Config.AgentName);
+        c.AceitaFaixa = true; c.FaixaTotal = tam; c.ETag = etag; c.UltimaMod = mod;
+        if (k == 1) { c.Tipo = tipo; c.Tamanho = fx[0].Fim - fx[0].Ini + 1; c.FaixaIni = fx[0].Ini; c.FaixaFim = fx[0].Fim; }
+        envia_cabecalho(request, &c);
         if (server->Config.LogRequests)
             printf("RESPONSE | Client: %d | Status: %d | Range: %lld-%lld/%lld\n", (int)(intptr_t)request->Client->Handle,
-                   (int)c.Status, (long long)ini, (long long)fim, (long long)tam);
-        if (faixa > 0 && request->Cmd != CMD_HEAD) appclient_send_file(request->Client, path.Content, ini, fim - ini + 1);
+                   (int)c.Status, (long long)(k == 1 ? fx[0].Ini : 0), (long long)(k == 1 ? fx[0].Fim : 0), (long long)tam);
+        if (k == 1 && com_corpo) appclient_send_file(request->Client, path.Content, fx[0].Ini, fx[0].Fim - fx[0].Ini + 1);
+        string_release_data(&path);
+        return true;
+    }
+
+    if (k > 1)
+    {
+        // 206 multipart/byteranges: cada faixa com o proprio Content-Type e Content-Range. O
+        // corpo sai pela fila: cabecalho da parte, trecho do arquivo, ..., fronteira final.
+        static xatomic_int seq;
+        char fronteira[48], tipo_mp[96], parte[256];
+        snprintf(fronteira, sizeof(fronteira), "appserver_faixas_%08x%08x", (unsigned)atomic_add_inline(&seq, 1), (unsigned)(info.Mod ^ tam));
+        snprintf(tipo_mp, sizeof(tipo_mp), "multipart/byteranges; boundary=%s", fronteira);
+        const char* tipo_parte = http_tipo_texto(tipo);
+        int64 total = 0;
+        for (int i = 0; i < k; i++) total += parte_cabecalho(parte, sizeof(parte), fronteira, tipo_parte, &fx[i], tam) + (fx[i].Fim - fx[i].Ini + 1);
+        int nfim = snprintf(parte, sizeof(parte), "\r\n--%s--\r\n", fronteira);
+        total += nfim;
+        HttpCabecalho c = http_cabecalho(HTTP_STATUS_PARTIAL_CONTENT, server->Config.AgentName);
+        c.AceitaFaixa = true; c.TipoTexto = tipo_mp; c.Tamanho = total; c.ETag = etag; c.UltimaMod = mod;
+        envia_cabecalho(request, &c);
+        if (server->Config.LogRequests)
+            printf("RESPONSE | Client: %d | Status: 206 | %d faixas | Content Length: %lld\n", (int)(intptr_t)request->Client->Handle, k, (long long)total);
+        if (com_corpo)
+        {
+            for (int i = 0; i < k; i++)
+            {
+                int np = parte_cabecalho(parte, sizeof(parte), fronteira, tipo_parte, &fx[i], tam);
+                appclient_send(request->Client, (byte*)parte, np, false);
+                if (!appclient_send_file(request->Client, path.Content, fx[i].Ini, fx[i].Fim - fx[i].Ini + 1)) break;
+            }
+            nfim = snprintf(parte, sizeof(parte), "\r\n--%s--\r\n", fronteira);
+            appclient_send(request->Client, (byte*)parte, nfim, false);
+        }
         string_release_data(&path);
         return true;
     }
@@ -347,8 +535,9 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     {
         ResourceBuffer buffer;
         memset(&buffer, 0, sizeof(ResourceBuffer));
+        Validadores val = { etag, mod };
         bool ok = binder_get_web_resource(&request->Route, &server->AbsLocal, &buffer);
-        if (ok) appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, cabecalho_aceita_faixa, 0);
+        if (ok) appserver_http_response_send(server, request, HTTP_STATUS_OK, &buffer, cabecalho_arquivo, &val);
         if (buffer.Data) memop_free_raw(buffer.Data);
         string_release_data(&path);
         return ok;
@@ -357,16 +546,13 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     HttpCabecalho c = http_cabecalho(HTTP_STATUS_OK, server->Config.AgentName);
     c.Tipo    = tipo;
     c.Tamanho = tam;
-    c.AceitaFaixa = true;
-    ResourceBuffer h; resource_buffer_init(&h);
-    http_resposta_cabecalho(&h, &c);
-    appclient_send(request->Client, h.Data, h.Length, false);
-    resource_buffer_release(&h, true);
+    c.AceitaFaixa = true; c.ETag = etag; c.UltimaMod = mod;
+    envia_cabecalho(request, &c);
     if (server->Config.LogRequests)
         printf("RESPONSE | Client: %d | Status: OK | Type: %s | Content Length: %lld (streaming)\n",
                (int)(intptr_t)request->Client->Handle, http_tipo_texto(tipo), (long long)tam);
     // HEAD: so o cabecalho (com o Content-Length do arquivo)
-    if (request->Cmd != CMD_HEAD) appclient_send_file(request->Client, path.Content, 0, tam);
+    if (com_corpo) appclient_send_file(request->Client, path.Content, 0, tam);
     string_release_data(&path);
     return true;
 }

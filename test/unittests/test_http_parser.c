@@ -95,7 +95,7 @@ void teste_parser_corpo_grande_em_memoria(TestResult* r)
     cab = snprintf(req, 512, "POST /api/up HTTP/1.1\r\nContent-Length: %d\r\n\r\n", CORPO);
     for (int i = 0; i < CORPO; i++) req[cab + i] = (char)('a' + (i * 7) % 26);
     int n = cab + CORPO;
-    n += snprintf(req + n, 512, "GET /api/depois HTTP/1.1\r\nHost: a\r\n\r\n");
+    n += snprintf(req + n, (size_t)(CORPO + 512 - n), "GET /api/depois HTTP/1.1\r\nHost: a\r\n\r\n");
     int pos = 0, k = 0;
     static const int pedacos[] = { 3000, 1, 65536, 7, 12345, 100000, 2, 40000 };
     while (pos < n)

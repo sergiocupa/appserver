@@ -79,6 +79,7 @@ void teste_plugin_usa_o_pool_do_host(TestResult* r)
     unsigned long long alocou;
 
     t_start(r);
+    PULA_SE_XPLATBASE_ESTATICO(r);
 
     if (indice_do_modulo() < 0) T_SKIP(r, "o modulo '%s' nao esta carregado", MODULO);
 

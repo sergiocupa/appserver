@@ -6,6 +6,16 @@
 #include "ctest_core.h"
 
 // ---- instancia unica do xplatbase (ver prep-xplatbase/PLANO.md) -------------
+// Os testes de instancia unica (um so pool de memoria, registro de threads e pool de tarefas
+// para o host e os plugins) so valem com o xplatbase COMPARTILHADO: estatico
+// (XPLATBASE_SHARED=OFF), cada modulo carrega a propria copia e a premissa nao existe. Ali eles
+// aparecem como pulados, com o motivo, em vez de falhar. XPLATBASE_USE_SHARED vem do CMake
+// (XPLATBASE_SHARED=ON) e do unittests.vcxproj (no Windows a biblioteca e sempre a DLL).
+#ifdef XPLATBASE_USE_SHARED
+#define PULA_SE_XPLATBASE_ESTATICO(r) ((void)0)
+#else
+#define PULA_SE_XPLATBASE_ESTATICO(r) T_SKIP((r), "xplatbase estatico neste build (XPLATBASE_SHARED=OFF): cada modulo tem a propria copia -- a instancia unica so existe com a biblioteca compartilhada")
+#endif
 void teste_instancia_unica(TestResult* r);
 void teste_instancia_vem_da_compartilhada(TestResult* r);
 
@@ -55,6 +65,7 @@ void teste_sse_pistas_ordem_e_todos(TestResult* r);
 void teste_sse_pistas_assinantes_saem(TestResult* r);
 void teste_sse_pistas_dois_publicadores(TestResult* r);
 void teste_estatico_range(TestResult* r);
+void teste_estatico_condicional(TestResult* r);
 
 // ---- servidor: fronteiras entre camadas (le os fontes) ----------------------
 void teste_fronteiras_entre_camadas(TestResult* r);

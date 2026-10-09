@@ -34,6 +34,9 @@ extern "C" {
         void*             ExtraArgs;
         bool              AceitaFaixa; // "Accept-Ranges: bytes" (arquivo estatico: o cliente pode pedir faixas)
         int64             FaixaIni, FaixaFim, FaixaTotal;   // Content-Range: do 206 (ini-fim/total) e do 416 (*/total)
+        const char*       TipoTexto;   // Content-Type literal, no lugar de Tipo (multipart/byteranges; boundary=...): sem Content-Range no topo
+        const char*       ETag;        // "ETag:" do arquivo estatico (validador do cache e do If-Range); 0 = nao manda
+        const char*       UltimaMod;   // "Last-Modified:" (data HTTP); 0 = nao manda
     }
     HttpCabecalho;
 

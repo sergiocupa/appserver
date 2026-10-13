@@ -341,8 +341,7 @@ add_library(mediafragmenter STATIC
   MediaFragmenter/src/Mp4MetadataUtil.c
   MediaFragmenter/src/media_source.c
   MediaFragmenter/src/frag_session.c
-  MediaFragmenter/src/pipeline.c
-  MediaFragmenter/src/embed_ops.c)
+  MediaFragmenter/src/pipeline.c)
 
 target_include_directories(mediagateway PUBLIC ${ROOT}/MediaGateway/media)
 target_compile_definitions(mediagateway PRIVATE HAVE_LIBYUV)
@@ -400,6 +399,7 @@ add_executable(unittests
   test/unittests/ctest_core.c
   test/unittests/test_xplatbase.c
   test/unittests/test_pipeline.c
+  test/unittests/test_video.c
   test/unittests/test_hardware.c
   test/unittests/test_codecs.c
   test/unittests/test_gateway_matrix.c
@@ -469,6 +469,30 @@ foreach(caso
     "Pipeline.GatewayDashVp9"
     "Pipeline.GatewayHlsH264"
     "Pipeline.GatewayMemoriaNaoCresce"
+    "Video.TemposArquivoComum"
+    "Video.TemposArquivoCortado"
+    "Video.TemposAudioAtrasado"
+    "Video.CopiaMp4ComQuadrosB"
+    "Video.CopiaHlsComecaEmZero"
+    "Video.HlsCortadoRecodifica"
+    "Video.HlsAudioAtrasadoGanhaSilencio"
+    "Video.DashAudioAtrasadoE2997"
+    "Video.Manifestos2997"
+    "Video.HlsH265InitECodec"
+    "Video.CodecH264PorResolucao"
+    "Video.SessaoGuardaFormatos"
+    "Video.HlsUltimoSegmentoNaoFicaMinusculo"
+    "Video.HlsCortadoCopiaMandaComecarDepois"
+    "Video.HlsCortadoSoPrimeiroGrupo"
+    "Video.HlsTargetCobreSegmentoLongo"
+    "Video.DashVp9UltimoSegmentoNaoFicaMinusculo"
+    "Video.HlsCortadoSoPrimeiroGrupoH265"
+    "Video.DecodeH265ComQuadrosB"
+    "Video.DashAv1SegmentosSeguemOAlvo"
+    "Video.PadraoUsaFormatoAceitoPorTodos"
+    "Video.CortadoLinhaDoTempoToda"
+    "Video.HlsH265SegmentosSeguemOAlvo"
+    "Video.HlsCortadoH265QuadrosBEmendaInteira"
     "Bench.H264Threads"
     "Bench.TodosCodecs"
     "Bench.Varredura"

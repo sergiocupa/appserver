@@ -11,6 +11,9 @@
 typedef struct
 {
     int      is_hevc;
+    // 1 = SPS/PPS/VPS ficam TAMBEM dentro da amostra em que chegam (alem de montar o cfg com
+    // os primeiros). Para pista cujos parametros mudam no meio (entrada 'avc3').
+    int      keep_ps;
     uint8_t  sps[512], pps[512], vps[512]; int sl, pl, vl;
     uint8_t  cfg[2048]; int cfg_len;       // avcC (H.264) / hvcC (HEVC) quando pronto
     uint8_t* frame; int frame_cap;         // buffer length-prefixed reutilizado

@@ -29,6 +29,8 @@ Mp4Mux* mp4_open_hevc(const char* path, int width, int height, const uint8_t* hv
 #define MP4_KIND_HEVC 1
 #define MP4_KIND_VP9  2
 #define MP4_KIND_AV1  3
+#define MP4_KIND_AVC3 4   // H.264 com SPS/PPS dentro das amostras: entrada 'avc3' + avcC
+#define MP4_KIND_HEV1 5   // H.265 com VPS/SPS/PPS dentro das amostras: entrada 'hev1' + hvcC
 Mp4Mux* mp4_open_kind(const char* path, int kind, int width, int height, const uint8_t* cfg, int cfg_len,
                       const uint8_t* asc, int asc_len, int rate, int channels);
 void    mp4_write_video(Mp4Mux* m, int64_t pts_ms, int keyframe, const uint8_t* avcc_sample, int size);

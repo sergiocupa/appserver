@@ -46,7 +46,63 @@ struct GwRun
     int      rhas[GW_MAXR];           // 1 se rpkt[r] tem pacote deste frame
     // frame atual (setado antes de disparar as tasks; valido ate o wait_idle):
     uint8_t *cy, *cu, *cv; int csy, csu, csv, cw, ch; int64_t cidx;
+
+    // --- parametros dentro das amostras (GW_CUT_SMART) ---
+    // Cada quadro-chave do trecho recodificado leva os SPS/PPS do ENCODER: a pista muda de
+    // parametros no meio, e quem entra num segmento precisa dos que valem ali. O encoder pode
+    // manda-los so no primeiro quadro-chave; os seguintes ganham uma copia.
+    int      inband;
+    uint8_t  enc_ps[2048]; int enc_ps_len;
+    uint8_t* inb_buf; int inb_cap;
 };
+
+// Percorre os NALs de um pacote Annex-B. Devolve o inicio do NAL (depois do codigo de inicio)
+// e poe em *fim onde ele acaba; -1 quando nao ha mais.
+static int gw_nal(const uint8_t* d, int n, int* i, int* fim)
+{
+    while (*i + 3 < n)
+    {
+        int sc = (d[*i] == 0 && d[*i+1] == 0 && d[*i+2] == 1) ? 3 : (*i + 4 < n && d[*i] == 0 && d[*i+1] == 0 && d[*i+2] == 0 && d[*i+3] == 1) ? 4 : 0;
+        if (!sc) { (*i)++; continue; }
+        int ini = *i + sc, j = ini;
+        while (j + 3 < n && !(d[j] == 0 && d[j+1] == 0 && (d[j+2] == 1 || (d[j+2] == 0 && d[j+3] == 1)))) j++;
+        *fim = (j + 3 < n) ? j : n; *i = *fim;
+        return ini;
+    }
+    return -1;
+}
+
+// 1 se o pacote traz um quadro-chave que FECHA o grupo: nada depois dele depende do que veio
+// antes. No H.264 e o IDR. No H.265 so IDR_W_RADL e IDR_N_LP (tipos 19 e 20): CRA e BLA tambem
+// sao pontos de entrada, mas podem trazer quadros que dependem do grupo anterior.
+static int gw_fecha_grupo(const uint8_t* d, int n, int hevc)
+{
+    int i = 0, fim = 0, ini;
+    while ((ini = gw_nal(d, n, &i, &fim)) >= 0)
+    {
+        int tipo = hevc ? (d[ini] >> 1) & 0x3F : d[ini] & 0x1F;
+        if (hevc ? (tipo == 19 || tipo == 20) : tipo == 5) return 1;
+    }
+    return 0;
+}
+
+// Copia para 'out' so os conjuntos de parametros (SPS/PPS do H.264; VPS/SPS/PPS do H.265) de um
+// pacote Annex-B, cada um com o seu codigo de inicio. Devolve o tamanho; 0 se nao ha nenhum.
+static int gw_param_sets(const uint8_t* d, int n, uint8_t* out, int cap, int hevc)
+{
+    int o = 0, i = 0, fim = 0, ini;
+    while ((ini = gw_nal(d, n, &i, &fim)) >= 0)
+    {
+        int tipo = hevc ? (d[ini] >> 1) & 0x3F : d[ini] & 0x1F;
+        int e_ps = hevc ? (tipo >= 32 && tipo <= 34) : (tipo == 7 || tipo == 8);
+        if (e_ps && o + 4 + (fim - ini) <= cap)
+        {
+            out[o++] = 0; out[o++] = 0; out[o++] = 0; out[o++] = 1;
+            GW_COPY(out + o, d + ini, fim - ini); o += fim - ini;
+        }
+    }
+    return o;
+}
 
 static mtime_us pts_of(GwRun* g, int64_t idx)
 { return (idx >= 0 && idx < g->fpts_n) ? g->fpts[idx] : (g->fpts_n ? g->fpts[g->fpts_n - 1] : 0); }
@@ -57,6 +113,18 @@ static void emit_vpkt(GwRun* g, int r, const MediaPacket* p)
     GwPacket gp; GW_ZERO(&gp, sizeof(gp));
     gp.Stream = r; gp.Data = p->Data; gp.Size = p->Size; gp.KeyFrame = p->KeyFrame;
     gp.Pts = gp.Dts = pts_of(g, p->Pts);
+    if (g->inband && r == 0 && p->KeyFrame)
+    {
+        uint8_t ps[2048]; int n = gw_param_sets(p->Data, p->Size, ps, (int)sizeof(ps), g->out_vcodec == MEDIA_CODEC_H265);
+        if (n > 0) { GW_COPY(g->enc_ps, ps, n); g->enc_ps_len = n; }
+        else if (g->enc_ps_len > 0)
+        {
+            int total = g->enc_ps_len + p->Size;
+            if (total > g->inb_cap) { g->inb_buf = (uint8_t*)GW_REALLOC(g->inb_buf, (size_t)total); g->inb_cap = total; }
+            GW_COPY(g->inb_buf, g->enc_ps, g->enc_ps_len); GW_COPY(g->inb_buf + g->enc_ps_len, p->Data, p->Size);
+            gp.Data = g->inb_buf; gp.Size = total;
+        }
+    }
     if (r == 0 && p->KeyFrame)
     {
         // Tolerancia de 25%: exigir o alvo CHEIO fazia o keyframe que chega um instante
@@ -130,7 +198,7 @@ static void encode_frame(GwRun* g, uint8_t* y, int sy, uint8_t* u, int su, uint8
 //  proprio encoder (Threads=1) e grava um chunk isolado (webm_open_chunk). Com
 //  ~nsegs x nrend tasks pequenas, os nucleos ficam cheios. memop e thread-safe.
 // ============================================================================
-#define GW_SP_KBUF 3        // segmentos em voo (memoria ~ K * frames_seg * bytes_frame)
+#define GW_SP_KBUF 4        // segmentos em voo (memoria ~ K * frames_seg * bytes_frame); um deles fica retido (ver SP_ALVO)
 #define GW_SP_MAXF 256      // teto de frames por segmento (fecha antes se estourar)
 
 typedef struct { uint8_t *y,*u,*v; int sy,su,sv,w,h; int64_t ms; } SpFrame;
@@ -411,7 +479,7 @@ static mtime_us ptsq_take(GwPtsFila* q)
 
 static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaProfile* profile,
                           const char* base_dir, const GwFeedback* fb, GwControl* ctl, int vidx,
-                          MediaStreamInfo* ain, int aidx)
+                          MediaStreamInfo* ain, int aidx, mtime_us tudo_us)
 {
     SpCtx c; GW_ZERO(&c, sizeof(c));
     c.dir = base_dir; c.codec = profile->VideoCodec;
@@ -492,18 +560,34 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
     // pega um slot livre (in_use==0) OU concluido (pending==0) p/ reciclar; dorme se cheio.
     // A espera e por SINAL (thread_wait): a task acorda a main ao terminar. O busy-wait
     // anterior queimava um nucleo inteiro justamente quando o pool estava saturado.
-    #define SP_ACQUIRE(base_ms) do { \
-        cur = 0; \
+    // 'evita' = slot que a main esta SEGURANDO sem ter despachado (in_use com pending 0): sem
+    // isso ele seria reciclado com os quadros dentro.
+    #define SP_PEGA(dst, dslot, evita) do { \
+        dst = 0; \
         for (;;) { \
             for (int k = 0; k < GW_SP_KBUF; k++) { \
-                if (!segs[k].in_use) { cur = &segs[k]; cur_slot = k; break; } \
-                if (atomic_get_inline(&segs[k].pending) == 0) { sp_seg_free(&segs[k]); cur = &segs[k]; cur_slot = k; break; } \
+                if (k == (evita)) continue; \
+                if (!segs[k].in_use) { dst = &segs[k]; dslot = k; break; } \
+                if (atomic_get_inline(&segs[k].pending) == 0) { sp_seg_free(&segs[k]); dst = &segs[k]; dslot = k; break; } \
             } \
-            if (cur) break; \
+            if (dst) break; \
             thread_wait_sleep_for_inline(&c.wait, 20000); /* backpressure: teto de 20ms */ \
         } \
-        cur->nf = 0; cur->in_use = 1; atomic_set_inline(&cur->pending, 0); \
-        seg_base = (base_ms); \
+        dst->nf = 0; dst->in_use = 1; atomic_set_inline(&dst->pending, 0); \
+    } while (0)
+
+    // Segmento em que o quadro do instante 'fms' entra. Quando o atual enche, ele NAO e
+    // despachado na hora: os quadros seguintes vao para 'prox', e o atual so segue para o
+    // encode quando 'prox' ja tem sp_min_ms. Se o video acabar antes, o que esta em 'prox'
+    // volta para o atual (ver o fim do laco). Sem essa espera, um video de 24,04 s virava 12
+    // segmentos de 2 s e um ultimo de UM quadro (41 ms) -- medido.
+    SpSeg* prox = 0; int prox_slot = -1; int64_t prox_base = 0; SpSeg* alvo = 0;
+    int sp_min_ms = c.seg_ms / 4; if (sp_min_ms > 1000) sp_min_ms = 1000; if (sp_min_ms < 200) sp_min_ms = 200;
+    #define SP_ALVO(fms) do { \
+        if (!cur) { SP_PEGA(cur, cur_slot, -1); seg_base = (fms); } \
+        else if (prox && ((fms) - prox_base) >= sp_min_ms) { SP_DISPATCH(); cur = prox; cur_slot = prox_slot; seg_base = prox_base; prox = 0; } \
+        if (!prox && (((fms) - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF)) { SP_PEGA(prox, prox_slot, cur_slot); prox_base = (fms); } \
+        alvo = prox ? prox : cur; \
     } while (0)
 
     GwPacket pkt; int rr; mtime_us last_prog = MTIME_NONE; int aborted = 0;
@@ -515,6 +599,7 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
         // abort para as tasks em voo (elas saem sem gravar) e para o laco de leitura.
         if ((ctl && ctl->Stop) || atomic_get_inline(&c.failed))
         { aborted = 1; atomic_set_inline(&c.abort, 1); break; }
+        pkt.Pts += tudo_us; pkt.Dts += tudo_us;   // GW_CUT_SHOW_ALL: nada fica antes de zero
         if (pkt.Stream != vidx)
         {
             if (aud && pkt.Stream == aidx && pkt.Pts >= 0) aud_fmp4_write(aud, &pkt);   // < 0: audio do pre-rolo (lista de edicao)
@@ -535,8 +620,8 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
             if (!gw_fps_gate_take(&sp_gate, pkt.Pts)) continue;
             int w = vin->Width, h = vin->Height, cw = (w + 1) / 2, ch = (h + 1) / 2;
             uint8_t* Y = pkt.Data; uint8_t* U = Y + (size_t)w * h; uint8_t* V = U + (size_t)cw * ch;
-            if (!cur || (ms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(ms); }
-            if (sp_seg_append(cur, Y, w, U, cw, V, cw, w, h, ms) < 0)
+            SP_ALVO(ms);
+            if (sp_seg_append(alvo, Y, w, U, cw, V, cw, w, h, ms) < 0)
             { gw_error(fb, "gateway: sem memoria para bufferizar o segmento."); aborted = 1; atomic_set_inline(&c.abort, 1); break; }
             if (ms > max_ms) max_ms = ms;
         }
@@ -551,8 +636,8 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
                 if (fp < 0) continue;             // pre-rolo de arquivo cortado (lista de edicao): decodifica, nao mostra
                 if (!gw_fps_gate_take(&sp_gate, fp)) continue;
                 int64_t fms = fp / 1000;
-                if (!cur || (fms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(fms); }
-                if (sp_seg_append(cur, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, fms) < 0)
+                SP_ALVO(fms);
+                if (sp_seg_append(alvo, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, fms) < 0)
                 { gw_error(fb, "gateway: sem memoria para bufferizar o segmento."); aborted = 1; atomic_set_inline(&c.abort, 1); break; }
                 if (fms > max_ms) max_ms = fms;
             }
@@ -576,14 +661,31 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
             if (last_pts < 0) continue;
             if (!gw_fps_gate_take(&sp_gate, last_pts)) continue;
             int64_t ms = last_pts / 1000;
-            if (!cur || (ms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(ms); }
-            if (sp_seg_append(cur, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, ms) < 0)
+            SP_ALVO(ms);
+            if (sp_seg_append(alvo, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, ms) < 0)
             { gw_error(fb, "gateway: sem memoria para bufferizar o segmento."); aborted = 1; atomic_set_inline(&c.abort, 1); break; }
             if (ms > max_ms) max_ms = ms;
         }
     }
 
-    if (aborted) { if (cur) { sp_seg_free(cur); cur = 0; } }   // segmento parcial nao vai para o disco
+    if (aborted) { if (cur) { sp_seg_free(cur); cur = 0; } if (prox) { sp_seg_free(prox); prox = 0; } }   // segmento parcial nao vai para o disco
+    else if (prox)
+    {
+        // fim do video com um resto em 'prox': curto demais para ser segmento, volta para o atual
+        int quadro = c.fps > 0 ? 1000 / c.fps : 33;
+        if (cur && (max_ms - prox_base) + quadro < sp_min_ms && cur->nf + prox->nf <= GW_SP_MAXF)
+        {
+            for (int i = 0; i < prox->nf; i++) cur->f[cur->nf++] = prox->f[i];   // os quadros mudam de dono
+            prox->nf = 0; prox->in_use = 0; prox = 0;
+            SP_DISPATCH();
+        }
+        else
+        {
+            SP_DISPATCH();
+            cur = prox; cur_slot = prox_slot; seg_base = prox_base; prox = 0;
+            SP_DISPATCH();
+        }
+    }
     else SP_DISPATCH();   // ultimo segmento
 
     // aguarda os encodes, emitindo progresso e "pronto" POR PISTA (barras distintas).
@@ -623,7 +725,8 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
         aud_fmp4_close(aud);
         GW_FREE(tl);
         #undef SP_DISPATCH
-        #undef SP_ACQUIRE
+        #undef SP_PEGA
+        #undef SP_ALVO
         return -10;
     }
 
@@ -637,7 +740,8 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
     gw_emit_mem(fb);
 
     #undef SP_DISPATCH
-    #undef SP_ACQUIRE
+    #undef SP_PEGA
+    #undef SP_ALVO
     return 0;
 }
 
@@ -650,6 +754,14 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     for (int i = 0; i < nst; i++) { if (st[i].Type == MSTREAM_VIDEO && vidx < 0) vidx = i; else if (st[i].Type == MSTREAM_AUDIO && aidx < 0) aidx = i; }
     if (vidx < 0) { gw_error(fb, "gateway: sem stream de video."); return -2; }
     MediaStreamInfo* vin = &st[vidx]; MediaStreamInfo* ain = aidx >= 0 ? &st[aidx] : 0;
+
+    // GW_CUT_SHOW_ALL: o corte do arquivo e ignorado. Todo pacote anda o tanto que a origem
+    // escondia (tudo_us) logo que e lido; dali em diante o arquivo e tratado como um que nao
+    // esconde nada -- por isso o pre-rolo da entrada e zerado aqui, uma vez, e nenhum caminho
+    // abaixo precisa saber deste modo.
+    mtime_us tudo_us = 0;
+    if (profile->CutFileMode == GW_CUT_SHOW_ALL && vin->PrerollUs > 0)
+    { tudo_us = vin->PrerollUs; vin->PrerollUs = 0; vin->PrerollFrames = 0; }
 
     // ---- perfil EFETIVO -----------------------------------------------------
     // O que o chamador deixou em 0/NONE significa "herda da entrada". Resolver isso AQUI,
@@ -680,7 +792,7 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     // nao. Para AV1 vale o caminho por-frame: UM encoder por rendition, vivo do inicio ao
     // fim, com memoria e threads limitadas.
     if (profile->Container == CONT_DASH_WEBM && profile->VideoCodec != MEDIA_CODEC_AV1)
-        return gw_dash_segpar(src, vin, profile, base_dir, fb, ctl, vidx, ain, aidx);   // decode-once: sem re-decode 6x
+        return gw_dash_segpar(src, vin, profile, base_dir, fb, ctl, vidx, ain, aidx, tudo_us);   // decode-once: sem re-decode 6x
 
     MediaSink* sink = media_sink_open(profile, base_dir, fb);
     if (!sink) return -3;   // a fabrica/sink ja emitiu o erro
@@ -699,7 +811,35 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
                       && profile->Width  == vin->Width
                       && profile->Height == vin->Height
                       && (profile->Fps <= 0 || profile->Fps == fps_in));
+
+    // EXCECAO: arquivo CORTADO sem recodificar (a lista de edicao esconde o comeco). Os quadros
+    // escondidos nao podem ser descartados numa copia -- os seguintes dependem deles -- e um
+    // formato de segmentos nao tem como esconde-los: copiado direto, o player mostra o trecho
+    // (medido: saida 2,2 s mais longa que a origem). O MP4 de arquivo unico continua copiando:
+    // ali o sink grava a propria lista de edicao. Nos segmentos ha tres saidas (GwCutMode):
+    //   recodifica tudo            -- comeca no quadro exato, em qualquer player
+    //   so o primeiro grupo        -- idem, e o resto do video sai intacto (so H.264)
+    //   copia tudo                 -- o manifesto manda comecar depois do trecho
+    // Sem encoder para o codec so sobra a copia.
+    int recod_prerolo = 0, hib = 0, copia_cortado = 0;   // hib: 1 = recodificando o 1o grupo, 2 = copiando o resto
+    if (v_passthrough && vin->PrerollUs > 0 && profile->Container != CONT_MP4_FILE)
+    {
+        GwCutMode modo = profile->CutFileMode;
+        int enc_ok = media_codec_available(profile->VideoCodec);
+        if (modo == GW_CUT_SMART && !(enc_ok && (profile->VideoCodec == MEDIA_CODEC_H264 || profile->VideoCodec == MEDIA_CODEC_H265))) modo = GW_CUT_RECODE;
+        if (modo == GW_CUT_RECODE && !enc_ok) modo = GW_CUT_COPY;
+        if      (modo == GW_CUT_RECODE) { v_passthrough = 0; recod_prerolo = 1; }
+        else if (modo == GW_CUT_SMART)  { v_passthrough = 0; hib = 1; }
+        else                            copia_cortado = 1;
+    }
+
     g.out_vcodec = v_passthrough ? vin->Codec : profile->VideoCodec;
+
+    // COPIA de arquivo cortado: o trecho escondido fica nos segmentos, comprimido a 2 ms por
+    // quadro (menos que isso e dois quadros caem no mesmo milissegundo da escala do segmento).
+    // Sem a contagem de quadros nao da para comprimir: o trecho fica com a duracao real.
+    mtime_us comp_us = copia_cortado ? (vin->PrerollFrames > 0 ? (mtime_us)vin->PrerollFrames * 2000 : vin->PrerollUs) : 0;
+    if (comp_us > vin->PrerollUs) comp_us = vin->PrerollUs;
 
     int nrend = profile->RenditionCount > 0 ? profile->RenditionCount : 1;
     if (nrend > GW_MAXR) nrend = GW_MAXR;
@@ -784,7 +924,9 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
 
     MediaTrackOut tr[GW_MAXR + 1]; int tn = 0;
     for (int r = 0; r < g.nrend; r++)
-    { MediaTrackOut* t = &tr[tn++]; GW_ZERO(t, sizeof(*t)); t->Type = MSTREAM_VIDEO; t->Codec = g.out_vcodec; t->Width = g.rw[r]; t->Height = g.rh[r]; t->Fps = vin->Fps; t->Bandwidth = g.rbw[r]; t->Name = g.rname[r]; }
+    { MediaTrackOut* t = &tr[tn++]; GW_ZERO(t, sizeof(*t)); t->Type = MSTREAM_VIDEO; t->Codec = g.out_vcodec; t->Width = g.rw[r]; t->Height = g.rh[r]; t->Fps = vin->Fps; t->Bandwidth = g.rbw[r]; t->Name = g.rname[r];
+      if (copia_cortado) t->StartUs = comp_us;          // o manifesto manda comecar depois do trecho escondido
+      t->InBandParams = hib ? 1 : 0; }
     int atrack = -1;
     if (a_pass || a_trans)
     {
@@ -807,6 +949,14 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
         else if (ve)       snprintf(enc_desc, sizeof(enc_desc), "%s [%s] %s", ve->Backend ? ve->Backend : "?", enc_tier_name((EncTier)ve->Tier), ve->BackendDetail);
         else               snprintf(enc_desc, sizeof(enc_desc), "indisponivel");
         if (dec) { size_t L = strlen(enc_desc); snprintf(enc_desc + L, sizeof(enc_desc) - L, " | decode: %s", gw_vdec_backend(dec)); }
+        if (recod_prerolo)   // quem pediu a mesma resolucao esperava copia: dizer por que recodificou
+        { size_t L = strlen(enc_desc); snprintf(enc_desc + L, sizeof(enc_desc) - L, " | recodificado: a origem esconde %.3f s no comeco (arquivo cortado)", (double)vin->PrerollUs / 1000000.0); }
+        if (hib)
+        { size_t L = strlen(enc_desc); snprintf(enc_desc + L, sizeof(enc_desc) - L, " | so o primeiro grupo de quadros e recodificado (a origem esconde %.3f s no comeco); o resto e copiado", (double)vin->PrerollUs / 1000000.0); }
+        if (tudo_us > 0)
+        { size_t L = strlen(enc_desc); snprintf(enc_desc + L, sizeof(enc_desc) - L, " | corte do arquivo ignorado: a linha do tempo toda, com %.3f s a mais no comeco", (double)tudo_us / 1000000.0); }
+        if (copia_cortado)
+        { size_t L = strlen(enc_desc); snprintf(enc_desc + L, sizeof(enc_desc) - L, " | arquivo cortado: o trecho escondido (%.3f s) fica nos segmentos, comprimido em %.3f s, e o manifesto manda comecar depois dele", (double)vin->PrerollUs / 1000000.0, (double)comp_us / 1000000.0); }
         GwEvent e; GW_ZERO(&e, sizeof(e)); e.Kind = GW_EV_TRACK_START; e.TrackIndex = r; e.Name = g.rname[r]; e.Width = g.rw[r]; e.Height = g.rh[r]; e.Bandwidth = g.rbw[r];
         e.Message = enc_desc; gw_emit(fb, &e);
     }
@@ -814,28 +964,88 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     GwPacket pkt; int rr; mtime_us last_prog = MTIME_NONE; int aborted = 0;
     mtime_us last_vpts = 0;                                 // ultimo PTS de video lido (base do drain)
     GwPtsFila ptsq; ptsq_init(&ptsq, (mtime_us)(fps_in > 0 ? 1000000 / fps_in : 33333));
-    mtime_us desloca = 0; int desloca_ok = 0;                // so no bypass (ver abaixo)
+    // so no bypass em segmentos (ver abaixo): desl_p anda a apresentacao (video e audio),
+    // desl_d anda so a decodificacao do video
+    int bypass_seg = (v_passthrough && profile->Container != CONT_MP4_FILE);
+    mtime_us desl_p = 0, desl_d = 0; int desloca_ok = 0;
+    // Tempo de um pacote da copia de arquivo cortado: o que a origem esconde (antes de zero)
+    // cabe em comp_us; o resto vem logo depois, na cadencia original.
+    #define GW_COMP(t) ((t) < 0 ? comp_us + (mtime_us)((double)(t) * (double)comp_us / (double)vin->PrerollUs) : (t) + comp_us)
+    uint8_t ps_orig[2048]; int ps_ok = 0;   // SPS/PPS da origem (so no modo "primeiro grupo")
+    g.inband = hib ? 1 : 0;
     while ((rr = src->Read(src, &pkt)) == 1)
     {
         if (ctl && ctl->Stop) { aborted = 1; break; }
+        pkt.Pts += tudo_us; pkt.Dts += tudo_us;   // GW_CUT_SHOW_ALL: nada fica antes de zero
         // BYPASS: os pacotes vao como estao, com os DOIS tempos (decodificacao e apresentacao).
         // O video pode chegar com tempo negativo: o primeiro dts de um arquivo com quadros B
         // (um quadro antes de zero) e o pre-rolo de um arquivo cortado (lista de edicao), que
         // sem recodificar nao da para descartar -- os quadros seguintes dependem dele.
         //  - MP4 de arquivo unico: o sink grava a propria lista de edicao; nada muda aqui.
-        //  - segmentos (HLS): nao ha lista de edicao por segmento, entao a linha do tempo
-        //    inteira (video e audio) anda para a frente ate o primeiro dts cair em zero. Num
-        //    arquivo cortado o trecho escondido aparece, mas o sincronismo fica.
-        if (v_passthrough && profile->Container != CONT_MP4_FILE)
+        //  - segmentos (HLS), arquivo comum com quadros B: so a DECODIFICACAO anda para a frente
+        //    ate o primeiro dts cair em zero (o tempo-base do segmento nao aceita negativo). A
+        //    apresentacao fica onde esta -- o sink grava o deslocamento de composicao COM SINAL
+        //    (trun versao 1) -- e o video comeca em zero, junto do audio. Antes a linha do tempo
+        //    inteira andava um quadro e a saida comecava 41,7 ms depois do zero.
+        //  - segmentos, arquivo cortado em modo de copia (GW_CUT_COPY): os quadros escondidos
+        //    ficam, comprimidos no tempo (GW_COMP); o audio desse trecho sai fora e o restante
+        //    anda junto com o video.
+        if (bypass_seg && copia_cortado)
+        {
+            if (pkt.Stream == vidx) { pkt.Pts = GW_COMP(pkt.Pts); pkt.Dts = GW_COMP(pkt.Dts); }
+            else if (pkt.Pts >= 0)  { pkt.Pts += comp_us; pkt.Dts += comp_us; }   // audio antes de zero segue negativo e e descartado
+        }
+        if (bypass_seg)
         {
             if (!desloca_ok && pkt.Stream == vidx)
-            { desloca_ok = 1; mtime_us m = pkt.Dts < pkt.Pts ? pkt.Dts : pkt.Pts; if (m < 0) desloca = -m; }
-            pkt.Pts += desloca; pkt.Dts += desloca;
+            { desloca_ok = 1; if (pkt.Dts + desl_p < 0) desl_d = -(pkt.Dts + desl_p); }
+            pkt.Pts += desl_p; pkt.Dts += desl_p;
+            if (pkt.Stream == vidx) pkt.Dts += desl_d;
         }
+        // SO O PRIMEIRO GRUPO (hib): o grupo que tem o trecho escondido passa por decoder e
+        // encoder, como na recodificacao. No primeiro quadro-chave APRESENTADO depois de zero o
+        // grupo acabou (quadro-chave IDR fecha o grupo: nada depois dele depende do que veio
+        // antes): esvazia decoder e encoder e, dali em diante, copia.
+        if (hib == 1 && pkt.Stream == vidx)
+        {
+            if (!ps_ok)   // parametros da ORIGEM primeiro: e com eles que o sink monta o init
+            {
+                int n = gw_param_sets(pkt.Data, pkt.Size, ps_orig, (int)sizeof(ps_orig), vin->Codec == MEDIA_CODEC_H265);
+                if (n > 0) { GwPacket cfg; GW_ZERO(&cfg, sizeof(cfg)); cfg.Stream = 0; cfg.Data = ps_orig; cfg.Size = n; sink->Write(sink, 0, &cfg); }
+                ps_ok = 1;
+            }
+            if (pkt.KeyFrame && pkt.Pts > 0 && gw_fecha_grupo(pkt.Data, pkt.Size, vin->Codec == MEDIA_CODEC_H265))
+            {
+                GwImage im, ult; int tem_ult = 0;
+                gw_vdec_send(dec, 0, 0);
+                while (gw_vdec_next(dec, &im) == 1)
+                {
+                    mtime_us fp = ptsq_take(&ptsq);
+                    ult = im; tem_ult = 1;
+                    if (fp >= 0) encode_frame(&g, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, fp);
+                }
+                // Decoder que devolveu MENOS quadros do que recebeu: sobram tempos na fila. O
+                // libde265 faz isso com quadros B -- nao devolve o ultimo quadro apresentado do
+                // grupo (medido: 602 pacotes, 593 quadros, um a menos por grupo). Sem preencher,
+                // a emenda ficava com um quadro faltando; repete-se o ultimo decodificado em
+                // cada tempo que sobrou, e a linha do tempo fica inteira.
+                while (tem_ult && ptsq.n > 0)
+                {
+                    mtime_us fp = ptsq_take(&ptsq);
+                    if (fp >= 0 && fp < pkt.Pts) encode_frame(&g, ult.Planes[0], ult.Strides[0], ult.Planes[1], ult.Strides[1], ult.Planes[2], ult.Strides[2], ult.Width, ult.Height, fp);
+                }
+                if (g.venc[0]) { MediaPacket p; g.venc[0]->SendFrame(g.venc[0], 0); while (g.venc[0]->ReceivePacket(g.venc[0], &p) == 1) emit_vpkt(&g, 0, &p); }
+                hib = 2;
+                // a copia traz quadros B: a decodificacao anda ate este quadro-chave ser
+                // decodificado no instante em que e apresentado (ver o bypass, acima)
+                desl_d = pkt.Pts > pkt.Dts ? pkt.Pts - pkt.Dts : 0;
+            }
+        }
+        if (hib == 2 && pkt.Stream == vidx) pkt.Dts += desl_d;
         if (pkt.Stream == vidx)
         {
             last_vpts = pkt.Pts;
-            if (v_passthrough)
+            if (v_passthrough || hib == 2)
             {
                 if (pkt.KeyFrame)
                 {
@@ -871,9 +1081,10 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
         }
         else if (aidx >= 0 && pkt.Stream == aidx && atrack >= 0)
         {
-            // audio do pre-rolo de arquivo cortado: fora, a nao ser no bypass (nos segmentos ja veio
-            // deslocado para >= 0; no MP4 unico o sink o esconde com a lista de edicao)
-            if (pkt.Pts < 0 && !v_passthrough) continue;
+            // audio anterior a zero (pre-rolo de arquivo cortado, ou o quadro de preparacao do
+            // AAC que a lista de edicao esconde): fora. So o MP4 unico copiado o leva, porque
+            // ali o sink o esconde com a lista de edicao.
+            if (pkt.Pts < 0 && !(v_passthrough && profile->Container == CONT_MP4_FILE)) continue;
             if (a_pass) sink->Write(sink, atrack, &pkt);
             else if (a_trans)
             {
@@ -893,7 +1104,7 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     if (rr < 0 && !aborted) { gw_error(fb, "gateway: falha ao ler a fonte."); aborted = 1; }
 
     // DRAIN do decoder antes de drenar os encoders -- ver a nota no caminho segment-parallel.
-    if (!aborted && dec)
+    if (!aborted && dec && hib != 2)   // hib == 2: decoder e encoder ja foram esvaziados na troca
     {
         gw_vdec_send(dec, 0, 0);
         GwImage im;
@@ -907,7 +1118,7 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
 
     // Drenar os encoders so faz sentido se a saida vai ser publicada. Num cancelamento,
     // drenar so gastaria tempo escrevendo amostras num arquivo que sera descartado.
-    if (!aborted && !v_passthrough)
+    if (!aborted && !v_passthrough && hib != 2)
         for (int r = 0; r < g.nrend; r++)
             if (g.venc[r]) { g.venc[r]->SendFrame(g.venc[r], 0); MediaPacket p; while (g.venc[r]->ReceivePacket(g.venc[r], &p) == 1) emit_vpkt(&g, r, &p); }
 
@@ -927,6 +1138,8 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     if (adec) aac_dec_close(adec);
     for (int r = 0; r < g.nrend; r++) { if (g.venc[r]) g.venc[r]->Close(g.venc[r]); GW_FREE(g.ry[r]); GW_FREE(g.ru[r]); GW_FREE(g.rv[r]); }
     GW_FREE(g.fpts);
+    GW_FREE(g.inb_buf);
+    #undef GW_COMP
     if (aborted) gw_cancelled(fb, "preparacao interrompida");
     gw_emit_mem(fb);     // amostra final (deve voltar ao baseline) p/ deteccao de vazamento
     return aborted ? -10 : 0;

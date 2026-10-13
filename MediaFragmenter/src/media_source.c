@@ -37,6 +37,8 @@ typedef struct
     // decoder, mas nao e apresentado (o gateway o descarta). O audio anterior a zero nem sai.
     mtime_us v_off, a_off;
     mtime_us a_min;   // o audio sai a partir daqui: o menor entre zero e o primeiro tempo do video
+    mtime_us v_preroll;   // quanto do comeco do video a lista de edicao esconde (0 = nada)
+    int      v_preroll_n; // quantos quadros estao nesse trecho
 }
 SrcMp4;
 
@@ -130,6 +132,7 @@ static int src_info(MediaSource* src, MediaStreamInfo* out, int max, int* count)
         MediaStreamInfo* v = &out[n++]; GW_ZERO(v, sizeof(*v));
         v->Type = MSTREAM_VIDEO; v->Codec = s->vcodec == 265 ? MEDIA_CODEC_H265 : MEDIA_CODEC_H264;
         v->Width = s->vw; v->Height = s->vh; v->Fps = s->fps;
+        v->PrerollUs = s->v_preroll; v->PrerollFrames = s->v_preroll_n;
     }
     if (s->has_audio && max > n)
     {
@@ -215,11 +218,24 @@ MediaSource* source_mp4_open(const char* path)
     }
     s->a_min = s->tdts ? (mtime_us)s->tdts[0] : s->v_off;
     if (s->a_min > 0) s->a_min = 0;
+    // Pre-rolo: quadro APRESENTADO antes de zero. Num arquivo comum com quadros B so a
+    // decodificacao comeca antes de zero (um quadro), a apresentacao nao -- ai fica 0. Menos de
+    // 1 ms negativo e arredondamento da escala de tempo, nao pre-rolo.
+    {
+        mtime_us menor = 0;
+        if (s->tpts) { for (uint32_t i = 0; i < s->t_n; i++) if ((mtime_us)s->tpts[i] < menor) menor = (mtime_us)s->tpts[i]; }
+        else menor = s->v_off;
+        s->v_preroll = menor < -1000 ? -menor : 0;
+        if (s->v_preroll > 0 && s->tpts)
+            for (uint32_t i = 0; i < s->t_n; i++) if ((mtime_us)s->tpts[i] < -1000) s->v_preroll_n++;
+    }
     mp4_video_info(path, &s->vw, &s->vh, 0, 0, &s->duration);
     mbuffer_init(&s->vbuf);
     if (fopen_s(&s->fp, path, "rb") != 0 || !s->fp)
     {
         if (s->vpts) memop_free_raw(s->vpts);
+        if (s->tpts) memop_free_raw(s->tpts);
+        if (s->tdts) memop_free_raw(s->tdts);
         mframe_list_release(&fl); GW_FREE(s); return 0;
     }
 

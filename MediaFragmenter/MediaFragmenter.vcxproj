@@ -29,7 +29,6 @@
     <ClInclude Include="src\Mp4Builder.h" />
     <ClInclude Include="src\Mp4Diag.h" />
     <ClInclude Include="src\Mp4MetadataUtil.h" />
-    <ClInclude Include="include\embed_ops.h" />
     <ClInclude Include="include\frag_session.h" />
     <ClInclude Include="include\yason_build.h" />
   </ItemGroup>
@@ -52,7 +51,6 @@
     <ClCompile Include="src\media_source.c" />
     <ClCompile Include="src\frag_session.c" />
     <ClCompile Include="src\pipeline.c" />
-    <ClCompile Include="src\embed_ops.c" />
   </ItemGroup>
   <ItemGroup>
     <!-- SetConfiguration: a DLL do xplatbase, SEMPRE. Neste projeto a configuracao Debug/Release do Xplatbase.vcxproj e BIBLIOTECA ESTATICA; a DLL e "Debug DLL"/"Release DLL", e so a solution fazia esse mapeamento. Compilando este projeto avulso (msbuild no .vcxproj) a referencia caia na estatica, o executavel saia com uma copia do xplatbase dentro, e ao carregar um plugin de codec surgia a segunda instancia: em Debug o detector chama abort() e o processo congelava. Aconteceu de verdade no appservertester. -->

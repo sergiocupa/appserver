@@ -91,7 +91,7 @@ void Notification_Result(ResourceBuffer* object)
 
 
 // ---- configuracao: appservertester.json ao lado do executavel -------------------------
-// {"web": "<pasta do conteudo web>", "port": 1234}, os dois opcionais. Caminho relativo vale a
+// {"web": "<pasta do conteudo web>", "port": 1234, "cutFiles": "recode|smart|copy"}, todos opcionais. Caminho relativo vale a
 // partir da PASTA DO EXECUTAVEL, nao do diretorio de trabalho: iniciado por servico, script ou
 // atalho de outra pasta, o servidor subia e nao achava arquivo nenhum. Sem o arquivo, ou sem
 // "web", o conteudo e a propria pasta do executavel. A saida das sessoes fica em <web>/hls.
@@ -152,6 +152,9 @@ static void config_carregar(void)
             if (w && w->Value.Length > 0) snprintf(web, sizeof(web), "%s", w->Value.Content);
             Element* p = yason_find_element(raiz, "port");
             if (p && p->Value.Length > 0 && atoi(p->Value.Content) > 0) g_porta = atoi(p->Value.Content);
+            Element* c = yason_find_element(raiz, "cutFiles");
+            if (c && c->Value.Length > 0 && !hls_set_cortado(c->Value.Content))
+                printf("AVISO: cutFiles=\"%s\" desconhecido (use recode, smart ou copy); fica recode\n", c->Value.Content);
             yb_free(raiz);
         }
         else printf("AVISO: %s nao e um JSON valido; usando os padroes\n", arq);

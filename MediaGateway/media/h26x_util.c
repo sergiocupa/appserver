@@ -66,7 +66,7 @@ int h26x_tl_ready(const H26xToLen* c) { return c->cfg_len > 0; }
 
 int h26x_tl_feed(H26xToLen* c, const uint8_t* d, int size, uint8_t** out)
 {
-    int pos = 0, nlen, alen = 0; const uint8_t* nal;
+    int pos = 0, nlen, alen = 0, vcl = 0; const uint8_t* nal;
     while ((nal = nal_next(d, size, &pos, &nlen)))
     {
         int type = c->is_hevc ? ((nal[0] >> 1) & 0x3F) : (nal[0] & 0x1F);
@@ -88,8 +88,9 @@ int h26x_tl_feed(H26xToLen* c, const uint8_t* d, int size, uint8_t** out)
                 if (type == 8 && c->pl == 0 && nlen <= (int)sizeof(c->pps)) { GW_COPY(c->pps, nal, nlen); c->pl = nlen; }
             }
         }
-        else if (is_vcl)
+        if (is_vcl || (is_ps && c->keep_ps))
         {
+            if (is_vcl) vcl = 1;
             int need = alen + 4 + nlen;
             if (need > c->frame_cap) { c->frame = (uint8_t*)GW_REALLOC(c->frame, need); c->frame_cap = need; }
             put_be32(c->frame + alen, (uint32_t)nlen);
@@ -105,7 +106,7 @@ int h26x_tl_feed(H26xToLen* c, const uint8_t* d, int size, uint8_t** out)
     }
 
     if (out) *out = c->frame;
-    return alen;
+    return vcl ? alen : 0;   // pacote so com parametros monta o cfg, nao vira amostra
 }
 
 void h26x_tl_free(H26xToLen* c) { if (c && c->frame) { GW_FREE(c->frame); c->frame = 0; c->frame_cap = 0; } }

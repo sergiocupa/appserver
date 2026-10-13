@@ -80,6 +80,32 @@ void teste_gateway_dash_vp9(TestResult* r);
 void teste_gateway_hls_h264(TestResult* r);
 void teste_gateway_memoria_nao_cresce(TestResult* r);
 
+// ---- video: tempos do MP4, copia sem recodificar, manifestos, sessao --------
+void teste_video_tempos_arquivo_comum(TestResult* r);
+void teste_video_tempos_arquivo_cortado(TestResult* r);
+void teste_video_tempos_audio_atrasado(TestResult* r);
+void teste_video_copia_mp4_com_quadros_b(TestResult* r);
+void teste_video_copia_hls_comeca_em_zero(TestResult* r);
+void teste_video_hls_cortado_recodifica(TestResult* r);
+void teste_video_hls_audio_atrasado_ganha_silencio(TestResult* r);
+void teste_video_dash_audio_atrasado_e_2997(TestResult* r);
+void teste_video_manifestos_2997(TestResult* r);
+void teste_video_hls_h265_init_e_codec(TestResult* r);
+void teste_video_codec_h264_por_resolucao(TestResult* r);
+void teste_video_sessao_guarda_formatos(TestResult* r);
+void teste_video_hls_ultimo_segmento_nao_fica_minusculo(TestResult* r);
+void teste_video_hls_cortado_copia_manda_comecar_depois(TestResult* r);
+void teste_video_hls_cortado_so_primeiro_grupo(TestResult* r);
+void teste_video_hls_target_cobre_segmento_longo(TestResult* r);
+void teste_video_dash_vp9_ultimo_segmento_nao_fica_minusculo(TestResult* r);
+void teste_video_hls_cortado_so_primeiro_grupo_h265(TestResult* r);
+void teste_video_decode_h265_com_quadros_b(TestResult* r);
+void teste_video_dash_av1_segmentos_seguem_o_alvo(TestResult* r);
+void teste_video_padrao_usa_formato_aceito_por_todos(TestResult* r);
+void teste_video_cortado_linha_do_tempo_toda(TestResult* r);
+void teste_video_hls_h265_segmentos_seguem_o_alvo(TestResult* r);
+void teste_video_hls_cortado_h265_quadros_b_emenda_inteira(TestResult* r);
+
 // ---- dependem de hardware (pulam sozinhos onde nao houver) ------------------
 void teste_encoder_hardware_h264(TestResult* r);
 void teste_decode_do_que_o_encoder_produziu(TestResult* r);

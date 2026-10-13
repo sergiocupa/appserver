@@ -81,6 +81,12 @@ int frag_session_set_result(const char* id, const char* protocol, const char* pl
 // "dash-vp9", "dash-av1"); o set_result guarda so o ultimo preparado. url vazia remove a chave.
 int frag_session_set_format(const char* id, const char* key, const char* url);
 
+// Arquivo cortado sem recodificar: "recode", "smart", "copy" ou "showall" (ver GwCutMode; os
+// tres primeiros valem no pedido de copia, "showall" em qualquer saida). Campo "cutFiles" do session.json; vazio = a sessao nao escolheu e vale o do
+// servidor. O get devolve 1 se a sessao existe (out fica vazio quando ela nao escolheu).
+int frag_session_set_cut_mode(const char* id, const char* modo);
+int frag_session_get_cut_mode(const char* id, char* out, size_t size);
+
 // ---- biblioteca: cada video na pasta do PROPRIO hash -----------------------------------
 // Identidade do video, que vira o nome da pasta (16 hex): hash dos metadados DESCRITIVOS
 // (titulo, autor, album, data, descricao, mais duracao e resolucao, para que dois cortes com

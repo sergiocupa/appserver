@@ -137,6 +137,35 @@ public:
     CASO(GatewayMemoriaNaoCresce, teste_gateway_memoria_nao_cresce)
 };
 
+TEST_CLASS(Video)
+{
+public:
+    CASO(TemposArquivoComum,           teste_video_tempos_arquivo_comum)
+    CASO(TemposArquivoCortado,         teste_video_tempos_arquivo_cortado)
+    CASO(TemposAudioAtrasado,          teste_video_tempos_audio_atrasado)
+    CASO(CopiaMp4ComQuadrosB,          teste_video_copia_mp4_com_quadros_b)
+    CASO(CopiaHlsComecaEmZero,         teste_video_copia_hls_comeca_em_zero)
+    CASO(HlsCortadoRecodifica,         teste_video_hls_cortado_recodifica)
+    CASO(HlsAudioAtrasadoGanhaSilencio, teste_video_hls_audio_atrasado_ganha_silencio)
+    CASO(DashAudioAtrasadoE2997,       teste_video_dash_audio_atrasado_e_2997)
+    CASO(Manifestos2997,               teste_video_manifestos_2997)
+    CASO(HlsH265InitECodec,            teste_video_hls_h265_init_e_codec)
+    CASO(CodecH264PorResolucao,        teste_video_codec_h264_por_resolucao)
+    CASO(SessaoGuardaFormatos,         teste_video_sessao_guarda_formatos)
+    CASO(HlsUltimoSegmentoNaoFicaMinusculo, teste_video_hls_ultimo_segmento_nao_fica_minusculo)
+    CASO(HlsCortadoCopiaMandaComecarDepois, teste_video_hls_cortado_copia_manda_comecar_depois)
+    CASO(HlsCortadoSoPrimeiroGrupo,    teste_video_hls_cortado_so_primeiro_grupo)
+    CASO(HlsTargetCobreSegmentoLongo,  teste_video_hls_target_cobre_segmento_longo)
+    CASO(DashVp9UltimoSegmentoNaoFicaMinusculo, teste_video_dash_vp9_ultimo_segmento_nao_fica_minusculo)
+    CASO(HlsCortadoSoPrimeiroGrupoH265, teste_video_hls_cortado_so_primeiro_grupo_h265)
+    CASO(DecodeH265ComQuadrosB,        teste_video_decode_h265_com_quadros_b)
+    CASO(DashAv1SegmentosSeguemOAlvo,  teste_video_dash_av1_segmentos_seguem_o_alvo)
+    CASO(PadraoUsaFormatoAceitoPorTodos, teste_video_padrao_usa_formato_aceito_por_todos)
+    CASO(CortadoLinhaDoTempoToda,      teste_video_cortado_linha_do_tempo_toda)
+    CASO(HlsH265SegmentosSeguemOAlvo,  teste_video_hls_h265_segmentos_seguem_o_alvo)
+    CASO(HlsCortadoH265QuadrosBEmendaInteira, teste_video_hls_cortado_h265_quadros_b_emenda_inteira)
+};
+
 TEST_CLASS(Hardware)
 {
 public:

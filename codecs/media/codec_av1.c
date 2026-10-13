@@ -178,6 +178,14 @@ MediaEncoder* av1_encoder_open(const MediaEncoderParams* p)
     cfg.rate_control_mode      = 1;                          // VBR (verificar enum na versao)
     cfg.enc_mode               = p->SpeedPreset > 0 ? p->SpeedPreset : 8; // preset rapido
 
+    // Quadro-chave a cada ~2 s, como no H.264 (ver codec_h264.c). O padrao do SVT-AV1 e
+    // "automatico", que da mais de 5 s: o gateway so corta segmento em quadro-chave, entao um
+    // DASH pedido com segmentos de 2 s saia com segmentos de 6,7 s (medido: 161 quadros a 24
+    // fps) -- troca de qualidade e salto mais lentos. E grupo FECHADO (IDR): cada segmento tem
+    // de poder ser decodificado sozinho.
+    cfg.intra_period_length    = (int32_t)((p->Fps > 0 ? p->Fps : 30) * 2);
+    cfg.intra_refresh_type     = SVT_AV1_KF_REFRESH;
+
     // Paralelismo POR INSTANCIA. Sem isto, cada encoder se dimensiona para a maquina
     // inteira -- e o gateway abre um por rendition, o que multiplica threads que so
     // disputam os mesmos nucleos.

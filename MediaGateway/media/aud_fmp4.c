@@ -6,6 +6,7 @@
 #include "aud_fmp4.h"
 #include "mux_mp4.h"
 #include "mpd_util.h"
+#include "aac_silence.h"
 #include "media_time.h"
 
 typedef struct { uint8_t* data; int size; int dur; } AfSample;
@@ -21,6 +22,8 @@ struct AudFmp4
     int64_t   seg_base, seg_dur;
     MpdSeg*   tl; int tl_n, tl_cap;           // cortes gravados (para o manifesto)
     int64_t   bytes;
+    const uint8_t* sil; int sil_n;            // quadro de silencio desta faixa (NULL = nao ha)
+    int       comecou;                        // ja chegou o primeiro pacote
 };
 
 AudFmp4* aud_fmp4_open(const char* base_dir, const char* prefixo, const uint8_t* asc, int asc_len,
@@ -37,6 +40,7 @@ AudFmp4* aud_fmp4_open(const char* base_dir, const char* prefixo, const uint8_t*
 
     char ip[1200]; snprintf(ip, sizeof(ip), "%s/init-%s.mp4", a->base, a->prefixo);
     if (mp4_write_init_audio(ip, asc, asc_len, a->rate, a->ch) != 0) { GW_FREE(a); return 0; }
+    a->sil = aac_silence_frame(asc, asc_len, &a->sil_n);
     return a;
 }
 
@@ -58,19 +62,32 @@ static void af_flush(AudFmp4* a)
     a->seg_n = 0; a->seg_dur = 0; a->seg_index++;
 }
 
+static void af_put(AudFmp4* a, const uint8_t* data, int size, int dur, int64_t dts)
+{
+    if (a->seg_n > 0 && a->seg_dur >= a->seg_units) af_flush(a);   // corte em fronteira de quadro AAC
+    if (a->seg_n == 0) a->seg_base = dts;
+    if (a->seg_n == a->seg_cap) { a->seg_cap = a->seg_cap ? a->seg_cap * 2 : 128; a->seg = (AfSample*)GW_REALLOC(a->seg, (size_t)a->seg_cap * sizeof(AfSample)); }
+    uint8_t* cp = (uint8_t*)GW_ALLOC(size);
+    if (!cp) return;
+    GW_COPY(cp, data, size);
+    a->seg[a->seg_n].data = cp; a->seg[a->seg_n].size = size; a->seg[a->seg_n].dur = dur;
+    a->seg_n++; a->seg_dur += dur;
+}
+
 void aud_fmp4_write(AudFmp4* a, const GwPacket* pkt)
 {
     if (!a || !pkt || pkt->Size <= 0) return;
     int     dur = pkt->Dur > 0 ? (int)mt_to_scale(pkt->Dur, a->rate) : 1024;
     int64_t dts = mt_to_scale(pkt->Pts, a->rate);
-    if (a->seg_n > 0 && a->seg_dur >= a->seg_units) af_flush(a);   // corte em fronteira de quadro AAC
-    if (a->seg_n == 0) a->seg_base = dts;
-    if (a->seg_n == a->seg_cap) { a->seg_cap = a->seg_cap ? a->seg_cap * 2 : 128; a->seg = (AfSample*)GW_REALLOC(a->seg, (size_t)a->seg_cap * sizeof(AfSample)); }
-    uint8_t* cp = (uint8_t*)GW_ALLOC(pkt->Size);
-    if (!cp) return;
-    GW_COPY(cp, pkt->Data, pkt->Size);
-    a->seg[a->seg_n].data = cp; a->seg[a->seg_n].size = pkt->Size; a->seg[a->seg_n].dur = dur;
-    a->seg_n++; a->seg_dur += dur;
+    if (!a->comecou)
+    {
+        // Audio que entra atrasado na origem: silencio ate o primeiro pacote (ver aac_silence.h),
+        // para a faixa comecar junto com a de video.
+        a->comecou = 1;
+        int64_t t = 0, n = a->sil ? aac_silence_count(dts, &t) : 0;
+        for (int64_t i = 0; i < n; i++, t += AAC_SILENCE_SAMPLES) af_put(a, a->sil, a->sil_n, AAC_SILENCE_SAMPLES, t);
+    }
+    af_put(a, pkt->Data, pkt->Size, dur, dts);
 }
 
 void aud_fmp4_finish(AudFmp4* a) { if (a) af_flush(a); }

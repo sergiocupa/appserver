@@ -25,6 +25,12 @@ typedef struct
     int    Width, Height; double Fps;      // video
     int    SampleRate, Channels;           // audio (PCM S16 quando Raw)
     const uint8_t* Extra; int ExtraLen;    // SPS/PPS/VPS/ASC (opcional; so Raw=0)
+    // Video de arquivo CORTADO sem recodificar: quanto do comeco a lista de edicao esconde
+    // (us; 0 = nada). Esses quadros saem da fonte com tempo negativo -- precisam passar pelo
+    // decoder, mas nao sao apresentados. Copiar sem recodificar nao consegue esconde-los num
+    // formato de segmentos, entao o gateway recodifica quando isto e maior que zero.
+    mtime_us PrerollUs;
+    int      PrerollFrames;                // quantos quadros estao nesse trecho (0 = nao se sabe)
 } MediaStreamInfo;
 
 typedef struct                              // pacote codificado (entrada ou saida)
@@ -39,6 +45,33 @@ typedef enum { CONT_DASH_WEBM, CONT_DASH_MP4, CONT_HLS_FMP4, CONT_MP4_FILE,
                CONT_LIVE_MEM   // ao vivo: fMP4 numa janela em memoria (live_store), sem disco
              } Container;
 typedef enum { GW_VOD = 0, GW_LIVE = 1 } GwMode;
+
+// O que fazer com arquivo CORTADO sem recodificar (a lista de edicao esconde o comeco) quando o
+// pedido e de copia (mesma resolucao e codec) num formato de SEGMENTOS. Num MP4 de arquivo
+// unico nada disto se aplica: a copia leva a propria lista de edicao.
+typedef enum
+{
+    // Recodifica o video inteiro. A saida comeca no quadro exato e toca em qualquer player;
+    // custa o tempo e a perda de uma recodificacao.
+    GW_CUT_RECODE = 0,
+    // Recodifica SO o primeiro grupo de quadros (o que tem o trecho escondido) e copia o
+    // resto. Comeca no quadro exato e o grosso do video sai intacto. Como os dois pedacos tem
+    // parametros de codificacao diferentes, eles vao DENTRO das amostras (entrada 'avc3' no
+    // H.264, 'hev1' no H.265), o que nem todo player aceita. Outro codec cai em GW_CUT_RECODE.
+    GW_CUT_SMART,
+    // Copia tudo. Os quadros escondidos continuam nos segmentos (os seguintes dependem deles),
+    // mas COMPRIMIDOS no tempo: 2 ms cada, em vez da duracao real. O trecho de 2,2 s vira um
+    // decimo de segundo no comeco, em qualquer player; e o manifesto ainda manda comecar depois
+    // dele (EXT-X-START no HLS, ancora #t= na URL do DASH) para quem respeita. Nao gasta encoder.
+    GW_CUT_COPY,
+    // IGNORA o corte: mostra tudo o que esta gravado, desde o primeiro quadro. A linha do tempo
+    // inteira (video e audio) anda o tanto que a origem escondia, entao nada fica antes de zero
+    // e o sincronismo se mantem. Vale em toda saida -- copia, recodificacao, escada, arquivo
+    // unico --, porque aqui a pergunta nao e "como copiar", e "o que mostrar". A saida fica mais
+    // longa que o video exibido pelo arquivo original.
+    GW_CUT_SHOW_ALL
+}
+GwCutMode;
 
 typedef struct
 {
@@ -58,6 +91,8 @@ typedef struct
 
     const PipeTrack* Renditions; int RenditionCount;   // multi-resolucao (0 = usa os campos acima)
 
+    GwCutMode   CutFileMode;                // arquivo cortado em pedido de copia (ver GwCutMode)
+
     // CONT_LIVE_MEM: o LiveStore que recebe os segmentos. Fica aqui porque quem abre o sink
     // e' o gateway (media_sink_open), e o destino ao vivo nao e' um caminho em disco.
     void* Live;
@@ -71,4 +106,10 @@ typedef struct                              // uma pista de saida ja configurada
     int SampleRate, Channels;               // audio
     const uint8_t* Extra; int ExtraLen;     // avcC/hvcC/OpusHead/ASC gerado no encode
     const char* Name;                       // rotulo da rendition (ex.: "720p")
+    // Video copiado de arquivo cortado (GW_CUT_COPY): a apresentacao comeca aqui (us); o que
+    // vem antes e o trecho que a origem esconde. 0 = comeca no inicio.
+    mtime_us StartUs;
+    // 1 = os parametros de codificacao (SPS/PPS, e VPS no H.265) mudam no meio da pista e vao
+    // dentro das amostras (GW_CUT_SMART): entrada 'avc3' em vez de 'avc1', 'hev1' em vez de 'hvc1'.
+    int InBandParams;
 } MediaTrackOut;

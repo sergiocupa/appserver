@@ -144,6 +144,11 @@ Element* session_route(Message* message)
                 field_dbl(out, "fps"), field_int(out, "bitrate"));
         }
 
+        // Arquivo cortado: "recode" | "smart" | "copy"; vazio = vale o do servidor.
+        Element* cut = yason_find_element(obj, "cutFiles");
+        if (cut && !frag_session_set_cut_mode(id, cut->Value.Length > 0 ? cut->Value.Content : ""))
+        { respond_error(message, HTTP_STATUS_BAD_REQUEST, "cutFiles invalido (use recode, smart, copy ou vazio)"); return 0; }
+
         Element* root = frag_session_read(id);
         if (!root) { respond_error(message, HTTP_STATUS_NOT_FOUND, "sessao nao encontrada"); return 0; }
         respond_element(message, root, HTTP_STATUS_OK);

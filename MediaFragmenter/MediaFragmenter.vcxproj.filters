@@ -39,7 +39,6 @@
     <ClInclude Include="src\H265Builder.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="include\embed_ops.h" />
     <ClInclude Include="include\frag_session.h" />
     <ClInclude Include="include\yason_build.h" />
   </ItemGroup>
@@ -89,6 +88,5 @@
     <ClCompile Include="src\media_source.c" />
     <ClCompile Include="src\frag_session.c" />
     <ClCompile Include="src\pipeline.c" />
-    <ClCompile Include="src\embed_ops.c" />
   </ItemGroup>
 </Project>

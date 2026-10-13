@@ -41,7 +41,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>XPLATBASE_USE_SHARED;_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway\media;$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaFragmenter\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)codecs\media;$(SolutionDir)MediaGateway\media;$(SolutionDir)MediaFragmenter\include;$(SolutionDir)MediaFragmenter\src;$(SolutionDir)appserver\submodules\yason\yason\include;$(SolutionDir)appserver\submodules\yason\yason\src;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\include;$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdclatest</LanguageStandard_C>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
@@ -63,6 +63,9 @@
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <ClCompile Include="test_pipeline.c">
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="test_video.c">
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <ClCompile Include="test_hardware.c">

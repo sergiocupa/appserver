@@ -53,7 +53,7 @@ static int h265_send(MediaEncoder* e, const MediaFrame* f)
         int n;
         while ((n = c->api->encoder_encode(c->enc, &nals, &nnal, 0, &pic_out)) > 0)
         {
-            int key = (pic_out.sliceType == X265_TYPE_IDR || pic_out.sliceType == X265_TYPE_I);
+            int key = (pic_out.sliceType == X265_TYPE_IDR);
             h265_queue(c, nals, nnal, pic_out.pts, key);
         }
         return 0;
@@ -70,7 +70,7 @@ static int h265_send(MediaEncoder* e, const MediaFrame* f)
     if (n < 0) return -1;
     if (n > 0)
     {
-        int key = (pic_out.sliceType == X265_TYPE_IDR || pic_out.sliceType == X265_TYPE_I);
+        int key = (pic_out.sliceType == X265_TYPE_IDR);
         h265_queue(c, nals, nnal, pic_out.pts, key);
     }
     return 0;
@@ -127,6 +127,18 @@ MediaEncoder* h265_encoder_open(const MediaEncoderParams* p)
     // sinks assumem DTS == PTS: com reordenacao o MP4/HLS sairia com timestamps de decode
     // errados. E o mesmo contrato que o encoder de hardware segue (AVEncMPVDefaultBPictureCount=0).
     param->bframes = 0;   // VPS/SPS/PPS junto de cada IDR -> permite montar hvcC
+
+    // Quadro-chave a cada ~2 s, como no H.264 e no AV1. O padrao do x265 e ate 250 quadros
+    // (10 s a 25 fps): o gateway so corta segmento em quadro-chave, entao um HLS em H.265 pedido
+    // com segmentos de 2 s saia num segmento so, ou cortava onde houvesse troca de cena (medido:
+    // segmentos de 5 a 6 s com alvo de 5).
+    // Grupo FECHADO, e o quadro-chave e sempre IDR: cada segmento tem de poder ser decodificado
+    // sozinho. O minimo igual ao maximo deixa a cadencia fixa; troca de cena ainda ganha um
+    // quadro I dentro do grupo, que melhora a imagem mas NAO e reportado como quadro-chave
+    // (ver h265_send): os quadros depois dele podem depender dos anteriores.
+    param->keyframeMax = (int)((p->Fps > 0 ? p->Fps : 30) * 2);
+    param->keyframeMin = param->keyframeMax;
+    param->bOpenGOP  = 0;
     param->rc.rateControlMode = X265_RC_ABR;
     param->rc.bitrate   = (p->BitrateBps > 0 ? p->BitrateBps : 2000000) / 1000;   // kbps
 

@@ -417,6 +417,19 @@ int frag_session_set_format(const char* id, const char* key, const char* url)
     return session_edit(id, edit_format, &a);
 }
 
+static void edit_cut_mode(Element* root, void* user)
+{
+    const char* modo = (const char*)user;
+    drop_field(root, "cutFiles");
+    if (modo && *modo) yb_str(root, "cutFiles", modo);
+}
+int frag_session_set_cut_mode(const char* id, const char* modo)
+{
+    if (modo && *modo && strcmp(modo, "recode") != 0 && strcmp(modo, "smart") != 0 && strcmp(modo, "copy") != 0
+        && strcmp(modo, "showall") != 0) return 0;
+    return session_edit(id, edit_cut_mode, (void*)modo);
+}
+
 // ---- biblioteca ------------------------------------------------------------
 
 #define FNV_BASE  1469598103934665603ULL
@@ -663,6 +676,16 @@ int frag_session_get_output(const char* id, char* codec, size_t codec_size,
     if (fps)     *fps     = dbl_field(o, "fps");
     if (bitrate) *bitrate = int_field(o, "bitrate");
 
+    yb_free(root);
+    return 1;
+}
+
+int frag_session_get_cut_mode(const char* id, char* out, size_t size)
+{
+    if (out && size) out[0] = '\0';
+    Element* root = frag_session_read(id);
+    if (!root) return 0;
+    copy_field(root, "cutFiles", out, size);
     yb_free(root);
     return 1;
 }

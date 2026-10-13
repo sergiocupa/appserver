@@ -77,6 +77,8 @@ export class VideoPlayer extends HTMLElement
         this.out_resolution         = this.shadowRoot.querySelector('#out-resolution');
         this.out_fps                = this.shadowRoot.querySelector('#out-fps');
         this.out_bitrate            = this.shadowRoot.querySelector('#out-bitrate');
+        this.out_cut                = this.shadowRoot.querySelector('#out-cut');
+        this.cut_dialog             = this.shadowRoot.querySelector('#cut-dialog');
         this.out_note               = this.shadowRoot.querySelector('#out-note');
         this.resolution_select      = this.shadowRoot.querySelector('#hls-resolution');
         this.progress_wrap          = this.shadowRoot.querySelector('#hls-progress');
@@ -526,6 +528,16 @@ export class VideoPlayer extends HTMLElement
         const plan = this._plan;
         if (!plan || !this.session_id()) return;
 
+        // Arquivo recortado sem recodificar: guarda mais video do que exibe. A pessoa escolhe
+        // o que vai para a saida; a escolha fica no campo "Arquivo cortado" e e gravada na sessao.
+        if (plan.hidden && Number(plan.hidden.seconds) > 0)
+        {
+            const escolha = await this.confirm_cut_choice(plan);
+            if (!escolha) return;                                   // cancelou: nada e iniciado
+            if (escolha === 'all') this.out_cut.value = 'showall';
+            else if (this.out_cut.value === 'showall') this.out_cut.value = '';   // obedecer: volta ao padrao
+        }
+
         // Formato "Arquivo unico" nao fragmenta: transcodifica (ou remuxa, no mesmo codec)
         // o video inteiro num arquivo so. Mesmo botao, mesma SAIDA.
         if (this.protocol_select && this.protocol_select.value === 'file')
@@ -545,6 +557,61 @@ export class VideoPlayer extends HTMLElement
         this.status_field.hidden = false;
         this.status_field.textContent = 'Iniciando a fragmentacao...';
         this.start_fragmentation(plan);
+    }
+
+    // Popup do arquivo recortado. Duas linhas na mesma escala: o que esta gravado e, embaixo, o
+    // que o arquivo manda exibir (o comeco listrado e o trecho escondido). Devolve 'obey',
+    // 'all' ou null (cancelou).
+    confirm_cut_choice(plan)
+    {
+        const caixa = this.cut_dialog;
+        if (!caixa) return Promise.resolve('obey');
+        const q = (seletor) => this.shadowRoot.querySelector(seletor);
+        const seg = (s) => `${Number(s).toFixed(3).replace('.', ',')} s`;
+
+        const escondido = Number(plan.hidden.seconds) || 0;
+        const gravado   = Number(plan.hidden.recorded) || (Number(plan.duration) || 0) + escondido;
+        const exibido   = Math.max(0, gravado - escondido);
+        const quadros   = Number(plan.hidden.frames) || 0;
+        // largura do trecho escondido na escala da linha; nunca tao fino que nao se veja
+        const parte = gravado > 0 ? Math.min(90, Math.max(2, escondido / gravado * 100)) : 2;
+
+        q('#cut-text').textContent =
+            `O arquivo guarda ${seg(gravado)} de vídeo, mas manda começar a exibição ${seg(escondido)} depois do início` +
+            (quadros > 0 ? ` (${quadros} quadros).` : '.') +
+            ' Esse começo foi cortado por quem editou o vídeo; ele continua no arquivo porque os quadros seguintes dependem dele.';
+        q('#cut-recorded-value').textContent = seg(gravado);
+        q('#cut-shown-value').textContent    = seg(exibido);
+        q('#cut-hidden-value').textContent   = `escondido: ${seg(escondido)}`;
+        q('#cut-hidden-seg').style.width = `${parte}%`;
+        q('#cut-shown-seg').style.width  = `${100 - parte}%`;
+        q('#cut-note').textContent =
+            `Obedecer: a saída tem ${seg(exibido)} e começa onde o arquivo manda. ` +
+            `Ignorar: a saída tem ${seg(gravado)} e mostra também o trecho escondido.`;
+
+        return new Promise((resolve) =>
+        {
+            const obedecer = q('#cut-obey'), tudo = q('#cut-all'), cancelar = q('#cut-cancel');
+            const fecha = (resposta) =>
+            {
+                obedecer.removeEventListener('click', ao_obedecer);
+                tudo.removeEventListener('click', ao_tudo);
+                cancelar.removeEventListener('click', ao_cancelar);
+                caixa.removeEventListener('keydown', ao_tecla);
+                caixa.hidden = true;
+                resolve(resposta);
+            };
+            const ao_obedecer = () => fecha('obey');
+            const ao_tudo     = () => fecha('all');
+            const ao_cancelar = () => fecha(null);
+            const ao_tecla    = (e) => { if (e.key === 'Escape') fecha(null); };
+            obedecer.addEventListener('click', ao_obedecer);
+            tudo.addEventListener('click', ao_tudo);
+            cancelar.addEventListener('click', ao_cancelar);
+            caixa.addEventListener('keydown', ao_tecla);
+            caixa.hidden = false;
+            obedecer.focus();
+        });
     }
 
     // SAIDA mostra os dados do arquivo nas opcoes "em branco", para ver o que sera herdado.
@@ -836,7 +903,9 @@ export class VideoPlayer extends HTMLElement
                 height:   wh.length === 2 ? parseInt(wh[1], 10) : 0,
                 fps:      parseFloat(this.out_fps.value || '0') || 0,
                 bitrate:  parseInt(this.out_bitrate.value || '0', 10) || 0
-            }
+            },
+            // video recortado sem recodificar: recode | smart | copy; vazio = o do servidor
+            cutFiles: this.out_cut ? this.out_cut.value : ''
         };
 
         try
@@ -1095,6 +1164,39 @@ export class VideoPlayer extends HTMLElement
         const created = item.created ? ` - criada em ${item.created}` : '';
         this.set_session_info(`${item.id}${created}`, item.state || 'idle');
         if (this._devices_for !== item.id) { this._devices_for = item.id; this.refresh_devices(); }
+        // So ao TROCAR de sessao: esta funcao tambem roda a cada atualizacao da lista, e repor
+        // os campos ai apagaria o que a pessoa acabou de escolher.
+        if (this._io_for !== item.id) { this._io_for = item.id; this.restore_io_config(item.id); }
+    }
+
+    // Poe nos campos da SAIDA o que a sessao tem gravado. Sem isto a tela abria sempre em
+    // branco: a escolha estava no session.json e valia na preparacao, mas nao aparecia.
+    async restore_io_config(id)
+    {
+        try
+        {
+            const response = await fetch(`/api/session/get/${encodeURIComponent(id)}`, { cache: 'no-store' });
+            if (!response.ok) return;
+            const sessao = await response.json();
+            if (this.session_id() !== id) return;   // trocou de sessao enquanto a resposta vinha
+
+            const saida = sessao.output || {};
+            // so muda o campo se o valor gravado e uma das opcoes dele
+            const poe = (campo, valor) =>
+            {
+                if (!campo) return;
+                const alvo = valor === undefined || valor === null ? '' : String(valor);
+                if ([...campo.options].some(opcao => opcao.value === alvo)) campo.value = alvo;
+            };
+            const largura = Number(saida.width) || 0, altura = Number(saida.height) || 0;
+            poe(this.out_codec,      saida.codec || '');
+            poe(this.out_resolution, largura > 0 && altura > 0 ? `${largura}x${altura}` : '');
+            poe(this.out_fps,        Number(saida.fps) > 0 ? String(Number(saida.fps)) : '');
+            poe(this.out_bitrate,    Number(saida.bitrate) > 0 ? String(Number(saida.bitrate)) : '');
+            poe(this.out_cut,        sessao.cutFiles || '');
+            this.update_output_note();
+        }
+        catch (error) { /* os campos ficam como estao */ }
     }
 
     async on_session_new()
@@ -1599,7 +1701,12 @@ export class VideoPlayer extends HTMLElement
         this._dash.on(events.FRAGMENT_LOADING_PROGRESS, () => { this._rede_viva = Date.now(); });
         this._dash.on('loadingProgress', () => { this._rede_viva = Date.now(); });
         this._dash.on(events.FRAGMENT_LOADING_ABANDONED, (e) => this.dash_abandonou(e));
-        this._dash.initialize(this.video, `${url}?v=${Date.now()}`, tocar_ja, preserve > 0 ? preserve : undefined);
+        // A URL pode trazer uma ancora de MPD (#t=segundos): copia de arquivo cortado, em que o
+        // comeco dos segmentos e o trecho que a origem esconde. O parametro anti-cache entra
+        // antes da ancora, senao ela deixava de ser ancora.
+        const [mpd_base, mpd_ancora] = url.split('#');
+        const mpd_url = `${mpd_base}?v=${Date.now()}${mpd_ancora ? '#' + mpd_ancora : ''}`;
+        this._dash.initialize(this.video, mpd_url, tocar_ja, preserve > 0 ? preserve : undefined);
 
         this._dash.on(events.STREAM_INITIALIZED, () =>
         {

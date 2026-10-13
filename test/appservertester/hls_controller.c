@@ -15,7 +15,6 @@
 
 #include "pipeline.h"     // pipeline embutido (sem ffmpeg): {VP9|AV1}+Opus -> WebM/DASH (MediaGateway/media)
 #include "mp4_timing.h"   // parse embutido do MP4 (metadados/timing, sem ffprobe) (MediaGateway/media)
-#include "embed_ops.h"    // HLS passthrough (fMP4) + Converter (WebM) embutidos, sem ffmpeg (MediaFragmenter/include)
 #include "sync_gateway.h" // gateway de sync (source -> decode/encode -> sink) (MediaGateway/media)
 #include "gw_path.h"      // caminhos e FS multiplataforma (MediaGateway/media)
 #include "frag_session.h" // sessao de fragmentacao: estado em disco + cancelamento
@@ -46,6 +45,26 @@ void hls_set_raiz(const char* dir)
 {
     snprintf(g_hls, sizeof(g_hls), "%s", dir);
     gw_path_normalize(g_hls);
+}
+
+static GwCutMode g_cortado = GW_CUT_RECODE;
+static int modo_cortado(const char* modo, GwCutMode* out)
+{
+    if      (modo && strcmp(modo, "recode")  == 0) *out = GW_CUT_RECODE;
+    else if (modo && strcmp(modo, "smart")   == 0) *out = GW_CUT_SMART;
+    else if (modo && strcmp(modo, "copy")    == 0) *out = GW_CUT_COPY;
+    else if (modo && strcmp(modo, "showall") == 0) *out = GW_CUT_SHOW_ALL;
+    else return 0;
+    return 1;
+}
+int hls_set_cortado(const char* modo) { return modo_cortado(modo, &g_cortado); }
+
+// Modo de arquivo cortado do perfil: o da sessao (escolhido na tela) vale mais que o do servidor.
+static void aplica_modo_cortado(const char* session_id, MediaProfile* profile)
+{
+    char modo[16] = { 0 };
+    profile->CutFileMode = g_cortado;
+    if (frag_session_get_cut_mode(session_id, modo, sizeof(modo)) && modo[0]) modo_cortado(modo, &profile->CutFileMode);
 }
 
 static int ensure_directory(const char* path)
@@ -264,6 +283,23 @@ static void sse_feedback(void* user, const GwEvent* ev)
                 char arq_mpd[MAX_PATH + 160]; FILE* fm = 0;
                 sprintf_s(arq_mpd, sizeof(arq_mpd), "%s/%s/master.mpd", g_hls, a->folder);
                 if (fopen_s(&fm, arq_mpd, "rb") == 0 && fm) { fclose(fm); sprintf_s(dash_cmaf, sizeof(dash_cmaf), "/hls/%s/master.mpd", a->folder); }
+                // Copia de arquivo cortado: o HLS manda comecar depois do trecho escondido com
+                // EXT-X-START. O DASH nao tem equivalente no manifesto (o deslocamento de
+                // apresentacao faz o navegador descartar ate o quadro-chave seguinte -- medido:
+                // o video so comecava 2,5 s depois), entao o ponto de inicio vai na URL, como
+                // ancora de MPD (#t=segundos), que o dash.js respeita.
+                if (dash_cmaf[0])
+                {
+                    char arq_m3u8[MAX_PATH + 160], linha[256]; FILE* fh = 0; double ini = 0.0;
+                    sprintf_s(arq_m3u8, sizeof(arq_m3u8), "%s/%s/master.m3u8", g_hls, a->folder);
+                    if (fopen_s(&fh, arq_m3u8, "rb") == 0 && fh)
+                    {
+                        while (fgets(linha, sizeof(linha), fh))
+                            if (strncmp(linha, "#EXT-X-START:TIME-OFFSET=", 25) == 0) { ini = atof(linha + 25); break; }
+                        fclose(fh);
+                    }
+                    if (ini > 0.0) { size_t L = strlen(dash_cmaf); sprintf_s(dash_cmaf + L, sizeof(dash_cmaf) - L, "#t=%.3f", ini); }
+                }
             }
             if (a->mode == 1 || a->mode == 2)
                 sprintf_s(buf, sizeof(buf), "{\"type\":\"done\",\"protocol\":\"%s\",\"playlist\":\"/hls/%s/%s\",\"dash\":\"%s\",\"folder\":\"%s\",\"duration\":%.3f,\"segmentDuration\":%d,\"elapsed\":%.1f,\"tracks\":[%s]}",
@@ -542,17 +578,35 @@ Element* hls_prepare_video(Message* message)
 
     // Retorna o plano de pistas (sem fragmentar ainda). A fragmentacao ocorre
     // no passo 2 via EventSource em /video/prepare-stream/<folder>.
+    // Arquivo recortado sem recodificar: quanto do comeco a lista de edicao esconde. A tela
+    // pergunta o que fazer com esse trecho antes de fragmentar.
+    double esc_s = 0.0; int esc_quadros = 0;
+    {
+        int64_t vo = 0, ao = 0;
+        mp4_edit_offsets(source_path, &vo, &ao);
+        if (vo < -1000)
+        {
+            int64_t *tp = 0, *td = 0; uint32_t tn = 0;
+            esc_s = (double)(-vo) / 1000000.0;
+            if (mp4_video_times_us(source_path, &tp, &td, &tn) == 0)
+                for (uint32_t i = 0; i < tn; i++) if (tp[i] < -1000) esc_quadros++;
+            if (tp) memop_free_raw(tp);
+            if (td) memop_free_raw(td);
+        }
+    }
+
     char e_tit[800], e_aut[800], e_arq[1600];
     json_esc(meta.Titulo, e_tit, sizeof(e_tit)); json_esc(meta.Autor, e_aut, sizeof(e_aut)); json_esc(arquivo, e_arq, sizeof(e_arq));
     char json[6144];
     int offset = sprintf_s(json, sizeof(json),
         "{\"folder\":\"%s\",\"media\":{\"title\":\"%s\",\"author\":\"%s\",\"fileName\":\"%s\",\"hashFrom\":\"%s\"},"
         "\"duration\":%.3f,\"width\":%d,\"height\":%d,\"segmentDuration\":%d,"
+        "\"hidden\":{\"seconds\":%.3f,\"frames\":%d,\"recorded\":%.3f},"
         "\"stream\":\"/api/video/prepare-stream/%s\",\"dashStream\":\"/api/video/prepare-dash/%s\","
         "\"source\":{\"vcodec\":\"%s\",\"pixfmt\":\"%s\",\"fps\":\"%s\",\"vbitrate\":%d,\"acodec\":\"%s\",\"achannels\":%d,\"asamplerate\":%d,\"abitrate\":%d},"
         "\"tracks\":[",
         folder, e_tit, e_aut, e_arq, por_meta ? "metadata" : "content",
-        duration, source_width, source_height, HLS_SEGMENT_SECONDS, folder, folder,
+        duration, source_width, source_height, HLS_SEGMENT_SECONDS, esc_s, esc_quadros, duration + esc_s, folder, folder,
         v_codec, v_pixfmt, v_fps, v_bitrate, a_codec, a_channels, a_sample, a_bitrate);
     for (int i = 0; i < track_count; i++)
     {
@@ -645,6 +699,7 @@ static void job_hls(AppJob* job, void* arg)
     profile.Container = CONT_HLS_FMP4; profile.VideoCodec = MEDIA_CODEC_H264; profile.AudioCodec = MEDIA_CODEC_AAC;
     profile.SegmentMs = HLS_SEGMENT_SECONDS * 1000; profile.Mode = GW_VOD;
     profile.Renditions = pts; profile.RenditionCount = track_count;
+    aplica_modo_cortado(v->folder, &profile);
     apply_session_output(v->folder, &profile);
 
     SseAdapter ad; memset(&ad, 0, sizeof(ad));
@@ -695,6 +750,7 @@ static void job_dash(AppJob* job, void* arg)
     MediaProfile profile; memset(&profile, 0, sizeof(profile));
     profile.Container = CONT_DASH_WEBM; profile.VideoCodec = v->is_av1 ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9; profile.AudioCodec = MEDIA_CODEC_OPUS;
     profile.SegmentMs = 2000; profile.Mode = GW_VOD; profile.Renditions = pts; profile.RenditionCount = track_count;
+    aplica_modo_cortado(v->folder, &profile);
     apply_session_output(v->folder, &profile);
 
     SseAdapter ad; memset(&ad, 0, sizeof(ad));
@@ -753,14 +809,15 @@ static void job_convert(AppJob* job, void* arg)
     if (dur <= 0.0) { app_job_publicar(job, 0, ERRO_FONTE); return; }
 
     // VP9/AV1: MP4, pelo gateway, com o AAC original da fonte (se houver). No WebM o audio
-    // teria de virar Opus, e sem decoder de AAC o arquivo saia mudo; e a conversao antiga para
-    // WebM (embed_transcode_webm) falhou no teste mesmo com fonte sem audio.
+    // teria de virar Opus, e sem decoder de AAC o arquivo saia mudo. (A conversao antiga para
+    // WebM falhava ate com fonte sem audio e foi removida, com o resto do embed_ops.)
     if (strcmp(codec, "vp9") == 0 || strcmp(codec, "av1") == 0)
     {
         MediaProfile profile; memset(&profile, 0, sizeof(profile));
         profile.Container = CONT_MP4_FILE;
         profile.VideoCodec = (strcmp(codec, "av1") == 0) ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9;
         profile.AudioCodec = MEDIA_CODEC_AAC; profile.SegmentMs = 2000; profile.Mode = GW_VOD;
+        aplica_modo_cortado(v->folder, &profile);
         apply_session_output(v->folder, &profile);
 
         SseAdapter ad; memset(&ad, 0, sizeof(ad));
@@ -780,6 +837,7 @@ static void job_convert(AppJob* job, void* arg)
         profile.Container = CONT_MP4_FILE;
         profile.VideoCodec = (strcmp(codec, "h265") == 0) ? MEDIA_CODEC_H265 : MEDIA_CODEC_H264;
         profile.AudioCodec = MEDIA_CODEC_AAC; profile.SegmentMs = 2000; profile.Mode = GW_VOD;
+        aplica_modo_cortado(v->folder, &profile);
         apply_session_output(v->folder, &profile);
 
         SseAdapter ad; memset(&ad, 0, sizeof(ad));

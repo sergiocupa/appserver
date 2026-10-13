@@ -256,6 +256,16 @@
                     <option value="400000">400 kb/s</option>
                 </select>
             </label>
+            <label class="hls-field">
+                <span>Arquivo cortado</span>
+                <select id="out-cut" class="input_default" title="Video recortado sem recodificar, quando a saida pede a mesma resolucao e o mesmo codec (HLS)">
+                    <option value="">(padrao do servidor)</option>
+                    <option value="recode">Recodificar tudo</option>
+                    <option value="smart">So o primeiro grupo</option>
+                    <option value="copy">Copiar</option>
+                    <option value="showall">Linha do tempo toda (ignorar o corte)</option>
+                </select>
+            </label>
         </div>
         <div id="out-note" class="io-note">Tudo em branco: sem conversao (bypass).</div>
     </fieldset>
@@ -293,6 +303,40 @@
     </div>
 
     <div id="track-progress" class="virtual-tracks" aria-label="Progresso da fragmentacao por pista"></div>
+
+    <!-- Aparece ao fragmentar um arquivo recortado sem recodificar: o arquivo guarda mais video
+         do que exibe, e quem escolhe o que vai para a saida e a pessoa. -->
+    <div id="cut-dialog" class="cut-dialog" hidden>
+        <div class="cut-box" role="dialog" aria-modal="true" aria-labelledby="cut-title">
+            <h2 id="cut-title">Este vídeo foi recortado</h2>
+            <p id="cut-text" class="cut-text"></p>
+
+            <div class="cut-row">
+                <span class="cut-label">Gravado no arquivo</span>
+                <div class="cut-bar"><div class="cut-seg cut-recorded" style="width:100%"></div></div>
+                <span id="cut-recorded-value" class="cut-value"></span>
+            </div>
+            <div class="cut-row">
+                <span class="cut-label">Exibido pelo arquivo</span>
+                <div class="cut-bar">
+                    <div id="cut-hidden-seg" class="cut-seg cut-hidden"></div>
+                    <div id="cut-shown-seg" class="cut-seg cut-shown"></div>
+                </div>
+                <span id="cut-shown-value" class="cut-value"></span>
+            </div>
+            <div class="cut-legend">
+                <span><i class="cut-dot cut-hidden"></i><span id="cut-hidden-value"></span></span>
+                <span><i class="cut-dot cut-shown"></i>exibido</span>
+            </div>
+
+            <div class="cut-actions">
+                <button id="cut-obey" class="btn primary" type="button">Obedecer o corte do arquivo</button>
+                <button id="cut-all" class="btn" type="button">Ignorar o corte e usar a linha do tempo toda</button>
+                <button id="cut-cancel" class="btn" type="button">Cancelar</button>
+            </div>
+            <p id="cut-note" class="cut-note"></p>
+        </div>
+    </div>
 
     <div id="frag-time" class="frag-time" hidden></div>
 

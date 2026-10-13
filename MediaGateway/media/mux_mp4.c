@@ -38,8 +38,8 @@ static void wr_ftyp(Buf* b)
 // VisualSampleEntry: avc1+avcC (H.264) ou hvc1+hvcC (HEVC), conforme is_hevc.
 static void wr_vse(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int cfg_len)
 {
-    // is_hevc carrega o TIPO: 0 avc1, 1 hvc1, 2 vp09, 3 av01 (MP4_KIND_*)
-    size_t p=box_begin(b, is_hevc==3?"av01":is_hevc==2?"vp09":is_hevc?"hvc1":"avc1");
+    // is_hevc carrega o TIPO: 0 avc1, 1 hvc1, 2 vp09, 3 av01, 4 avc3, 5 hev1 (MP4_KIND_*)
+    size_t p=box_begin(b, is_hevc==5?"hev1":is_hevc==4?"avc3":is_hevc==3?"av01":is_hevc==2?"vp09":is_hevc?"hvc1":"avc1");
     zero(b,6); b16(b,1);                 // reserved + data_ref_index
     b16(b,0); b16(b,0); zero(b,12);      // predefined/reserved
     b16(b,w); b16(b,h);
@@ -47,7 +47,7 @@ static void wr_vse(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int cf
     b32(b,0); b16(b,1);                  // reserved + frame_count
     zero(b,32);                          // compressorname
     b16(b,0x0018); b16(b,0xFFFF);        // depth + predefined
-    { size_t c=box_begin(b, is_hevc==3?"av1C":is_hevc==2?"vpcC":is_hevc?"hvcC":"avcC");
+    { size_t c=box_begin(b, is_hevc==4?"avcC":is_hevc==3?"av1C":is_hevc==2?"vpcC":is_hevc?"hvcC":"avcC");
       if (is_hevc==2){ b8(b,1); b8(b,0); b8(b,0); b8(b,0); }   // vpcC e FullBox, versao 1
       bytes(b,cfg,cfg_len); box_end(b,c); }
     box_end(b,p);

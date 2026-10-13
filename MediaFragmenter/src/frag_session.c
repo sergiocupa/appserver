@@ -276,6 +276,24 @@ int frag_session_clear_output(const char* id)
 
 typedef struct { Element* arr; } ListCtx;
 
+// Copia para o item da lista um objeto do session.json, so com os campos escalares.
+static void list_objeto(Element* it, Element* s, const char* nome)
+{
+    Element* o = 0;
+    for (int i = 0; i < s->Children.Count; i++)
+        if (yason_string_equals(&s->Children.Items[i]->Name, nome)) { o = s->Children.Items[i]; break; }
+    if (!o || o->Type != NODE_TYPE_OBJECT) return;
+    Element* m = yb_object(it, nome);
+    for (int i = 0; i < o->Children.Count; i++)
+    {
+        Element* f = o->Children.Items[i];
+        if (f->Type == NODE_TYPE_ARRAY || f->Type == NODE_TYPE_OBJECT) continue;
+        Element* d = yb__child(m, f->Name.Content, NODE_TYPE_FIELD);
+        d->IsString = f->IsString;
+        if (f->Value.Length > 0) yason_string_append(&d->Value, f->Value.Content);
+    }
+}
+
 static void list_entry(void* user, const char* name, int is_dir)
 {
     if (!is_dir) return;
@@ -293,6 +311,8 @@ static void list_entry(void* user, const char* name, int is_dir)
         d->IsString = f->IsString;
         if (f->Value.Length > 0) yason_string_append(&d->Value, f->Value.Content);
     }
+    list_objeto(it, s, "media");     // metadados do video (biblioteca)
+    list_objeto(it, s, "formats");   // manifestos prontos para tocar
     yb_bool(it, "running", frag_session_running(name));
     yb_free(s);
 }
@@ -363,18 +383,200 @@ int frag_session_set_output(const char* id, const char* protocol, const char* co
     return session_edit(id, edit_output, &a);
 }
 
-typedef struct { const char* playlist; double elapsed; } ResArg;
+typedef struct { const char* protocol; const char* playlist; double elapsed; } ResArg;
 static void edit_result(Element* root, void* user)
 {
     ResArg* a = (ResArg*)user;
-    drop_field(root, "playlist"); drop_field(root, "elapsed");
+    drop_field(root, "protocol"); drop_field(root, "playlist"); drop_field(root, "elapsed");
+    yb_str(root, "protocol", a->protocol ? a->protocol : "");
     yb_str(root, "playlist", a->playlist ? a->playlist : "");
     yb_num(root, "elapsed", a->elapsed, 1);
 }
-int frag_session_set_result(const char* id, const char* playlist, double elapsed_sec)
+int frag_session_set_result(const char* id, const char* protocol, const char* playlist, double elapsed_sec)
 {
-    ResArg a = { playlist, elapsed_sec };
+    ResArg a = { protocol, playlist, elapsed_sec };
     return session_edit(id, edit_result, &a);
+}
+
+typedef struct { const char* chave; const char* url; } FmtArg;
+static void edit_format(Element* root, void* user)
+{
+    FmtArg* a = (FmtArg*)user;
+    Element* f = 0;
+    for (int i = 0; i < root->Children.Count; i++)
+        if (yason_string_equals(&root->Children.Items[i]->Name, "formats")) { f = root->Children.Items[i]; break; }
+    if (f && f->Type != NODE_TYPE_OBJECT) { drop_field(root, "formats"); f = 0; }
+    if (!f) f = yb_object(root, "formats");
+    drop_field(f, a->chave);
+    if (a->url && *a->url) yb_str(f, a->chave, a->url);
+}
+int frag_session_set_format(const char* id, const char* key, const char* url)
+{
+    if (!key || !*key) return 0;
+    FmtArg a = { key, url };
+    return session_edit(id, edit_format, &a);
+}
+
+// ---- biblioteca ------------------------------------------------------------
+
+#define FNV_BASE  1469598103934665603ULL
+#define FNV_PRIMO 1099511628211ULL
+static uint64_t fnv_add(uint64_t h, const void* p, size_t n)
+{
+    const uint8_t* b = (const uint8_t*)p;
+    for (size_t i = 0; i < n; i++) { h ^= b[i]; h *= FNV_PRIMO; }
+    return h;
+}
+// Campo com separador: "ab"+"c" e "a"+"bc" nao podem dar o mesmo hash.
+static uint64_t fnv_campo(uint64_t h, const char* s) { h = fnv_add(h, s, strlen(s)); return fnv_add(h, "", 1); }
+
+int frag_video_id(const char* source_path, char* out, size_t size, int* por_metadados, Mp4Meta* meta)
+{
+    Mp4Meta local; Mp4Meta* m = meta ? meta : &local;
+    if (por_metadados) *por_metadados = 0;
+    if (!mp4_metadata(source_path, m)) memset(m, 0, sizeof(*m));
+    uint64_t h = FNV_BASE;
+    if (mp4_metadata_descritiva(m))
+    {
+        int w = 0, ht = 0; double dur = 0.0;
+        mp4_video_info(source_path, &w, &ht, 0, 0, &dur);
+        char extra[64]; snprintf(extra, sizeof(extra), "%lld|%dx%d", (long long)(dur * 1000.0 + 0.5), w, ht);
+        h = fnv_campo(h, "metadados");
+        h = fnv_campo(h, m->Titulo); h = fnv_campo(h, m->Autor); h = fnv_campo(h, m->Album);
+        h = fnv_campo(h, m->Data);   h = fnv_campo(h, m->Descricao); h = fnv_campo(h, extra);
+        if (por_metadados) *por_metadados = 1;
+    }
+    else
+    {
+        FILE* f = 0;
+        if (fopen_s(&f, source_path, "rb") != 0) f = 0;
+        if (!f) return 0;
+        uint8_t* buf = (uint8_t*)GW_ALLOC(1 << 20);
+        if (!buf) { fclose(f); return 0; }
+        h = fnv_campo(h, "conteudo");
+        size_t n;
+        while ((n = fread(buf, 1, 1 << 20, f)) > 0) h = fnv_add(h, buf, n);
+        GW_FREE(buf);
+        fclose(f);
+    }
+    snprintf(out, size, "%016llx", (unsigned long long)h);
+    return 1;
+}
+
+// Estado de RESULTADO fora: a saida foi limpa (ou nunca existiu nesta pasta), entao o que
+// dizia "pronto, manifesto tal" e mentira. Sem isto, juntar a sessao a pasta de um video ja
+// preparado levava o "done" e o manifesto do video ANTERIOR (medido: a biblioteca apontava
+// para a pasta de outro video).
+static void sem_resultado(Element* root, FragState estado)
+{
+    static const char* campos[] = { "protocol", "playlist", "elapsed", "tracks", "memory", "state", "message", "formats" };
+    for (size_t i = 0; i < sizeof(campos) / sizeof(campos[0]); i++) drop_field(root, campos[i]);
+    yb_array(root, "tracks");
+    yb_str(root, "state", frag_state_name(estado));
+    yb_str(root, "message", "");
+}
+
+int frag_session_has_media(const char* id)
+{
+    Element* root = frag_session_read(id);
+    if (!root) return 0;
+    Element* m = yason_find_element(root, "media");
+    int tem = m != 0;
+    yb_free(root);
+    return tem;
+}
+
+int frag_session_fork(const char* id, char* out_id, size_t id_size)
+{
+    char novo[FRAG_ID_MAX];
+    if (!frag_session_create(0, novo, sizeof(novo))) return 0;
+    Element* root = frag_session_read(id);
+    if (root)
+    {
+        // A configuracao (entrada/saida escolhidas na tela) vem junto; o video e o resultado nao.
+        char agora[32]; iso_now(agora, sizeof(agora));
+        drop_field(root, "id"); drop_field(root, "name"); drop_field(root, "created"); drop_field(root, "media");
+        yb_str(root, "id", novo); yb_str(root, "name", novo); yb_str(root, "created", agora);
+        sem_resultado(root, FRAG_IDLE);
+        touch_updated(root);
+        session_write(novo, root);
+        yb_free(root);
+    }
+    if (out_id && id_size) snprintf(out_id, id_size, "%s", novo);
+    return 1;
+}
+
+static void edit_id(Element* root, void* user)
+{
+    drop_field(root, "id");
+    yb_str(root, "id", (const char*)user);
+}
+
+int frag_session_adopt(const char* id, const char* novo_id)
+{
+    if (!id_is_safe(id) || !id_is_safe(novo_id)) return 0;
+    if (strcmp(id, novo_id) == 0) return 1;
+    if (frag_session_running(novo_id) || frag_session_running(id)) return -1;
+
+    char de[768], para[768];
+    frag_session_dir(id, de, sizeof(de));
+    frag_session_dir(novo_id, para, sizeof(para));
+
+    if (!gw_dir_exists(para))
+    {
+        if (rename(de, para) != 0) return 0;
+        return session_edit(novo_id, edit_id, (void*)novo_id);
+    }
+
+    // O mesmo video ja tem pasta: a saida antiga sai, a fonte nova e a configuracao desta
+    // sessao (entrada/saida escolhidas na tela) entram, e a sessao temporaria some.
+    if (!frag_session_clear_output(novo_id)) return 0;
+    char fonte_de[900], fonte_para[900];
+    gw_path_join(fonte_de, sizeof(fonte_de), de, "source.mp4");
+    gw_path_join(fonte_para, sizeof(fonte_para), para, "source.mp4");
+    if (gw_file_exists(fonte_de) && rename(fonte_de, fonte_para) != 0) return 0;
+
+    Element* root = frag_session_read(id);
+    if (root)
+    {
+        Element* antigo = frag_session_read(novo_id);
+        Element* criado = antigo ? yason_find_element(antigo, "created") : 0;
+        if (criado && criado->Value.Content) { drop_field(root, "created"); yb_str(root, "created", criado->Value.Content); }
+        edit_id(root, (void*)novo_id);
+        sem_resultado(root, FRAG_READY);
+        touch_updated(root);
+        session_write(novo_id, root);
+        if (antigo) yb_free(antigo);
+        yb_free(root);
+    }
+    gw_rmtree(de);
+    return 1;
+}
+
+typedef struct { const Mp4Meta* meta; const char* file_name; int por_metadados; double duration; int width, height; } MediaArg;
+static void edit_media(Element* root, void* user)
+{
+    MediaArg* a = (MediaArg*)user;
+    drop_field(root, "media");
+    Element* m = yb_object(root, "media");
+    const Mp4Meta* x = a->meta;
+    yb_str(m, "title",       x ? x->Titulo : "");
+    yb_str(m, "author",      x ? x->Autor : "");
+    yb_str(m, "album",       x ? x->Album : "");
+    yb_str(m, "date",        x ? x->Data : "");
+    yb_str(m, "description", x ? x->Descricao : "");
+    yb_str(m, "genre",       x ? x->Genero : "");
+    yb_str(m, "fileName",    a->file_name ? a->file_name : "");
+    yb_str(m, "hashFrom",    a->por_metadados ? "metadata" : "content");
+    yb_num(m, "duration",    a->duration, 3);
+    yb_int(m, "width",       a->width);
+    yb_int(m, "height",      a->height);
+}
+int frag_session_set_media(const char* id, const Mp4Meta* meta, const char* file_name, int por_metadados,
+                           double duration, int width, int height)
+{
+    MediaArg a = { meta, file_name, por_metadados, duration, width, height };
+    return session_edit(id, edit_media, &a);
 }
 
 typedef struct { long long live, osres; unsigned long long allocs, frees; } MemArg;

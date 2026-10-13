@@ -556,6 +556,124 @@ video {
     min-width: 110px;
 }
 
+/* ---- carregando / sem rede / falha (sobre o video) ---- */
+.buffering
+{
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(5, 10, 16, 0.45);
+    color: var(--text);
+    font-size: 14px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.buffering[hidden] { display: none; }
+#buffering-text { max-width: min(86%, 520px); line-height: 1.45; padding: 0 12px; }
+.buffering .btn { pointer-events: auto; padding: 6px 14px; }
+
+.buffering-spinner
+{
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.18);
+    border-top-color: var(--accent);
+    animation: buffering-gira 0.9s linear infinite;
+}
+
+.buffering.is-failed .buffering-spinner { display: none; }
+
+@keyframes buffering-gira { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce)
+{
+    .buffering-spinner { animation-duration: 2.5s; }
+}
+
+/* ---- biblioteca: videos ja preparados ---- */
+.library
+{
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    background: rgba(15,23,34,0.6);
+}
+
+.library-head
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.library-head .btn { padding: 4px 10px; text-transform: none; letter-spacing: 0; }
+
+.library-list
+{
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.library-item
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.library-item:first-child { border-top: 0; }
+.library-item.is-current .library-title { color: var(--accent); }
+
+.library-info { min-width: 0; }
+
+.library-title
+{
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.library-sub
+{
+    color: #a5b4c3;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.library-item .btn { padding: 5px 12px; white-space: nowrap; }
+.library-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.library-item .btn.is-current { border-color: var(--accent); color: var(--accent); }
+
+.library-empty
+{
+    color: #a5b4c3;
+    font-size: 12px;
+    padding: 6px 4px 2px;
+}
+
 /* ---- grupos Entrada / Saida ---- */
 /* Destacados do resto do painel: fundo proprio, borda com a cor de destaque e uma faixa
    lateral, para a area de configuracao nao se confundir com as barras de sessao/player. */

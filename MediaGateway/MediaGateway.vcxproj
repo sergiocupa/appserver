@@ -43,6 +43,7 @@
     <ClCompile Include="media/media_sink.c" />
     <ClCompile Include="media/sink_mp4.c" />
     <ClCompile Include="media/sink_hls.c" />
+    <ClCompile Include="media/aud_fmp4.c" />
     <ClCompile Include="media/sink_dash.c" />
     <ClCompile Include="media/sink_live.c" />
     <ClCompile Include="media/live_store.c" />

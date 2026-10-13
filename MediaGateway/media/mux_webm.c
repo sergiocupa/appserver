@@ -105,6 +105,7 @@ struct WebmMux
     int64_t cluster_base;
     int     cluster_open;
     int     has_audio;
+    int64_t* ct; int ct_n, ct_cap;   // (segmentado) inicio, em ms, de cada chunk gravado
 };
 
 static void write_unknown_size(FILE* f) { uint8_t u[8] = { 0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF }; fwrite(u, 1, 8, f); }
@@ -249,7 +250,12 @@ static void flush_cluster(WebmMux* m)
         char path[1024];
         snprintf(path, sizeof(path), "%s/chunk-%s-%d.webm", m->dir, m->name, m->seg_index);
         FILE* seg = 0;
-        if (fopen_s(&seg, path, "wb") == 0 && seg) { fwrite(full.d, 1, full.len, seg); fclose(seg); m->seg_index++; }
+        if (fopen_s(&seg, path, "wb") == 0 && seg)
+        {
+            fwrite(full.d, 1, full.len, seg); fclose(seg); m->seg_index++;
+            if (m->ct_n == m->ct_cap) { m->ct_cap = m->ct_cap ? m->ct_cap * 2 : 128; m->ct = (int64_t*)memop_realloc_raw(m->ct, (size_t)m->ct_cap * sizeof(int64_t)); }
+            if (m->ct) m->ct[m->ct_n++] = m->cluster_base;
+        }
     }
     else
     {
@@ -314,11 +320,20 @@ int webm_build_opus_head(int channels, int rate, uint8_t out[19])
     return 19;
 }
 
+int webm_chunk_times(WebmMux* m, const int64_t** tempos)
+{
+    if (!m) { if (tempos) *tempos = 0; return 0; }
+    flush_cluster(m);
+    if (tempos) *tempos = m->ct;
+    return m->ct_n;
+}
+
 void webm_close(WebmMux* m)
 {
     if (!m) return;
     flush_cluster(m);
     if (m->f) fclose(m->f);
+    if (m->ct) memop_free_raw(m->ct);
     buf_free(&m->cluster);
     memop_free_raw(m);
 }

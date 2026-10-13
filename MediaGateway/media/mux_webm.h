@@ -51,4 +51,10 @@ WebmMux* webm_open_h264(const char* path, const uint8_t* avcc, int avcc_len,
 // Retorna o tamanho (19). preskip usa 3840 (padrao do libopus a 48k).
 int webm_build_opus_head(int channels, int rate, uint8_t out[19]);
 
+// (segmentado) Fecha o cluster pendente e devolve o inicio REAL, em ms, de cada chunk gravado
+// (chunk-<nome>-1, -2, ...). O corte cai no primeiro quadro-chave depois de seg_ms, entao a
+// duracao real depende do encoder: e isto que o manifesto precisa listar. O ponteiro vale
+// ate o webm_close.
+int webm_chunk_times(WebmMux* m, const int64_t** tempos);
+
 void webm_close(WebmMux* m);

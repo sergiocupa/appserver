@@ -38,7 +38,8 @@ static void wr_ftyp(Buf* b)
 // VisualSampleEntry: avc1+avcC (H.264) ou hvc1+hvcC (HEVC), conforme is_hevc.
 static void wr_vse(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int cfg_len)
 {
-    size_t p=box_begin(b, is_hevc?"hvc1":"avc1");
+    // is_hevc carrega o TIPO: 0 avc1, 1 hvc1, 2 vp09, 3 av01 (MP4_KIND_*)
+    size_t p=box_begin(b, is_hevc==3?"av01":is_hevc==2?"vp09":is_hevc?"hvc1":"avc1");
     zero(b,6); b16(b,1);                 // reserved + data_ref_index
     b16(b,0); b16(b,0); zero(b,12);      // predefined/reserved
     b16(b,w); b16(b,h);
@@ -46,13 +47,17 @@ static void wr_vse(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int cf
     b32(b,0); b16(b,1);                  // reserved + frame_count
     zero(b,32);                          // compressorname
     b16(b,0x0018); b16(b,0xFFFF);        // depth + predefined
-    { size_t c=box_begin(b, is_hevc?"hvcC":"avcC"); bytes(b,cfg,cfg_len); box_end(b,c); }
+    { size_t c=box_begin(b, is_hevc==3?"av1C":is_hevc==2?"vpcC":is_hevc?"hvcC":"avcC");
+      if (is_hevc==2){ b8(b,1); b8(b,0); b8(b,0); b8(b,0); }   // vpcC e FullBox, versao 1
+      bytes(b,cfg,cfg_len); box_end(b,c); }
     box_end(b,p);
 }
 
 // stbl para PROGRESSIVO (com tabelas) ou FRAGMENTADO (tabelas vazias se count=0).
+// 'pts' = tempos de DECODIFICACAO (viram o stts). 'cts' = tempos de apresentacao, ou NULL se
+// iguais; havendo diferenca sai tambem o ctts (v1, deslocamento com sinal).
 static void wr_stbl(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int cfg_len,
-                    const int64_t* pts, const int* size, const int* key, int count, uint64_t chunk_off)
+                    const int64_t* pts, const int64_t* cts, const int* size, const int* key, int count, uint64_t chunk_off)
 {
     size_t p=box_begin(b,"stbl");
     { size_t s=box_begin(b,"stsd"); b32(b,0); b32(b,1); wr_vse(b,is_hevc,w,h,cfg,cfg_len); box_end(b,s); }
@@ -72,6 +77,13 @@ static void wr_stbl(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int c
       }
       patch32(b,cntpos,runs); box_end(b,s);
     }
+    // ctts (so se algum quadro e apresentado fora da ordem de decodificacao)
+    { int dif=0; if (cts) for(int i=0;i<count;i++) if(cts[i]!=pts[i]){ dif=1; break; }
+      if (dif){ size_t s=box_begin(b,"ctts"); b8(b,1); b8(b,0);b8(b,0);b8(b,0); size_t cp=b->len; b32(b,0); uint32_t runs=0;
+        int i=0; while(i<count){ int32_t o=(int32_t)(cts[i]-pts[i]); int j=i+1; while(j<count && (int32_t)(cts[j]-pts[j])==o) j++;
+                                 b32(b,(uint32_t)(j-i)); b32(b,(uint32_t)o); runs++; i=j; }
+        patch32(b,cp,runs); box_end(b,s); }
+    }
     // stss (sync samples)
     { size_t s=box_begin(b,"stss"); b32(b,0); size_t cp=b->len; b32(b,0); uint32_t n=0;
       for(int i=0;i<count;i++) if(key[i]){ b32(b,(uint32_t)(i+1)); n++; }
@@ -86,21 +98,35 @@ static void wr_stbl(Buf* b, int is_hevc, int w, int h, const uint8_t* cfg, int c
     box_end(b,p);
 }
 
+// Lista de edicao de UMA faixa: edicao vazia de 'vazio_ms' (escala do filme) se a faixa entra
+// atrasada, e depois a midia a partir de 'media_time' (escala da faixa) por 'dur_ms'.
+// Nada e escrito quando os dois sao zero (a faixa comeca em zero, como sempre foi).
+static void wr_edts(Buf* b, int64_t vazio_ms, int64_t media_time, uint64_t dur_ms)
+{
+    if (vazio_ms <= 0 && media_time <= 0) return;
+    size_t e=box_begin(b,"edts"); size_t l=box_begin(b,"elst"); b32(b,0); b32(b, vazio_ms>0?2:1);
+    if (vazio_ms>0){ b32(b,(uint32_t)vazio_ms); b32(b,0xFFFFFFFFu); b32(b,0x00010000); }
+    b32(b,(uint32_t)dur_ms); b32(b,(uint32_t)(media_time>0?media_time:0)); b32(b,0x00010000);
+    box_end(b,l); box_end(b,e);
+}
+
 static void wr_video_trak(Buf* b, int is_hevc, int w, int h, uint64_t duration, const uint8_t* cfg, int cfg_len,
-                          const int64_t* pts, const int* size, const int* key, int count, uint64_t chunk_off)
+                          const int64_t* pts, const int64_t* cts, const int* size, const int* key, int count, uint64_t chunk_off,
+                          uint64_t tk_dur, int64_t ed_vazio, int64_t ed_media)
 {
     size_t p=box_begin(b,"trak");
     { size_t s=box_begin(b,"tkhd"); b8(b,0); b8(b,0);b8(b,0);b8(b,7); // v0, flags enabled|inmovie|inpreview
-      b32(b,0); b32(b,0); b32(b,1); b32(b,0); b32(b,(uint32_t)duration);
+      b32(b,0); b32(b,0); b32(b,1); b32(b,0); b32(b,(uint32_t)tk_dur);
       zero(b,8); b16(b,0); b16(b,0); b16(b,0); b16(b,0); bytes(b,MATRIX,36);
       b32(b,(uint32_t)w<<16); b32(b,(uint32_t)h<<16); box_end(b,s); }
+    wr_edts(b, ed_vazio, ed_media, tk_dur > (uint64_t)(ed_vazio>0?ed_vazio:0) ? tk_dur - (uint64_t)(ed_vazio>0?ed_vazio:0) : 0);
     { size_t m=box_begin(b,"mdia");
       { size_t s=box_begin(b,"mdhd"); b32(b,0); b32(b,0); b32(b,0); b32(b,TS); b32(b,(uint32_t)duration); b16(b,0x55C4); b16(b,0); box_end(b,s); }
       { size_t s=box_begin(b,"hdlr"); b32(b,0); b32(b,0); typ(b,"vide"); zero(b,12); bytes(b,"VideoHandler",12); b8(b,0); box_end(b,s); }
       { size_t f=box_begin(b,"minf");
         { size_t s=box_begin(b,"vmhd"); b8(b,0);b8(b,0);b8(b,0);b8(b,1); b16(b,0); b16(b,0);b16(b,0);b16(b,0); box_end(b,s); }
         { size_t s=box_begin(b,"dinf"); { size_t dr=box_begin(b,"dref"); b32(b,0); b32(b,1); { size_t u=box_begin(b,"url "); b8(b,0);b8(b,0);b8(b,0);b8(b,1); box_end(b,u); } box_end(b,dr);} box_end(b,s); }
-        wr_stbl(b,is_hevc,w,h,cfg,cfg_len,pts,size,key,count,chunk_off);
+        wr_stbl(b,is_hevc,w,h,cfg,cfg_len,pts,cts,size,key,count,chunk_off);
         box_end(b,f);
       }
       box_end(b,m);
@@ -158,13 +184,14 @@ static void wr_audio_stbl(Buf* b, int rate, int channels, const uint8_t* asc, in
 
 static void wr_audio_trak(Buf* b, int rate, int channels, uint64_t movie_dur_ms, const uint8_t* asc, int asc_len,
                           const int64_t* dur, const int* size, int count, uint64_t chunk_off,
-                          uint64_t media_dur_units, uint32_t track_id)
+                          uint64_t media_dur_units, uint32_t track_id, int64_t ed_vazio, int64_t ed_media)
 {
     size_t p=box_begin(b,"trak");
     { size_t s=box_begin(b,"tkhd"); b8(b,0); b8(b,0);b8(b,0);b8(b,7);
       b32(b,0); b32(b,0); b32(b,track_id); b32(b,0); b32(b,(uint32_t)movie_dur_ms);
       zero(b,8); b16(b,0); b16(b,0); b16(b,0x0100); b16(b,0); bytes(b,MATRIX,36);  // volume=1.0
       b32(b,0); b32(b,0); box_end(b,s); }                                          // width/height = 0
+    wr_edts(b, ed_vazio, ed_media, movie_dur_ms > (uint64_t)(ed_vazio>0?ed_vazio:0) ? movie_dur_ms - (uint64_t)(ed_vazio>0?ed_vazio:0) : 0);
     { size_t m=box_begin(b,"mdia");
       { size_t s=box_begin(b,"mdhd"); b32(b,0); b32(b,0); b32(b,0); b32(b,(uint32_t)rate); b32(b,(uint32_t)media_dur_units); b16(b,0x55C4); b16(b,0); box_end(b,s); }
       { size_t s=box_begin(b,"hdlr"); b32(b,0); b32(b,0); typ(b,"soun"); zero(b,12); bytes(b,"SoundHandler",12); b8(b,0); box_end(b,s); }
@@ -185,6 +212,8 @@ struct Mp4Mux
     FILE* f; int w,h,is_hevc; uint8_t* avcc; int avcc_len;   // avcc = avcC (H.264) ou hvcC (HEVC)
     size_t mdat_size_pos; uint64_t first_sample_off;
     int64_t* pts; int* size; int* key; int count, cap;
+    int64_t* dts;                                 // decodificacao (== pts quando nao ha quadros B)
+    int64_t  a_start; int a_start_set;            // apresentacao da 1a amostra de audio (ms)
     // audio (AAC passthrough, opcional)
     int has_audio, a_rate, a_channels, asc_len;
     uint8_t* asc;
@@ -217,6 +246,12 @@ Mp4Mux* mp4_open2(const char* path, int width, int height, const uint8_t* avcc, 
     return mp4_open_full(path,0,width,height,avcc,avcc_len,asc,asc_len,rate,channels);
 }
 
+Mp4Mux* mp4_open_kind(const char* path, int kind, int width, int height, const uint8_t* cfg, int cfg_len,
+                      const uint8_t* asc, int asc_len, int rate, int channels)
+{
+    return mp4_open_full(path,kind,width,height,cfg,cfg_len,asc,asc_len,rate,channels);
+}
+
 Mp4Mux* mp4_open(const char* path, int width, int height, const uint8_t* avcc, int avcc_len)
 {
     return mp4_open_full(path,0,width,height,avcc,avcc_len,0,0,0,0);
@@ -237,12 +272,22 @@ void mp4_write_audio(Mp4Mux* m, int dur_units, const uint8_t* s, int size)
     memcpy(m->a_data+m->a_len,s,size); m->a_len+=size;
 }
 
-void mp4_write_video(Mp4Mux* m, int64_t pts_ms, int keyframe, const uint8_t* s, int size)
+void mp4_write_video2(Mp4Mux* m, int64_t pts_ms, int64_t dts_ms, int keyframe, const uint8_t* s, int size)
 {
     if(!m||!s||size<=0) return;
-    if(m->count==m->cap){ m->cap=m->cap?m->cap*2:1024; m->pts=(int64_t*)memop_realloc_raw(m->pts,m->cap*sizeof(int64_t)); m->size=(int*)memop_realloc_raw(m->size,m->cap*sizeof(int)); m->key=(int*)memop_realloc_raw(m->key,m->cap*sizeof(int)); }
-    m->pts[m->count]=pts_ms; m->size[m->count]=size; m->key[m->count]=keyframe?1:0; m->count++;
+    if(m->count==m->cap){ m->cap=m->cap?m->cap*2:1024; m->pts=(int64_t*)memop_realloc_raw(m->pts,m->cap*sizeof(int64_t)); m->dts=(int64_t*)memop_realloc_raw(m->dts,m->cap*sizeof(int64_t)); m->size=(int*)memop_realloc_raw(m->size,m->cap*sizeof(int)); m->key=(int*)memop_realloc_raw(m->key,m->cap*sizeof(int)); }
+    m->pts[m->count]=pts_ms; m->dts[m->count]=dts_ms; m->size[m->count]=size; m->key[m->count]=keyframe?1:0; m->count++;
     fwrite(s,1,size,m->f);
+}
+
+void mp4_write_video(Mp4Mux* m, int64_t pts_ms, int keyframe, const uint8_t* s, int size)
+{
+    mp4_write_video2(m, pts_ms, pts_ms, keyframe, s, size);
+}
+
+void mp4_set_audio_start(Mp4Mux* m, int64_t pts_ms)
+{
+    if (m && !m->a_start_set) { m->a_start = pts_ms; m->a_start_set = 1; }
 }
 
 void mp4_close(Mp4Mux* m)
@@ -260,25 +305,43 @@ void mp4_close(Mp4Mux* m)
     { uint8_t sz[4]={ (mdat_size>>24)&0xFF,(mdat_size>>16)&0xFF,(mdat_size>>8)&0xFF,mdat_size&0xFF }; fwrite(sz,1,4,m->f); }
     fseek(m->f,0,SEEK_END);
 
-    uint64_t vdur = m->count>0 ? (uint64_t)(m->pts[m->count-1] + (m->count>1? (m->pts[m->count-1]-m->pts[m->count-2]) : (TS/30))) : 0;
+    // VIDEO. A midia e gravada com a decodificacao comecando em zero (d0); a apresentacao de
+    // cada amostra e pts - d0 (ctts). O instante ZERO da linha do tempo recebida fica, na
+    // midia, em -d0: a lista de edicao aponta para la (ou para o primeiro quadro, com uma
+    // edicao vazia antes, se o video so comeca depois de zero).
+    int64_t d0 = m->count>0 ? m->dts[0] : 0, pmin = 0, pmax = 0;
+    for (int i=0;i<m->count;i++){ if(i==0||m->pts[i]<pmin) pmin=m->pts[i]; if(i==0||m->pts[i]>pmax) pmax=m->pts[i]; }
+    int64_t lastd = m->count>1 ? (m->dts[m->count-1]-m->dts[m->count-2]) : (TS/30); if (lastd<=0) lastd=TS/30;
+    for (int i=0;i<m->count;i++){ m->pts[i]-=d0; m->dts[i]-=d0; }                 // relativos a d0 (>= 0)
+    uint64_t vdur = m->count>0 ? (uint64_t)(m->dts[m->count-1] + lastd) : 0;      // duracao da MIDIA
+    int64_t v_vazio = pmin>0 ? pmin : 0;
+    int64_t v_media = v_vazio - d0;                                              // >= 0, pois d0 <= pmin
+    int64_t v_fim   = pmax + lastd; if (v_fim < v_vazio) v_fim = v_vazio;         // fim da apresentacao
 
-    // duracao do filme (timescale=1000) = max(video, audio em ms)
+    // AUDIO: comeca em a_start (0 se ninguem informou).
     uint64_t a_units=0; for(int i=0;i<m->a_count;i++) a_units+=(uint64_t)m->a_dur[i];
     uint64_t adur_ms = (m->has_audio && m->a_rate>0) ? (a_units*1000/(uint64_t)m->a_rate) : 0;
-    uint64_t mv_dur = vdur>adur_ms?vdur:adur_ms;
+    int64_t a0 = m->a_start_set ? m->a_start : 0;
+    int64_t a_vazio = a0>0 ? a0 : 0;
+    int64_t a_media = (a0<0 && m->a_rate>0) ? (-a0)*(int64_t)m->a_rate/1000 : 0;  // unidades da faixa
+    int64_t a_fim   = a0 + (int64_t)adur_ms; if (a_fim < a_vazio) a_fim = a_vazio;
+
+    // duracao do filme (timescale=1000) = fim da apresentacao mais tardio
+    uint64_t mv_dur = (uint64_t)(v_fim>a_fim ? v_fim : a_fim);
     uint32_t next_track = m->has_audio && m->a_count>0 ? 3 : 2;
 
     Buf b={0}; size_t p=box_begin(&b,"moov");
     { size_t s=box_begin(&b,"mvhd"); b32(&b,0); b32(&b,0); b32(&b,0); b32(&b,TS); b32(&b,(uint32_t)mv_dur);
       b32(&b,0x00010000); b16(&b,0x0100); b16(&b,0); b32(&b,0); b32(&b,0); bytes(&b,MATRIX,36); zero(&b,24); b32(&b,next_track); box_end(&b,s); }
-    wr_video_trak(&b, m->is_hevc, m->w, m->h, vdur, m->avcc, m->avcc_len, m->pts, m->size, m->key, m->count, m->first_sample_off);
+    wr_video_trak(&b, m->is_hevc, m->w, m->h, vdur, m->avcc, m->avcc_len, m->dts, m->pts, m->size, m->key, m->count, m->first_sample_off,
+                  (uint64_t)v_fim, v_vazio, v_media);
     if (m->has_audio && m->a_count>0)
-        wr_audio_trak(&b, m->a_rate, m->a_channels, adur_ms, m->asc, m->asc_len,
-                      m->a_dur, m->a_size, m->a_count, a_off, a_units, 2);
+        wr_audio_trak(&b, m->a_rate, m->a_channels, (uint64_t)a_fim, m->asc, m->asc_len,
+                      m->a_dur, m->a_size, m->a_count, a_off, a_units, 2, a_vazio, a_media);
     box_end(&b,p);
     fwrite(b.d,1,b.len,m->f); memop_free_raw(b.d);
 
-    fclose(m->f); memop_free_raw(m->avcc); memop_free_raw(m->pts); memop_free_raw(m->size); memop_free_raw(m->key);
+    fclose(m->f); memop_free_raw(m->avcc); memop_free_raw(m->pts); memop_free_raw(m->dts); memop_free_raw(m->size); memop_free_raw(m->key);
     memop_free_raw(m->asc); memop_free_raw(m->a_dur); memop_free_raw(m->a_size); memop_free_raw(m->a_data); memop_free_raw(m);
 }
 
@@ -286,14 +349,14 @@ void mp4_close(Mp4Mux* m)
 // Os dois build_* montam em MEMORIA; os write_* sao eles mais um fwrite. O ao vivo de
 // camera serve init/segmento direto da RAM (nunca toca o disco), e o VOD continua
 // gravando -- um so lugar monta as caixas.
-int mp4_build_init(uint8_t** out, int* out_len, int width, int height, const uint8_t* avcc, int avcc_len)
+static int build_init(uint8_t** out, int* out_len, int kind, int width, int height, const uint8_t* avcc, int avcc_len)
 {
     if (!out || !out_len) return -1;
     Buf b={0}; wr_ftyp(&b);
     size_t p=box_begin(&b,"moov");
     { size_t s=box_begin(&b,"mvhd"); b32(&b,0); b32(&b,0); b32(&b,0); b32(&b,TS); b32(&b,0);
       b32(&b,0x00010000); b16(&b,0x0100); b16(&b,0); b32(&b,0); b32(&b,0); bytes(&b,MATRIX,36); zero(&b,24); b32(&b,2); box_end(&b,s); }
-    wr_video_trak(&b, 0, width, height, 0, avcc, avcc_len, 0, 0, 0, 0, 0);  // stbl vazio (H.264)
+    wr_video_trak(&b, kind, width, height, 0, avcc, avcc_len, 0, 0, 0, 0, 0, 0, 0, 0, 0);  // stbl vazio
     { size_t mx=box_begin(&b,"mvex");
       { size_t tx=box_begin(&b,"trex"); b32(&b,0); b32(&b,1); b32(&b,1); b32(&b,0); b32(&b,0); b32(&b,0); box_end(&b,tx); }
       box_end(&b,mx);
@@ -303,18 +366,29 @@ int mp4_build_init(uint8_t** out, int* out_len, int width, int height, const uin
     return 0;
 }
 
+int mp4_build_init(uint8_t** out, int* out_len, int width, int height, const uint8_t* avcc, int avcc_len)
+{
+    return build_init(out, out_len, MP4_KIND_H264, width, height, avcc, avcc_len);
+}
+
 int mp4_write_init(const char* path, int width, int height, const uint8_t* avcc, int avcc_len)
 {
+    return mp4_write_init_kind(path, MP4_KIND_H264, width, height, avcc, avcc_len);
+}
+
+int mp4_write_init_kind(const char* path, int kind, int width, int height, const uint8_t* avcc, int avcc_len)
+{
     uint8_t* data=0; int len=0;
-    if (mp4_build_init(&data,&len,width,height,avcc,avcc_len)!=0 || !data) return -1;
+    if (build_init(&data,&len,kind,width,height,avcc,avcc_len)!=0 || !data) return -1;
     FILE* f=0; if (fopen_s(&f,path,"wb")!=0 || !f) { memop_free_raw(data); return -1; }
     fwrite(data,1,(size_t)len,f); fclose(f); memop_free_raw(data);
     return 0;
 }
 
-int mp4_build_segment(uint8_t** out, int* out_len, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count)
+static int build_segment(uint8_t** out, int* out_len, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count, const int* cts)
 {
     if(count<=0 || !out || !out_len) return -1;
+    int com_cts = 0; if (cts) for(int i=0;i<count;i++) if(cts[i]!=0){ com_cts=1; break; }
 
     Buf mf={0}; size_t moof=box_begin(&mf,"moof");
     { size_t s=box_begin(&mf,"mfhd"); b32(&mf,0); b32(&mf,seq); box_end(&mf,s); }
@@ -325,13 +399,15 @@ int mp4_build_segment(uint8_t** out, int* out_len, uint32_t seq, int64_t base_dt
       { size_t s=box_begin(&mf,"trun");
         // version(1)=0 + flags(3)=0x000701:
         //   data-offset(0x000001) + sample-duration(0x000100) + sample-size(0x000200) + sample-flags(0x000400)
-        b8(&mf,0); b8(&mf,0x00); b8(&mf,0x07); b8(&mf,0x01);
+        // com quadros B: + sample-composition-time-offset(0x000800), version 1 (com sinal)
+        b8(&mf,com_cts?1:0); b8(&mf,0x00); b8(&mf,com_cts?0x0F:0x07); b8(&mf,0x01);
         b32(&mf,(uint32_t)count);
         data_off_pos=mf.len; b32(&mf,0); // data_offset (patch depois)
         for(int i=0;i<count;i++){
             b32(&mf,(uint32_t)(samples[i].duration_ms>0?samples[i].duration_ms:(TS/30)));
             b32(&mf,(uint32_t)samples[i].size);
             b32(&mf, samples[i].keyframe ? 0x02000000u : 0x01010000u); // sample_flags (sync / non-sync)
+            if (com_cts) b32(&mf,(uint32_t)(int32_t)cts[i]);
         }
         box_end(&mf,s);
       }
@@ -352,13 +428,23 @@ int mp4_build_segment(uint8_t** out, int* out_len, uint32_t seq, int64_t base_dt
     return 0;
 }
 
-int mp4_write_segment(const char* path, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count)
+int mp4_build_segment(uint8_t** out, int* out_len, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count)
+{
+    return build_segment(out, out_len, seq, base_dt_ms, samples, count, 0);
+}
+
+int mp4_write_segment_cts(const char* path, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count, const int* cts_ms)
 {
     uint8_t* data=0; int len=0;
-    if (mp4_build_segment(&data,&len,seq,base_dt_ms,samples,count)!=0 || !data) return -1;
+    if (build_segment(&data,&len,seq,base_dt_ms,samples,count,cts_ms)!=0 || !data) return -1;
     FILE* f=0; if (fopen_s(&f,path,"wb")!=0 || !f) { memop_free_raw(data); return -1; }
     fwrite(data,1,(size_t)len,f); fclose(f); memop_free_raw(data);
     return 0;
+}
+
+int mp4_write_segment(const char* path, uint32_t seq, int64_t base_dt_ms, const Mp4Sample* samples, int count)
+{
+    return mp4_write_segment_cts(path, seq, base_dt_ms, samples, count, 0);
 }
 
 // ---------------- Fragmentado: init de AUDIO (AAC) ----------------
@@ -370,7 +456,7 @@ int mp4_write_init_audio(const char* path, const uint8_t* asc, int asc_len, int 
     size_t p=box_begin(&b,"moov");
     { size_t s=box_begin(&b,"mvhd"); b32(&b,0); b32(&b,0); b32(&b,0); b32(&b,TS); b32(&b,0);
       b32(&b,0x00010000); b16(&b,0x0100); b16(&b,0); b32(&b,0); b32(&b,0); bytes(&b,MATRIX,36); zero(&b,24); b32(&b,2); box_end(&b,s); }
-    wr_audio_trak(&b, rate, channels>0?channels:2, 0, asc, asc_len, 0, 0, 0, 0, 0, 1);  // stbl vazio
+    wr_audio_trak(&b, rate, channels>0?channels:2, 0, asc, asc_len, 0, 0, 0, 0, 0, 1, 0, 0);  // stbl vazio
     { size_t mx=box_begin(&b,"mvex");
       { size_t tx=box_begin(&b,"trex"); b32(&b,0); b32(&b,1); b32(&b,1); b32(&b,0); b32(&b,0); b32(&b,0); box_end(&b,tx); }
       box_end(&b,mx);

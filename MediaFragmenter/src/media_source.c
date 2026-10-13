@@ -20,10 +20,11 @@ typedef struct
     FrameIndexList* fl;
     VideoMetadata*  meta;
     int             vcodec;          // MEDIA_CODEC_H264/H265
-    int64_t*        vpts; uint32_t vpts_n;   // pts por frame, em ms
+    int64_t*        vpts; uint32_t vpts_n;   // (reserva) tempo de decodificacao por frame, em ms
+    int64_t*        tpts; int64_t* tdts; uint32_t t_n;   // apresentacao e decodificacao por frame, em us
     uint64_t        vi;              // proximo indice de video
     MediaBuffer     vbuf;            // annexb do frame corrente (buffer da MediaFragmenter)
-    int             v_pending, v_key; mtime_us v_pts, v_dur;
+    int             v_pending, v_key; mtime_us v_pts, v_dts, v_dur;
 
     // audio (AAC passthrough)
     void*      actx; AacRawInfo ainfo; int has_audio;
@@ -31,6 +32,11 @@ typedef struct
 
     int    vw, vh; double fps, duration;
     int    stream_count;
+    // Lista de edicao (mp4_edit_offsets): apresentacao = tempo de midia + deslocamento. O video
+    // sai com o tempo ja deslocado -- quadro com tempo negativo e pre-rolo: precisa passar pelo
+    // decoder, mas nao e apresentado (o gateway o descarta). O audio anterior a zero nem sai.
+    mtime_us v_off, a_off;
+    mtime_us a_min;   // o audio sai a partir daqui: o menor entre zero e o primeiro tempo do video
 }
 SrcMp4;
 
@@ -67,9 +73,26 @@ static void ensure_video(SrcMp4* s)
     s->vbuf.Size = 0;
     h26x_put_single_frame(s->fp, s->fl->Frames[s->vi], s->meta, &s->vbuf);
     double fps = s->fps > 0 ? s->fps : 30;
+    if (s->tpts && s->vi < s->t_n)
+    {
+        // Os dois tempos de verdade: com quadros B a apresentacao nao segue a ordem do arquivo.
+        // Quem recodifica usa so o pts (o gateway ordena); quem copia grava os dois.
+        mtime_us quadro = (mtime_us)(1000000.0 / fps + 0.5);
+        mtime_us prox = (s->vi + 1 < s->t_n) ? (mtime_us)s->tdts[s->vi + 1] : (mtime_us)s->tdts[s->vi] + quadro;
+        s->v_pts = (mtime_us)s->tpts[s->vi]; s->v_dts = (mtime_us)s->tdts[s->vi];
+        s->v_dur = prox - s->v_dts > 0 ? prox - s->v_dts : quadro;
+        s->v_key = annexb_is_key(s->vbuf.Data, s->vbuf.Size, s->vcodec);
+        s->v_pending = 1; s->vi++;
+        return;
+    }
     int64_t ms   = (s->vpts && s->vi < s->vpts_n)     ? s->vpts[s->vi]     : (int64_t)(s->vi * 1000.0 / fps + 0.5);
     int64_t next = (s->vpts && s->vi + 1 < s->vpts_n) ? s->vpts[s->vi + 1] : ms + (int64_t)(1000.0 / fps + 0.5);
-    s->v_pts = mt_from_ms(ms);
+    s->v_pts = mt_from_ms(ms) + s->v_off;
+    // Os tempos por quadro estao em ms truncados e o deslocamento em us: o quadro que cai
+    // exatamente no zero da apresentacao saia com -0,667 ms e era descartado como pre-rolo
+    // (medido: a saida perdia o primeiro quadro). Menos de 1 ms negativo e arredondamento.
+    if (s->v_pts < 0 && s->v_pts > -1000) s->v_pts = 0;
+    s->v_dts = s->v_pts;
     s->v_dur = mt_from_ms(next - ms > 0 ? next - ms : (int64_t)(1000.0 / fps + 0.5));
     s->v_key = annexb_is_key(s->vbuf.Data, s->vbuf.Size, s->vcodec);
     s->v_pending = 1; s->vi++;
@@ -80,12 +103,20 @@ static void ensure_audio(SrcMp4* s)
 {
     if (s->a_pending || !s->has_audio) return;
     const uint8_t* d; int sz, dur; int64_t dts;
-    int r = aac_read_raw(s->actx, &d, &sz, &dts, &dur);
-    if (r != 1) { s->has_audio = 0; return; }   // fim do audio -> segue so video
+    for (;;)
+    {
+        int r = aac_read_raw(s->actx, &d, &sz, &dts, &dur);
+        if (r != 1) { s->has_audio = 0; return; }   // fim do audio -> segue so video
+        // O audio sai a partir de onde o VIDEO sai: com pre-rolo de video (tempo negativo) vem
+        // junto o audio desse trecho, tambem com tempo negativo. Quem recodifica descarta os
+        // dois abaixo de zero; quem copia sem recodificar (bypass) precisa dos dois. Pacote AAC
+        // nao se corta ao meio, e os seguintes mantem o tempo EXATO.
+        if (mt_from_scale(dts, (int)s->ainfo.timescale) + s->a_off >= s->a_min) break;
+    }
     if (sz > s->abuf_cap) { s->abuf = (uint8_t*)GW_REALLOC(s->abuf, sz); s->abuf_cap = sz; }
     GW_COPY(s->abuf, d, sz);
     s->a_size = sz;
-    s->a_pts  = mt_from_scale(dts, (int)s->ainfo.timescale);
+    s->a_pts  = mt_from_scale(dts, (int)s->ainfo.timescale) + s->a_off;
     s->a_dur  = mt_from_scale(dur, (int)s->ainfo.timescale);
     s->a_pending = 1;
 }
@@ -117,7 +148,7 @@ static int src_read(MediaSource* src, GwPacket* pkt)
     ensure_video(s); ensure_audio(s);
 
     int take_audio;
-    if (s->v_pending && s->a_pending) take_audio = (s->a_pts <= s->v_pts);
+    if (s->v_pending && s->a_pending) take_audio = (s->a_pts < s->v_dts);   // ordem de DECODIFICACAO; empate = video
     else if (s->a_pending)            take_audio = 1;
     else if (s->v_pending)            take_audio = 0;
     else                              return 0;   // EOF
@@ -132,7 +163,7 @@ static int src_read(MediaSource* src, GwPacket* pkt)
     else
     {
         pkt->Stream = 0; pkt->Data = s->vbuf.Data; pkt->Size = s->vbuf.Size;
-        pkt->Pts = pkt->Dts = s->v_pts; pkt->Dur = s->v_dur; pkt->KeyFrame = s->v_key;   // sem B-frames na fase 1: dts=pts
+        pkt->Pts = s->v_pts; pkt->Dts = s->v_dts; pkt->Dur = s->v_dur; pkt->KeyFrame = s->v_key;
         s->v_pending = 0;
     }
     return 1;
@@ -149,6 +180,8 @@ static void src_close_inner(SrcMp4* s)
     if (s->fl) mframe_list_release(&s->fl);
     if (s->fp) fclose(s->fp);
     if (s->vpts) memop_free_raw(s->vpts);                  // buffer do mp4_timing (lib legada)
+    if (s->tpts) memop_free_raw(s->tpts);
+    if (s->tdts) memop_free_raw(s->tdts);
     GW_FREE(s->abuf);
     GW_FREE(s);
 }
@@ -172,6 +205,16 @@ MediaSource* source_mp4_open(const char* path)
     s->fps = fl->Metadata.Fps > 0.0 ? fl->Metadata.Fps : 30.0;
 
     mp4_video_pts_ms(path, &s->vpts, &s->vpts_n);
+    { int64_t vo = 0, ao = 0; mp4_edit_offsets(path, &vo, &ao); s->v_off = (mtime_us)vo; s->a_off = (mtime_us)ao; }
+    if (mp4_video_times_us(path, &s->tpts, &s->tdts, &s->t_n) != 0 || s->t_n != (uint32_t)fl->Count)
+    {
+        // tabela de tempos que nao bate com a lista de quadros: fica o caminho antigo (so decodificacao)
+        if (s->tpts) memop_free_raw(s->tpts);
+        if (s->tdts) memop_free_raw(s->tdts);
+        s->tpts = 0; s->tdts = 0; s->t_n = 0;
+    }
+    s->a_min = s->tdts ? (mtime_us)s->tdts[0] : s->v_off;
+    if (s->a_min > 0) s->a_min = 0;
     mp4_video_info(path, &s->vw, &s->vh, 0, 0, &s->duration);
     mbuffer_init(&s->vbuf);
     if (fopen_s(&s->fp, path, "rb") != 0 || !s->fp)

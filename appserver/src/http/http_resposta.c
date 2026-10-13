@@ -26,6 +26,7 @@ const char* http_status_texto(HttpStatusCode st)
 	case HTTP_STATUS_FORBIDDEN:           return "Forbidden";
 	case HTTP_STATUS_NOT_FOUND:           return "Not Found";
 	case HTTP_STATUS_METHOD_NOT_ALLOWED:  return "Method Not Allowed";
+	case HTTP_STATUS_CONFLICT:            return "Conflict";
 	case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition Failed";
 	case HTTP_STATUS_PAYLOAD_TOO_LARGE:   return "Payload Too Large";
 	case HTTP_STATUS_HEADERS_TOO_LARGE:   return "Request Header Fields Too Large";

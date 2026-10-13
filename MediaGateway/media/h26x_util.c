@@ -37,7 +37,20 @@ static int build_hvcc(const uint8_t* vps, int vl, const uint8_t* sps, int sl, co
 {
     int n = 0;
     o[n++] = 1;
-    if (sl >= 15) GW_COPY(o + n, sps + 3, 12); else GW_ZERO(o + n, 12);
+    // profile_tier_level (12 bytes) vem do SPS, logo depois do cabecalho do NAL (2 bytes) e de
+    // 1 byte de ids. Tem de ser lido SEM os bytes de prevencao de emulacao (o 03 que o
+    // encoder insere depois de 00 00): copiados crus, eles deslocavam tudo o que vinha depois
+    // e o hvcC saia com nivel 0 e as restricoes erradas (medido: "60 00 00 03 00 90 ...").
+    {
+        uint8_t rb[16]; int rn = 0, zeros = 0;
+        for (int i = 2; i < sl && rn < 16; i++)
+        {
+            if (zeros >= 2 && sps[i] == 3) { zeros = 0; continue; }
+            zeros = (sps[i] == 0) ? zeros + 1 : 0;
+            rb[rn++] = sps[i];
+        }
+        if (rn >= 13) GW_COPY(o + n, rb + 1, 12); else GW_ZERO(o + n, 12);
+    }
     n += 12;
     o[n++] = 0xF0; o[n++] = 0x00; o[n++] = 0xFC; o[n++] = 0xFD; o[n++] = 0xF8; o[n++] = 0xF8;
     o[n++] = 0x00; o[n++] = 0x00; o[n++] = 0x0B; o[n++] = 3;

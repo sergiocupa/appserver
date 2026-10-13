@@ -6,6 +6,8 @@
 //  keyframe e escreve no sink. Alocacoes via memory_pool. NAO TESTADO EM RUNTIME.
 
 #include "sync_gateway.h"
+#include "aud_fmp4.h"     // audio AAC do DASH em faixa fMP4 separada
+#include "mpd_util.h"     // nomes dos arquivos do DASH WebM (codec no nome)
 #include "media_codec.h"
 #include "gw_decode.h"     // GwVideoDec: decode unificado H264/H265/VP9/AV1
 #include "enc_select.h"
@@ -140,6 +142,7 @@ typedef struct {
 typedef struct {
     const char* dir; MediaCodec codec; int fps; int seg_ms; int nrend;
     int rw[GW_MAXR], rh[GW_MAXR], rbw[GW_MAXR]; const char* rname[GW_MAXR];
+    char fname[GW_MAXR][48];   // nome dos arquivos e id da Representation: "<codec>-<resolucao>"
     xatomic_int done[GW_MAXR];   // segmentos concluidos por rendition (progresso)
     xatomic_int abort;           // 1 = cancelamento cooperativo; tasks saem sem gravar
     xatomic_int failed;          // 1 = alguma task falhou (encoder/mux/alloc)
@@ -217,7 +220,7 @@ static void sp_task(void* arg)
         return;
     }
     MediaEncoder* enc = media_encoder_open(&ep);
-    WebmMux* cm = webm_open_chunk(c->dir, c->rname[r], seg->seg_no + 1);   // startNumber=1
+    WebmMux* cm = webm_open_chunk(c->dir, c->fname[r], seg->seg_no + 1);   // startNumber=1
     if (!enc || !cm)
     {
         // Falha silenciosa aqui produzia um segmento faltando no manifesto (o player
@@ -284,23 +287,37 @@ static int sp_seg_append(SpSeg* s, uint8_t* y, int sy, uint8_t* u, int su, uint8
     return 1;
 }
 
-static void sp_write_mpd(const SpCtx* c, int64_t dur_ms)
+// 'tl' = inicio REAL de cada segmento despachado. O segmento fecha no primeiro quadro que
+// passa de seg_ms, entao so dura seg_ms exatos quando seg_ms e multiplo do tempo de quadro
+// (24, 25, 30 fps). A 29,97 fps sao 60 quadros = 2002 ms: declarar "2000" deixava cada
+// segmento 2 ms mais adiantado que o anterior no manifesto (medido: 20 ms no 11o; num video
+// de 1 h seriam 3,6 s), e o player pedia o segmento errado para o tempo que queria.
+static void sp_write_mpd(const SpCtx* c, int64_t dur_ms, const AudFmp4* aud, MpdSeg* tl, int tl_n)
 {
-    char path[1200]; snprintf(path, sizeof(path), "%s/manifest.mpd", c->dir);
+    int64_t v_fim = dur_ms + (c->fps > 0 ? 1000 / c->fps : 33);   // fim do ultimo quadro de VIDEO
+    dur_ms = v_fim;   // a duracao declarada inclui o ultimo quadro (antes parava no INICIO dele)
+    double adur = aud_fmp4_duration(aud);
+    if (adur * 1000.0 > (double)dur_ms) dur_ms = (int64_t)(adur * 1000.0);
+    char path[1200]; snprintf(path, sizeof(path), "%s/%s", c->dir, mpd_webm_manifest(c->codec == MEDIA_CODEC_AV1));
     FILE* fmpd = 0; if (fopen_s(&fmpd, path, "wb") != 0 || !fmpd) return;
     fprintf(fmpd,
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         "<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" type=\"static\" "
         "mediaPresentationDuration=\"PT%.3fS\" minBufferTime=\"PT2S\" "
         "profiles=\"urn:mpeg:dash:profile:isoff-live:2011\">\n  <Period>\n"
-        "    <AdaptationSet mimeType=\"video/webm\" codecs=\"%s\" segmentAlignment=\"true\" startWithSAP=\"1\">\n"
-        "      <SegmentTemplate timescale=\"1000\" duration=\"%d\" startNumber=\"1\" "
-        "initialization=\"init-$RepresentationID$.webm\" media=\"chunk-$RepresentationID$-$Number$.webm\"/>\n",
-        dur_ms / 1000.0, sp_mpd_codec(c->codec), c->seg_ms);
+        "    <AdaptationSet contentType=\"video\" mimeType=\"video/webm\" codecs=\"%s\" segmentAlignment=\"true\" startWithSAP=\"1\">\n"
+        "      <SegmentTemplate timescale=\"1000\" startNumber=\"1\" "
+        "initialization=\"init-$RepresentationID$.webm\" media=\"chunk-$RepresentationID$-$Number$.webm\">\n",
+        dur_ms / 1000.0, sp_mpd_codec(c->codec));
+    if (tl_n > 0 && v_fim > tl[tl_n - 1].t) tl[tl_n - 1].d = v_fim - tl[tl_n - 1].t;   // o ultimo vai ate o fim do ultimo quadro
+    mpd_timeline(fmpd, tl, tl_n, "        ");
+    fprintf(fmpd, "      </SegmentTemplate>\n");
     for (int r = 0; r < c->nrend; r++)
         fprintf(fmpd, "      <Representation id=\"%s\" bandwidth=\"%d\" width=\"%d\" height=\"%d\"/>\n",
-                c->rname[r], c->rbw[r], c->rw[r], c->rh[r]);
-    fprintf(fmpd, "    </AdaptationSet>\n  </Period>\n</MPD>\n");
+                c->fname[r], c->rbw[r], c->rw[r], c->rh[r]);
+    fprintf(fmpd, "    </AdaptationSet>\n");
+    aud_fmp4_mpd(aud, fmpd);   // AAC original, faixa fMP4 separada (nada escreve se nao ha audio)
+    fprintf(fmpd, "  </Period>\n</MPD>\n");
     fclose(fmpd);
 }
 
@@ -359,8 +376,42 @@ static int gw_fps_gate_take(GwFpsGate* g, mtime_us pts)
     return 1;
 }
 
+// Tempo de cada quadro DECODIFICADO. O decoder devolve os quadros em ordem de apresentacao,
+// mas nao o tempo de cada um, e segura alguns pacotes antes de devolver o primeiro (atraso de
+// reordenacao/threads). O tempo do pacote que ACABOU de entrar nao serve: era o que se usava,
+// e cada quadro saia com o tempo de um pacote posterior -- medido num MP4 1080p: video
+// deslocado ~0,54 s no inicio e ~0,83 s dali em diante, contra o audio, que segue o tempo
+// da fonte. Aqui cada pacote enviado guarda o proprio tempo numa fila ORDENADA, e cada quadro
+// que sai leva o menor: o k-esimo quadro apresentado recebe o k-esimo tempo.
+#define GW_PTSQ_CAP 256
+typedef struct { mtime_us v[GW_PTSQ_CAP]; int n; mtime_us ultimo, passo; } GwPtsFila;
+
+static void ptsq_init(GwPtsFila* q, mtime_us passo) { q->n = 0; q->ultimo = MTIME_NONE; q->passo = passo > 0 ? passo : 33333; }
+
+static void ptsq_put(GwPtsFila* q, mtime_us pts)
+{
+    if (q->n == GW_PTSQ_CAP)   // decoder que descartou quadros: some o mais antigo
+    { memmove(q->v, q->v + 1, sizeof(mtime_us) * (GW_PTSQ_CAP - 1)); q->n--; }
+    int i = q->n;
+    while (i > 0 && q->v[i - 1] > pts) { q->v[i] = q->v[i - 1]; i--; }
+    q->v[i] = pts; q->n++;
+}
+
+// Fila vazia (um pacote rendeu mais de um quadro, ou o dreno do fim passou do que entrou):
+// segue a cadencia a partir do ultimo tempo entregue.
+static mtime_us ptsq_take(GwPtsFila* q)
+{
+    mtime_us t;
+    if (q->n > 0) { t = q->v[0]; memmove(q->v, q->v + 1, sizeof(mtime_us) * (size_t)(q->n - 1)); q->n--; }
+    else t = q->ultimo == MTIME_NONE ? 0 : q->ultimo + q->passo;
+    if (q->ultimo != MTIME_NONE && t <= q->ultimo) t = q->ultimo + 1;   // nunca volta no tempo
+    q->ultimo = t;
+    return t;
+}
+
 static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaProfile* profile,
-                          const char* base_dir, const GwFeedback* fb, GwControl* ctl, int vidx)
+                          const char* base_dir, const GwFeedback* fb, GwControl* ctl, int vidx,
+                          MediaStreamInfo* ain, int aidx)
 {
     SpCtx c; GW_ZERO(&c, sizeof(c));
     c.dir = base_dir; c.codec = profile->VideoCodec;
@@ -380,6 +431,7 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
         else
         { c.rw[r] = profile->Width; c.rh[r] = profile->Height; c.rbw[r] = profile->BitrateBps; c.rname[r] = "source"; }
         atomic_initialize_inline(&c.done[r], 0);
+        snprintf(c.fname[r], sizeof(c.fname[r]), "%s-%s", mpd_webm_tag(profile->VideoCodec == MEDIA_CODEC_AV1), c.rname[r]);
     }
     atomic_initialize_inline(&c.abort, 0);
     atomic_initialize_inline(&c.failed, 0);
@@ -388,10 +440,18 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
 
     // init-<name>.webm por rendition (reusa o muxer segmentado so p/ gravar o init).
     for (int r = 0; r < nrend; r++)
-    { WebmMux* im = webm_open_segmented(base_dir, c.rname[r], sp_vcodec_id(c.codec), c.rw[r], c.rh[r], c.fps, c.seg_ms, 0, 0, 0, 0, 0); if (im) webm_close(im); }
+    { WebmMux* im = webm_open_segmented(base_dir, c.fname[r], sp_vcodec_id(c.codec), c.rw[r], c.rh[r], c.fps, c.seg_ms, 0, 0, 0, 0, 0); if (im) webm_close(im); }
 
     GwVideoDec* dec = 0;
     if (!vin->Raw) dec = gw_vdec_open(vin->Codec);   // disponibilidade ja checada em gateway_run
+
+    // Audio: o AAC da fonte segue SEM conversao para uma faixa fMP4 propria (ver aud_fmp4.h).
+    // Este caminho ignorava o audio, e o caminho por-frame (para onde ia toda fonte com audio)
+    // cortava os chunks fora do manifesto: aqui cada segmento e codificado sozinho, entao tem
+    // exatamente seg_ms e as resolucoes ficam alinhadas.
+    AudFmp4* aud = 0;
+    if (ain && !ain->Raw && ain->Codec == MEDIA_CODEC_AAC)
+        aud = aud_fmp4_open(base_dir, "dash-audio", ain->Extra, ain->ExtraLen, ain->SampleRate, ain->Channels, c.seg_ms);
 
     { GwEvent e; GW_ZERO(&e, sizeof(e)); e.Kind = GW_EV_START; e.Total = nrend; gw_emit(fb, &e); }
     for (int r = 0; r < nrend; r++)
@@ -414,13 +474,15 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
     for (int k = 0; k < GW_SP_KBUF; k++) atomic_initialize_inline(&segs[k].pending, 0);
 
     int seg_no = 0; int64_t max_ms = 0, seg_base = MTIME_NONE; SpSeg* cur = 0; int cur_slot = -1;
+    MpdSeg* tl = 0; int tl_n = 0, tl_cap = 0;   // inicio real de cada segmento (para o manifesto)
 
     // fecha (dispara) o segmento atual. seg_no so avanca AQUI: antes era incrementado
     // no acquire, entao um slot adquirido e nunca despachado (EOF logo apos o acquire)
     // deixava seg_no maior que o total real de tasks -> a espera final (done >= seg_no)
     // nunca era satisfeita e o gateway travava para sempre.
     #define SP_DISPATCH() do { \
-        if (cur && cur->nf > 0) { cur->seg_no = seg_no++; atomic_set_inline(&cur->pending, nrend); \
+        if (cur && cur->nf > 0) { mpd_seg_add(&tl, &tl_n, &tl_cap, seg_base, c.seg_ms); \
+            cur->seg_no = seg_no++; atomic_set_inline(&cur->pending, nrend); \
             for (int r = 0; r < nrend; r++) { args[cur_slot][r].c = &c; args[cur_slot][r].seg = cur; args[cur_slot][r].r = r; \
                 if (pool) pool_submit_relative(pool, sp_task, &args[cur_slot][r]); else sp_task(&args[cur_slot][r]); } } \
         else if (cur) { cur->in_use = 0; } \
@@ -446,13 +508,18 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
 
     GwPacket pkt; int rr; mtime_us last_prog = MTIME_NONE; int aborted = 0;
     mtime_us last_pts = 0;                                  // ultimo PTS lido (base do drain)
+    GwPtsFila ptsq; ptsq_init(&ptsq, (mtime_us)(1000000 / sp_fps_in));
     while ((rr = src->Read(src, &pkt)) == 1)
     {
         // Cancelamento pedido pela UI, ou falha reportada por alguma task: propaga o
         // abort para as tasks em voo (elas saem sem gravar) e para o laco de leitura.
         if ((ctl && ctl->Stop) || atomic_get_inline(&c.failed))
         { aborted = 1; atomic_set_inline(&c.abort, 1); break; }
-        if (pkt.Stream != vidx) continue;
+        if (pkt.Stream != vidx)
+        {
+            if (aud && pkt.Stream == aidx && pkt.Pts >= 0) aud_fmp4_write(aud, &pkt);   // < 0: audio do pre-rolo (lista de edicao)
+            continue;
+        }
         int64_t ms = pkt.Pts / 1000;
         last_pts = pkt.Pts;
 
@@ -475,15 +542,19 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
         }
         else if (dec)
         {
+            ptsq_put(&ptsq, pkt.Pts);
             gw_vdec_send(dec, pkt.Data, pkt.Size);
             GwImage im;
             while (gw_vdec_next(dec, &im) == 1)
             {
-                if (!gw_fps_gate_take(&sp_gate, pkt.Pts)) continue;
-                if (!cur || (ms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(ms); }
-                if (sp_seg_append(cur, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, ms) < 0)
+                mtime_us fp = ptsq_take(&ptsq);   // tempo DESTE quadro (ver GwPtsFila)
+                if (fp < 0) continue;             // pre-rolo de arquivo cortado (lista de edicao): decodifica, nao mostra
+                if (!gw_fps_gate_take(&sp_gate, fp)) continue;
+                int64_t fms = fp / 1000;
+                if (!cur || (fms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(fms); }
+                if (sp_seg_append(cur, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, fms) < 0)
                 { gw_error(fb, "gateway: sem memoria para bufferizar o segmento."); aborted = 1; atomic_set_inline(&c.abort, 1); break; }
-                if (ms > max_ms) max_ms = ms;
+                if (fms > max_ms) max_ms = fms;
             }
             if (aborted) break;
         }
@@ -496,14 +567,13 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
     if (!aborted && dec)
     {
         gw_vdec_send(dec, 0, 0);
-        // Os frames drenados nao trazem PTS proprio: seguem a cadencia da entrada a partir
-        // do ultimo pacote lido. Empilhar todos no mesmo timestamp faria o segmento final
-        // ter varios frames simultaneos.
-        mtime_us step = (mtime_us)(sp_fps_in > 0 ? 1000000 / sp_fps_in : 33333);
+        // Os quadros drenados levam os tempos que ficaram na fila (os dos ultimos pacotes);
+        // passando disso, a cadencia da entrada.
         GwImage im;
         while (gw_vdec_next(dec, &im) == 1)
         {
-            last_pts += step;
+            last_pts = ptsq_take(&ptsq);
+            if (last_pts < 0) continue;
             if (!gw_fps_gate_take(&sp_gate, last_pts)) continue;
             int64_t ms = last_pts / 1000;
             if (!cur || (ms - seg_base) >= c.seg_ms || cur->nf >= GW_SP_MAXF) { SP_DISPATCH(); SP_ACQUIRE(ms); }
@@ -550,6 +620,8 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
         // estado que contaminava a proxima fragmentacao.
         gw_cancelled(fb, "preparacao interrompida");
         gw_emit_mem(fb);
+        aud_fmp4_close(aud);
+        GW_FREE(tl);
         #undef SP_DISPATCH
         #undef SP_ACQUIRE
         return -10;
@@ -557,8 +629,11 @@ static int gw_dash_segpar(MediaSource* src, MediaStreamInfo* vin, const MediaPro
 
     for (int r = 0; r < nrend; r++) if (!demit[r]) { GwEvent e; GW_ZERO(&e, sizeof(e)); e.Kind = GW_EV_TRACK_DONE; e.TrackIndex = r; e.Name = c.rname[r]; e.Width = c.rw[r]; e.Height = c.rh[r]; e.Bandwidth = c.rbw[r]; gw_emit(fb, &e); }
 
-    sp_write_mpd(&c, max_ms);
-    { GwEvent e; GW_ZERO(&e, sizeof(e)); e.Kind = GW_EV_DONE; e.Playlist = "manifest.mpd"; gw_emit(fb, &e); }
+    aud_fmp4_finish(aud);
+    sp_write_mpd(&c, max_ms, aud, tl, tl_n);
+    aud_fmp4_close(aud);
+    GW_FREE(tl);
+    { GwEvent e; GW_ZERO(&e, sizeof(e)); e.Kind = GW_EV_DONE; e.Playlist = mpd_webm_manifest(c.codec == MEDIA_CODEC_AV1); gw_emit(fb, &e); }
     gw_emit_mem(fb);
 
     #undef SP_DISPATCH
@@ -595,8 +670,8 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     if (!vin->Raw && !gw_vdec_available(vin->Codec))
     { gw_error(fb, "gateway: nao ha decoder compilado para o codec de entrada."); return -4; }
 
-    // DASH-WebM sem audio: usa o caminho SEGMENT-PARALLEL (tasks rendition x segmento no pool).
-    // Com audio, HLS ou MP4: cai no caminho por-frame abaixo (que trata audio/cut/sink).
+    // DASH-WebM (VP9), com ou sem audio: caminho SEGMENT-PARALLEL (tasks rendition x segmento
+    // no pool). O audio vai numa faixa fMP4 separada. HLS, MP4 e AV1: caminho por-frame abaixo.
     //
     // EXCECAO, AV1: o segment-parallel abre UM encoder por (segmento x rendition), e cada
     // instancia do SVT-AV1 e' um pipeline inteiro -- dezenas de threads e centenas de MB.
@@ -604,8 +679,8 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     // de CPU. O libvpx (VP9) aguenta esse padrao porque a instancia dele e' barata; o SVT
     // nao. Para AV1 vale o caminho por-frame: UM encoder por rendition, vivo do inicio ao
     // fim, com memoria e threads limitadas.
-    if (profile->Container == CONT_DASH_WEBM && aidx < 0 && profile->VideoCodec != MEDIA_CODEC_AV1)
-        return gw_dash_segpar(src, vin, profile, base_dir, fb, ctl, vidx);   // decode-once: sem re-decode 6x
+    if (profile->Container == CONT_DASH_WEBM && profile->VideoCodec != MEDIA_CODEC_AV1)
+        return gw_dash_segpar(src, vin, profile, base_dir, fb, ctl, vidx, ain, aidx);   // decode-once: sem re-decode 6x
 
     MediaSink* sink = media_sink_open(profile, base_dir, fb);
     if (!sink) return -3;   // a fabrica/sink ja emitiu o erro
@@ -692,8 +767,12 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
             if (!g.venc[r]) gw_error(fb, "gateway: encoder de saida indisponivel para uma rendition.");
         }
 
-    int a_pass  = (ain && !ain->Raw && ain->Codec == MEDIA_CODEC_AAC && profile->AudioCodec == MEDIA_CODEC_AAC);
-    int a_trans = (ain && !ain->Raw && ain->Codec == MEDIA_CODEC_AAC && profile->AudioCodec == MEDIA_CODEC_OPUS);
+    // DASH-WebM: o AAC da fonte passa DIRETO para o sink, que o grava numa faixa fMP4 separada.
+    // A conversao AAC -> Opus (audio muxado no WebM) depende de um decoder de AAC que o projeto
+    // nao tem: sem ele o audio era descartado calado, e o DASH saia mudo.
+    int dash_webm = (profile->Container == CONT_DASH_WEBM);
+    int a_pass  = (ain && !ain->Raw && ain->Codec == MEDIA_CODEC_AAC && (profile->AudioCodec == MEDIA_CODEC_AAC || dash_webm));
+    int a_trans = (ain && !ain->Raw && ain->Codec == MEDIA_CODEC_AAC && profile->AudioCodec == MEDIA_CODEC_OPUS && !dash_webm);
     void* adec = 0; MediaEncoder* aenc = 0; mtime_us a_ts = 0;
     if (a_trans)
     {
@@ -734,9 +813,25 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
 
     GwPacket pkt; int rr; mtime_us last_prog = MTIME_NONE; int aborted = 0;
     mtime_us last_vpts = 0;                                 // ultimo PTS de video lido (base do drain)
+    GwPtsFila ptsq; ptsq_init(&ptsq, (mtime_us)(fps_in > 0 ? 1000000 / fps_in : 33333));
+    mtime_us desloca = 0; int desloca_ok = 0;                // so no bypass (ver abaixo)
     while ((rr = src->Read(src, &pkt)) == 1)
     {
         if (ctl && ctl->Stop) { aborted = 1; break; }
+        // BYPASS: os pacotes vao como estao, com os DOIS tempos (decodificacao e apresentacao).
+        // O video pode chegar com tempo negativo: o primeiro dts de um arquivo com quadros B
+        // (um quadro antes de zero) e o pre-rolo de um arquivo cortado (lista de edicao), que
+        // sem recodificar nao da para descartar -- os quadros seguintes dependem dele.
+        //  - MP4 de arquivo unico: o sink grava a propria lista de edicao; nada muda aqui.
+        //  - segmentos (HLS): nao ha lista de edicao por segmento, entao a linha do tempo
+        //    inteira (video e audio) anda para a frente ate o primeiro dts cair em zero. Num
+        //    arquivo cortado o trecho escondido aparece, mas o sincronismo fica.
+        if (v_passthrough && profile->Container != CONT_MP4_FILE)
+        {
+            if (!desloca_ok && pkt.Stream == vidx)
+            { desloca_ok = 1; mtime_us m = pkt.Dts < pkt.Pts ? pkt.Dts : pkt.Pts; if (m < 0) desloca = -m; }
+            pkt.Pts += desloca; pkt.Dts += desloca;
+        }
         if (pkt.Stream == vidx)
         {
             last_vpts = pkt.Pts;
@@ -760,12 +855,15 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
             }
             else if (dec)
             {
+                ptsq_put(&ptsq, pkt.Pts);
                 gw_vdec_send(dec, pkt.Data, pkt.Size);
                 GwImage im;
                 while (gw_vdec_next(dec, &im) == 1)
                 {
-                    if (!gw_fps_gate_take(&fps_gate, pkt.Pts)) continue;
-                    encode_frame(&g, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, pkt.Pts);
+                    mtime_us fp = ptsq_take(&ptsq);   // tempo DESTE quadro (ver GwPtsFila)
+                    if (fp < 0) continue;             // pre-rolo de arquivo cortado: decodifica, nao mostra
+                    if (!gw_fps_gate_take(&fps_gate, fp)) continue;
+                    encode_frame(&g, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, fp);
                 }
             }
             if (last_prog == MTIME_NONE || pkt.Pts - last_prog >= 1000000)
@@ -773,6 +871,9 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
         }
         else if (aidx >= 0 && pkt.Stream == aidx && atrack >= 0)
         {
+            // audio do pre-rolo de arquivo cortado: fora, a nao ser no bypass (nos segmentos ja veio
+            // deslocado para >= 0; no MP4 unico o sink o esconde com a lista de edicao)
+            if (pkt.Pts < 0 && !v_passthrough) continue;
             if (a_pass) sink->Write(sink, atrack, &pkt);
             else if (a_trans)
             {
@@ -795,12 +896,11 @@ int gateway_run(MediaSource* src, const MediaProfile* profile, const char* base_
     if (!aborted && dec)
     {
         gw_vdec_send(dec, 0, 0);
-        mtime_us step = (mtime_us)(fps_in > 0 ? 1000000 / fps_in : 33333);   // ver nota no segpar
         GwImage im;
-        while (gw_vdec_next(dec, &im) == 1)
+        while (gw_vdec_next(dec, &im) == 1)   // tempos que ficaram na fila (ver nota no segpar)
         {
-            last_vpts += step;
-            if (gw_fps_gate_take(&fps_gate, last_vpts))
+            last_vpts = ptsq_take(&ptsq);
+            if (last_vpts >= 0 && gw_fps_gate_take(&fps_gate, last_vpts))
                 encode_frame(&g, im.Planes[0], im.Strides[0], im.Planes[1], im.Strides[1], im.Planes[2], im.Strides[2], im.Width, im.Height, last_vpts);
         }
     }

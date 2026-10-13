@@ -305,6 +305,7 @@ add_library(mediagateway STATIC
   MediaGateway/media/media_sink.c
   MediaGateway/media/sink_mp4.c
   MediaGateway/media/sink_hls.c
+  MediaGateway/media/aud_fmp4.c
   MediaGateway/media/sink_dash.c
   MediaGateway/media/sink_live.c
   MediaGateway/media/live_store.c
@@ -367,6 +368,13 @@ target_include_directories(appservertester PRIVATE ${ROOT}/test/appservertester)
 target_link_libraries(appservertester PRIVATE mediafragmenter mediagateway appserver_lib)
 set_target_properties(appservertester PROPERTIES LINKER_LANGUAGE CXX)   # x265/libyuv sao C++
 app_compat(appservertester)
+# appservertester.json ao lado do executavel: a pasta web e a do repositorio (o do Visual Studio
+# usa caminho relativo a x64/Release, que nao vale para a pasta de build do CMake). Um arquivo
+# ja existente (editado a mao) fica como esta.
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/appservertester.json)
+  file(WRITE ${CMAKE_BINARY_DIR}/appservertester.json
+       "{\"web\": \"${ROOT}/test/appservertester/web\", \"port\": 1234}")
+endif()
 
 # ============================================================================
 #  Benchmark do servidor (test/httpbench): servidor minimo + cliente de carga.

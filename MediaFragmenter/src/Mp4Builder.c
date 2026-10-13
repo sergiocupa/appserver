@@ -337,10 +337,15 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     fseek(f, 0, SEEK_SET);
 
     // Nao pega length_size, mas de onde vem isso? Assumiu que tem este dado. Perguntar como obter este dado
+    // Daqui em diante 'meta' e dono do SPS/PPS/VPS (memop). Saida com erro tem de libera-los:
+    // so viram da lista (e do mframe_list_release) no fim, quando a lista existe.
+    #define META_LIBERA() do { if (meta.Sps.Data) memop_free_raw(meta.Sps.Data); if (meta.Pps.Data) memop_free_raw(meta.Pps.Data); \
+                               if (meta.Vps.Data) memop_free_raw(meta.Vps.Data); } while (0)
     int length_size = meta.LengthSize;  // Adicionado: Usa length_size extraído (geralmente 4, mas dinâmico)
     if (length_size < 1 || length_size > 4)
     {
         printf("length_size inválido: %d\n", length_size);
+        META_LIBERA();
         fclose(f);
         return NULL;
     }
@@ -359,9 +364,18 @@ FrameIndexList* mp4builder_get_frames(const char* path)
     if (stsz.count == 0 || meta.Codec == 0)
     {
         printf("Falha ao parsear tables de vídeo.\n");
+        // as tabelas que chegaram a ser lidas antes da falha tambem ficavam para tras
+        // (medido: 3 blocos por abertura que falha, com um MP4 sem stsz)
+        if (stsz.sizes)   memop_free_raw(stsz.sizes);
+        if (stco.offsets) memop_free_raw(stco.offsets);
+        if (stsc.entries) memop_free_raw(stsc.entries);
+        if (stts.entries) memop_free_raw(stts.entries);
+        META_LIBERA();
         fclose(f);
         return NULL;
     }
+
+    #undef META_LIBERA
 
     // Cria lista ordenada
     FrameIndexList* list = mframe_list_new(stsz.count);

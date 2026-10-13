@@ -422,10 +422,20 @@ static int faixas_pedidas(const char* v, int n, int64 total, Faixa* f)
 // Validadores do arquivo (ETag forte = tamanho-data, Last-Modified) na resposta 200 em memoria.
 typedef struct { const char* ETag; const char* Mod; } Validadores;
 
+// Estaticos: o navegador guarda, mas REVALIDA sempre (ETag -> 304 de poucos bytes). Com
+// Last-Modified e sem Cache-Control ele aplica frescor heuristico e usa a copia velha sem
+// perguntar -- uma pagina recem-atualizada rodava o JS antigo.
+static void cabecalho_revalidar(void* args, ResourceBuffer* http)
+{
+    (void)args;
+    resource_buffer_append_string(http, "Cache-Control: no-cache\r\n");
+}
+
 static void cabecalho_arquivo(void* args, ResourceBuffer* http)
 {
     Validadores* v = (Validadores*)args;
     resource_buffer_append_string(http, "Accept-Ranges: bytes\r\n");
+    resource_buffer_append_string(http, "Cache-Control: no-cache\r\n");
     if (v) resource_buffer_append_format(http, "ETag: %s\r\nLast-Modified: %s\r\n", v->ETag, v->Mod);
 }
 
@@ -468,7 +478,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     if (igual)
     {
         HttpCabecalho c = http_cabecalho(HTTP_STATUS_NOT_MODIFIED, server->Config.AgentName);
-        c.Tamanho = -1; c.ETag = etag; c.UltimaMod = mod;
+        c.Tamanho = -1; c.ETag = etag; c.UltimaMod = mod; c.Extra = cabecalho_revalidar;
         envia_cabecalho(request, &c);
         if (server->Config.LogRequests)
             printf("RESPONSE | Client: %d | Status: 304 | %s\n", (int)(intptr_t)request->Client->Handle, path.Content);
@@ -487,7 +497,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     {
         // 206 com o trecho (sai pela fila da conexao, como o arquivo grande) ou 416
         HttpCabecalho c = http_cabecalho(k == 1 ? HTTP_STATUS_PARTIAL_CONTENT : HTTP_STATUS_RANGE_NOT_SATISFIABLE, server->Config.AgentName);
-        c.AceitaFaixa = true; c.FaixaTotal = tam; c.ETag = etag; c.UltimaMod = mod;
+        c.AceitaFaixa = true; c.FaixaTotal = tam; c.ETag = etag; c.UltimaMod = mod; c.Extra = cabecalho_revalidar;
         if (k == 1) { c.Tipo = tipo; c.Tamanho = fx[0].Fim - fx[0].Ini + 1; c.FaixaIni = fx[0].Ini; c.FaixaFim = fx[0].Fim; }
         envia_cabecalho(request, &c);
         if (server->Config.LogRequests)
@@ -512,7 +522,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
         int nfim = snprintf(parte, sizeof(parte), "\r\n--%s--\r\n", fronteira);
         total += nfim;
         HttpCabecalho c = http_cabecalho(HTTP_STATUS_PARTIAL_CONTENT, server->Config.AgentName);
-        c.AceitaFaixa = true; c.TipoTexto = tipo_mp; c.Tamanho = total; c.ETag = etag; c.UltimaMod = mod;
+        c.AceitaFaixa = true; c.TipoTexto = tipo_mp; c.Tamanho = total; c.ETag = etag; c.UltimaMod = mod; c.Extra = cabecalho_revalidar;
         envia_cabecalho(request, &c);
         if (server->Config.LogRequests)
             printf("RESPONSE | Client: %d | Status: 206 | %d faixas | Content Length: %lld\n", (int)(intptr_t)request->Client->Handle, k, (long long)total);
@@ -546,7 +556,7 @@ bool appserver_web_process(AppServerInfo* server, Message* request)
     HttpCabecalho c = http_cabecalho(HTTP_STATUS_OK, server->Config.AgentName);
     c.Tipo    = tipo;
     c.Tamanho = tam;
-    c.AceitaFaixa = true; c.ETag = etag; c.UltimaMod = mod;
+    c.AceitaFaixa = true; c.ETag = etag; c.UltimaMod = mod; c.Extra = cabecalho_revalidar;
     envia_cabecalho(request, &c);
     if (server->Config.LogRequests)
         printf("RESPONSE | Client: %d | Status: OK | Type: %s | Content Length: %lld (streaming)\n",

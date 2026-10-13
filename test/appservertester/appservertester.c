@@ -22,6 +22,8 @@
 #include "live_controller.h"
 #include "frag_session.h"
 #include "mem_leak_watch.h"   // monitor de alcancabilidade da xplatbase
+#include "yason.h"            // appservertester.json
+#include "yason_build.h"      // yb_free
 #include <stdlib.h>
 
 
@@ -88,11 +90,98 @@ void Notification_Result(ResourceBuffer* object)
 
 
 
+// ---- configuracao: appservertester.json ao lado do executavel -------------------------
+// {"web": "<pasta do conteudo web>", "port": 1234}, os dois opcionais. Caminho relativo vale a
+// partir da PASTA DO EXECUTAVEL, nao do diretorio de trabalho: iniciado por servico, script ou
+// atalho de outra pasta, o servidor subia e nao achava arquivo nenhum. Sem o arquivo, ou sem
+// "web", o conteudo e a propria pasta do executavel. A saida das sessoes fica em <web>/hls.
+static char g_web[MAX_PATH];
+static int  g_porta = 1234;
+
+static int caminho_absoluto(const char* p)
+{
+    return p[0] == '/' || p[0] == '\\' || (p[0] && p[1] == ':');
+}
+
+// Caminho do executavel e caminho absoluto: cada sistema tem a sua chamada.
+#ifdef _WIN32
+  #define CFG_SEP "\\"
+  static void exe_caminho(char* out, size_t n) { out[0] = '\0'; GetModuleFileNameA(NULL, out, (DWORD)n); }
+  static void caminho_completo(char* out, size_t n, const char* p)
+  {
+      if (!_fullpath(out, p, n)) snprintf(out, n, "%s", p);
+  }
+#else
+  #include <unistd.h>
+  #include <limits.h>
+  #define CFG_SEP "/"
+  static void exe_caminho(char* out, size_t n)
+  {
+      ssize_t k = readlink("/proc/self/exe", out, n - 1);
+      out[k > 0 ? k : 0] = '\0';
+  }
+  static void caminho_completo(char* out, size_t n, const char* p)
+  {
+      char real[PATH_MAX];
+      snprintf(out, n, "%s", realpath(p, real) ? real : p);
+  }
+#endif
+
+static void config_carregar(void)
+{
+    char exe[MAX_PATH] = { 0 };
+    exe_caminho(exe, sizeof(exe));
+    char* corte = strrchr(exe, '\\');
+    char* corte2 = strrchr(exe, '/');
+    if (corte2 > corte) corte = corte2;
+    if (corte) *corte = '\0';   // pasta do executavel
+
+    char arq[MAX_PATH];
+    snprintf(arq, sizeof(arq), "%s" CFG_SEP "appservertester.json", exe);
+    char web[MAX_PATH] = { 0 };
+    int achou = 0;
+
+    char* texto = 0; int len = 0;
+    if (file_read_text(arq, &texto, &len) && texto)
+    {
+        achou = 1;
+        Element* raiz = yason_parse(texto, len, TREE_TYPE_JSON);
+        if (raiz)
+        {
+            Element* w = yason_find_element(raiz, "web");
+            if (w && w->Value.Length > 0) snprintf(web, sizeof(web), "%s", w->Value.Content);
+            Element* p = yason_find_element(raiz, "port");
+            if (p && p->Value.Length > 0 && atoi(p->Value.Content) > 0) g_porta = atoi(p->Value.Content);
+            yb_free(raiz);
+        }
+        else printf("AVISO: %s nao e um JSON valido; usando os padroes\n", arq);
+        memop_free_raw(texto);
+    }
+
+    char junto[MAX_PATH * 2];
+    if (!web[0])                         snprintf(junto, sizeof(junto), "%s", exe);
+    else if (caminho_absoluto(web))      snprintf(junto, sizeof(junto), "%s", web);
+    else                                 snprintf(junto, sizeof(junto), "%s" CFG_SEP "%s", exe, web);
+    caminho_completo(g_web, sizeof(g_web), junto);
+    size_t n = strlen(g_web);
+    while (n > 3 && (g_web[n - 1] == '\\' || g_web[n - 1] == '/')) g_web[--n] = '\0';
+
+    printf("Configuracao: %s (%s)\n", arq, achou ? "lida" : "ausente: padroes");
+    printf("Conteudo web: %s | porta %d\n", g_web, g_porta);
+    fflush(stdout);   // saida redirecionada (servico/journal): sem isto a linha ficava presa no buffer
+}
+
 //int main(int argc, char* argv[])
 int main()
 {
     platform_init();   // inicializa memory_pool + thread hooks do xplatbase (auto-init foi suprimido)
-    frag_session_init("web/hls");   // raiz das sessoes de fragmentacao (uma subpasta por sessao)
+    config_carregar();
+    {
+        char hls[MAX_PATH + 8];
+        snprintf(hls, sizeof(hls), "%s\\hls", g_web);
+        frag_session_init(hls);   // raiz das sessoes de fragmentacao (uma subpasta por sessao)
+        hls_set_raiz(hls);        // onde o upload e a fragmentacao gravam
+    }
 
     // Monitor de vazamento da xplatbase. ATENCAO: o platform_init() acima JA chama
     // mem_leak_watch_start(NULL) -- chamar de novo aqui seria no-op ("ja rodando").
@@ -144,9 +233,9 @@ int main()
 
     AppServerConfig cfg = appserver_config_default();
     cfg.AgentName           = "video-service";
-    cfg.Port                = 1234;
+    cfg.Port                = g_porta;
     cfg.Prefix              = "api";
-    cfg.WebContentPath      = "web";
+    cfg.WebContentPath      = g_web;
     cfg.EnableHealthMonitor = true;   // com painel de saude: a pagina web tem o health-box
     // Aparelho com bateria: pool em economia; os jobs de video pedem performance enquanto rodam.
     cfg.PerfilPool          = POOL_PERFIL_ECONOMIA;

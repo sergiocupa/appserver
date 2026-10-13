@@ -24,6 +24,7 @@
 #include "list_hander.h"
 #include "string_handler.h"
 #include "yason_element.h"  // Element
+#include "mp4_timing.h"     // Mp4Meta
 
 typedef enum
 {
@@ -71,7 +72,41 @@ int frag_session_set_input(const char* id, const char* kind, const char* device,
                            int width, int height, double fps, double duration);
 int frag_session_set_output(const char* id, const char* protocol, const char* codec,
                             int width, int height, double fps, int bitrate);
-int frag_session_set_result(const char* id, const char* playlist, double elapsed_sec);
+// Resultado publicado: protocolo ("hls"/"dash"/"mp4") e a URL do manifesto (ou do arquivo).
+// E o que a biblioteca de videos usa para abrir a reproducao sem fragmentar de novo.
+int frag_session_set_result(const char* id, const char* protocol, const char* playlist, double elapsed_sec);
+
+// Formatos prontos para tocar: objeto "formats" { chave: url do manifesto }. O mesmo video pode
+// ter mais de um na mesma pasta ("hls", "dash" -- os dois sobre os MESMOS segmentos fMP4 --,
+// "dash-vp9", "dash-av1"); o set_result guarda so o ultimo preparado. url vazia remove a chave.
+int frag_session_set_format(const char* id, const char* key, const char* url);
+
+// ---- biblioteca: cada video na pasta do PROPRIO hash -----------------------------------
+// Identidade do video, que vira o nome da pasta (16 hex): hash dos metadados DESCRITIVOS
+// (titulo, autor, album, data, descricao, mais duracao e resolucao, para que dois cortes com
+// o mesmo titulo nao colidam); sem eles, hash do CONTEUDO do arquivo inteiro. FNV-1a de 64
+// bits: identifica, nao protege (nao e uso criptografico). *por_metadados: 1/0. 'meta' recebe
+// os metadados lidos (pode ser NULL). 1 = ok; 0 = arquivo ilegivel.
+int frag_video_id(const char* source_path, char* out, size_t size, int* por_metadados, Mp4Meta* meta);
+
+// 1 se a sessao ja guarda um video (tem os metadados de um upload).
+int frag_session_has_media(const char* id);
+
+// Sessao nova com a CONFIGURACAO de 'id' (entrada/saida), sem o video nem o resultado. E onde
+// um upload entra quando a sessao selecionada ja guarda outro video: o video preparado antes
+// nao pode ser sobrescrito. 1 = ok, out_id recebe o id novo.
+int frag_session_fork(const char* id, char* out_id, size_t id_size);
+
+// Passa a sessao 'id' para a pasta 'novo_id' (o hash do video). Pasta nova: renomeia (e o
+// "id" do session.json). Pasta ja existente (o mesmo video, preparado antes): a fonte recem-
+// enviada e a configuracao da sessao vao para ela, a saida antiga e limpa, e a sessao
+// temporaria some. 1 = ok; 0 = falhou; -1 = o video ja esta sendo preparado (job em voo).
+int frag_session_adopt(const char* id, const char* novo_id);
+
+// Metadados exibidos pela biblioteca: os do MP4 e o nome do arquivo enviado (fallback do
+// titulo). por_metadados diz de onde veio o hash ("metadata"/"content").
+int frag_session_set_media(const char* id, const Mp4Meta* meta, const char* file_name, int por_metadados,
+                           double duration, int width, int height);
 // Liga a varredura de alcancabilidade (mem_leak_watch da xplatbase) ao FIM de cada job.
 // O monitor ja e iniciado pelo platform_init, mas com limiares de 70%/90% da RAM fisica:
 // na pratica ele nunca dispara sozinho. Forcar o scan exatamente na fronteira da sessao e

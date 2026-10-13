@@ -225,6 +225,12 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <!-- Configuracao lida ao lado do executavel: "web" relativo a pasta do .exe. -->
+  <ItemGroup>
+    <CopyFileToFolders Include="appservertester.json">
+      <DestinationFolders>$(OutDir)</DestinationFolders>
+    </CopyFileToFolders>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <!-- ====================================================================
        Codec por demanda.
@@ -273,6 +279,12 @@
     <!-- Instancia unica: a DLL tem de estar ao lado do exe, senao o carregador
          nao a acha e o processo nem sobe. -->
     <Copy SourceFiles="$(SolutionDir)appserver\submodules\xplatbase\Xplatbase\Xplatbase\$(Platform)\$(Configuration)\dll\Xplatbase.dll"
+          DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <!-- Os plugins de codec dependem destas DLLs: codec_h264_plugin.dll da openh264.dll e
+         codec_h265_plugin.dll da libde265.dll. Sem elas ao lado do exe o plugin nao carrega
+         e o codec some em silencio (medido no Release: nenhum encoder de H.265, e o H.264
+         so por hardware). O projeto de testes ja copiava; este nao. -->
+    <Copy SourceFiles="$(SolutionDir)codecs\openh264\openh264.dll;$(SolutionDir)codecs\libde265\libde265.dll"
           DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

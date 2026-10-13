@@ -20,7 +20,26 @@ Mp4Mux* mp4_open2(const char* path, int width, int height, const uint8_t* avcc, 
 // HEVC: sample entry hvc1 + hvcC (cfg = HEVCDecoderConfigurationRecord). asc=NULL p/ video-only.
 Mp4Mux* mp4_open_hevc(const char* path, int width, int height, const uint8_t* hvcc, int hvcc_len,
                       const uint8_t* asc, int asc_len, int rate, int channels);
+// VP9 e AV1 em MP4 (para o arquivo unico poder levar o AAC original: o WebM so aceita
+// Opus/Vorbis). 'kind': MP4_KIND_VP9 -> sample entry vp09 + vpcC, cfg = os 8 bytes do vpcC
+// depois de version/flags; MP4_KIND_AV1 -> av01 + av1C, cfg = o av1C inteiro (4 bytes + o OBU
+// de cabecalho de sequencia). As amostras vao como o encoder as entrega (no AV1, sem os OBUs
+// delimitadores de tempo).
+#define MP4_KIND_H264 0
+#define MP4_KIND_HEVC 1
+#define MP4_KIND_VP9  2
+#define MP4_KIND_AV1  3
+Mp4Mux* mp4_open_kind(const char* path, int kind, int width, int height, const uint8_t* cfg, int cfg_len,
+                      const uint8_t* asc, int asc_len, int rate, int channels);
 void    mp4_write_video(Mp4Mux* m, int64_t pts_ms, int keyframe, const uint8_t* avcc_sample, int size);
+// Com os DOIS tempos (copia sem recodificar de fonte com quadros B): as amostras chegam na ordem
+// de decodificacao, dts cresce, pts nao. O arquivo ganha a tabela de composicao (ctts) e a lista
+// de edicao (edts/elst) que poe o primeiro quadro APRESENTADO no instante zero -- tempos
+// negativos sao aceitos: e o que fica antes de zero que a lista de edicao esconde.
+void    mp4_write_video2(Mp4Mux* m, int64_t pts_ms, int64_t dts_ms, int keyframe, const uint8_t* avcc_sample, int size);
+// Instante de apresentacao (ms) da PRIMEIRA amostra de audio. Sem isto o audio comeca em zero.
+// Positivo: a faixa entra atrasada (edicao vazia); negativo: o comeco fica escondido.
+void    mp4_set_audio_start(Mp4Mux* m, int64_t pts_ms);
 // Escreve 1 sample AAC codificado (bufferizado, gravado no fim). dur_units em unidades do timescale de audio.
 void    mp4_write_audio(Mp4Mux* m, int dur_units, const uint8_t* aac_sample, int size);
 void    mp4_close(Mp4Mux* m);
@@ -28,6 +47,9 @@ void    mp4_close(Mp4Mux* m);
 // ---------- Fragmentado/CMAF (video-only H.264) ----------
 // init.mp4: ftyp + moov (trak + mvex/trex), sem amostras. Retorna 0 em sucesso.
 int mp4_write_init(const char* path, int width, int height, const uint8_t* avcc, int avcc_len);
+// Mesmo init, com o tipo da amostra (MP4_KIND_H264 ou MP4_KIND_HEVC): no HEVC a entrada e
+// hvc1 + hvcC. Gravar um HEVC com mp4_write_init deixava um init "avc1" com hvcC dentro.
+int mp4_write_init_kind(const char* path, int kind, int width, int height, const uint8_t* cfg, int cfg_len);
 
 // Uma amostra codificada para um segmento em construcao.
 // Para faixa de audio, duration_ms e base_dt sao em unidades do timescale de audio (rate).
@@ -37,6 +59,11 @@ typedef struct { const uint8_t* data; int size; int duration_ms; int keyframe; }
 // Retorna 0 em sucesso.
 int mp4_write_segment(const char* path, uint32_t seq, int64_t base_dt_ms,
                       const Mp4Sample* samples, int count);
+
+// Variante com deslocamento de composicao por amostra (pts - dts, em ms; NULL = nenhum): para
+// segmento copiado de fonte com quadros B. base_dt_ms e as duracoes sao de DECODIFICACAO.
+int mp4_write_segment_cts(const char* path, uint32_t seq, int64_t base_dt_ms,
+                          const Mp4Sample* samples, int count, const int* cts_ms);
 
 // Mesmas caixas, montadas em MEMORIA (o ao vivo de camera serve da RAM, sem tocar o disco).
 // Em sucesso devolve 0 e um buffer do memory_pool que o CHAMADOR libera (memop_free_raw).

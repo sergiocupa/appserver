@@ -40,6 +40,14 @@ typedef struct HlsTrack
   static _Thread_local char g_last_error[512];
 #endif
 
+// Raiz da saida: <web>/hls (appservertester.json). O padrao so vale se ninguem configurar.
+static char g_hls[MAX_PATH] = "web/hls";
+void hls_set_raiz(const char* dir)
+{
+    snprintf(g_hls, sizeof(g_hls), "%s", dir);
+    gw_path_normalize(g_hls);
+}
+
 static int ensure_directory(const char* path)
 {
     return gw_mkdir_p(path);   // cria os pais que faltarem; Windows + Linux
@@ -125,6 +133,35 @@ static void sanitize_folder(const char* in, char* out, size_t out_size)
         strcpy_s(out, out_size, "current");
 }
 
+// Texto para dentro de uma string JSON: aspas, barra invertida e controles escapados.
+static void json_esc(const char* in, char* out, size_t cap)
+{
+    size_t o = 0;
+    for (const unsigned char* p = (const unsigned char*)(in ? in : ""); *p && o + 7 < cap; p++)
+    {
+        if (*p == '"' || *p == '\\') { out[o++] = '\\'; out[o++] = (char)*p; }
+        else if (*p < 0x20) o += (size_t)snprintf(out + o, cap - o, "\\u%04x", *p);
+        else out[o++] = (char)*p;
+    }
+    out[o] = '\0';
+}
+
+// %XX -> byte (o nome do arquivo vem com encodeURIComponent: UTF-8 e espacos preservados).
+static void url_decode(const char* in, char* out, size_t cap)
+{
+    size_t o = 0;
+    for (size_t i = 0; in && in[i] && o + 1 < cap; i++)
+    {
+        if (in[i] == '%' && isxdigit((unsigned char)in[i + 1]) && isxdigit((unsigned char)in[i + 2]))
+        {
+            char h[3] = { in[i + 1], in[i + 2], 0 };
+            out[o++] = (char)strtol(h, 0, 16); i += 2;
+        }
+        else out[o++] = in[i];
+    }
+    out[o] = '\0';
+}
+
 // Preenche as pistas (Full HD reduzindo: 1080, 760, 480, 360) conforme a fonte.
 static int compute_tracks(int source_width, int source_height, HlsTrack* tracks)
 {
@@ -177,7 +214,9 @@ static void sse_event(SseAdapter* a, const char* json) { app_job_publicar(a->job
 
 static void sse_feedback(void* user, const GwEvent* ev)
 {
-    SseAdapter* a = (SseAdapter*)user; char buf[1200];
+    // 4096: o maior evento e o "done", que leva tracks_json (ate 2048) mais ~300 de campos fixos.
+    // Com 1200 cabia so por acaso (6 pistas ~ 450 bytes); o sprintf_s nao trunca, ele derruba.
+    SseAdapter* a = (SseAdapter*)user; char buf[4096];
     const char* proto = (a->mode == 2) ? "dash" : "hls";
     switch (ev->Kind)
     {
@@ -209,6 +248,7 @@ static void sse_feedback(void* user, const GwEvent* ev)
                     sprintf_s(buf, sizeof(buf), "{\"type\":\"track-done\",\"index\":%d,\"name\":\"%s\",\"width\":%d,\"height\":%d,\"bandwidth\":%d}",
                               ev->TrackIndex, ev->Name ? ev->Name : "", ev->Width, ev->Height, ev->Bandwidth);
                 sse_event(a, buf);
+                if (a->tn + 200 < (int)sizeof(a->tracks_json))   // pista que nao cabe fica fora da lista, sem estourar
                 a->tn += sprintf_s(a->tracks_json + a->tn, sizeof(a->tracks_json) - a->tn, "%s{\"name\":\"%s\",\"width\":%d,\"height\":%d,\"bandwidth\":%d}",
                                    a->tn ? "," : "", ev->Name ? ev->Name : "", ev->Width, ev->Height, ev->Bandwidth);
             }
@@ -217,12 +257,40 @@ static void sse_feedback(void* user, const GwEvent* ev)
         case GW_EV_DONE:
         {
             double elapsed = a->start_ms ? (double)(GetTickCount64() - a->start_ms) / 1000.0 : 0.0;
+            // O sink do HLS grava tambem um manifesto DASH (master.mpd) sobre os mesmos segmentos.
+            char dash_cmaf[400] = { 0 };
+            if (a->mode == 1)
+            {
+                char arq_mpd[MAX_PATH + 160]; FILE* fm = 0;
+                sprintf_s(arq_mpd, sizeof(arq_mpd), "%s/%s/master.mpd", g_hls, a->folder);
+                if (fopen_s(&fm, arq_mpd, "rb") == 0 && fm) { fclose(fm); sprintf_s(dash_cmaf, sizeof(dash_cmaf), "/hls/%s/master.mpd", a->folder); }
+            }
             if (a->mode == 1 || a->mode == 2)
-                sprintf_s(buf, sizeof(buf), "{\"type\":\"done\",\"protocol\":\"%s\",\"playlist\":\"/hls/%s/%s\",\"folder\":\"%s\",\"duration\":%.3f,\"segmentDuration\":%d,\"elapsed\":%.1f,\"tracks\":[%s]}",
-                          proto, a->folder, ev->Playlist ? ev->Playlist : (a->mode == 2 ? "manifest.mpd" : "master.m3u8"), a->folder, a->duration, a->seg_ms / 1000, elapsed, a->tracks_json);
+                sprintf_s(buf, sizeof(buf), "{\"type\":\"done\",\"protocol\":\"%s\",\"playlist\":\"/hls/%s/%s\",\"dash\":\"%s\",\"folder\":\"%s\",\"duration\":%.3f,\"segmentDuration\":%d,\"elapsed\":%.1f,\"tracks\":[%s]}",
+                          proto, a->folder, ev->Playlist ? ev->Playlist : (a->mode == 2 ? "manifest.mpd" : "master.m3u8"), dash_cmaf, a->folder, a->duration, a->seg_ms / 1000, elapsed, a->tracks_json);
             else
                 sprintf_s(buf, sizeof(buf), "{\"type\":\"done\",\"codec\":\"%s\",\"file\":\"/hls/%s/%s\",\"elapsed\":%.1f}",
                           a->codec, a->folder, ev->Playlist ? ev->Playlist : "output.mp4", elapsed);
+            // A biblioteca abre a reproducao pelo que fica gravado na sessao, sem fragmentar de novo.
+            if (frag_session_exists(a->folder))
+            {
+                char url[400];
+                const char* arq = ev->Playlist ? ev->Playlist : (a->mode == 2 ? "manifest.mpd" : (a->mode == 1 ? "master.m3u8" : "output.mp4"));
+                sprintf_s(url, sizeof(url), "/hls/%s/%s", a->folder, arq);
+                frag_session_set_result(a->folder, a->mode == 2 ? "dash" : (a->mode == 1 ? "hls" : "mp4"), url, elapsed);
+                // Formatos que a pasta passa a ter (a biblioteca oferece todos). VP9 e AV1 tem
+                // arquivos proprios (codec no nome), entao os dois convivem na mesma pasta.
+                if (a->mode == 1)
+                {
+                    frag_session_set_format(a->folder, "hls", url);
+                    frag_session_set_format(a->folder, "dash", dash_cmaf);
+                }
+                else if (a->mode == 2)
+                {
+                    int av1 = a->codec && strcmp(a->codec, "av1") == 0;
+                    frag_session_set_format(a->folder, av1 ? "dash-av1" : "dash-vp9", url);
+                }
+            }
             sse_event(a, buf); break;
         }
 
@@ -364,16 +432,31 @@ Element* hls_prepare_video(Message* message)
 
     char base[MAX_PATH];
     char source_path[MAX_PATH];
-    sprintf_s(base, sizeof(base), "web/hls/%s", folder);
+    sprintf_s(base, sizeof(base), "%s/%s", g_hls, folder);
     sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
 
     printf("[hls] prepare folder='%s' base='%s' content_length=%llu\n", folder, base, (unsigned long long)message->ContentLength);
 
-    if (!ensure_directory("web/hls"))
+    if (!ensure_directory(g_hls))
     {
-        printf("[hls] falha ao criar web/hls\n");
+        printf("[hls] falha ao criar %s\n", g_hls);
         message->Response = message_response_create_text(HTTP_STATUS_INTERNAL_ERROR, "Unable to create HLS base directory.");
         return 0;
+    }
+
+    // A sessao selecionada ja guarda um video (preparado ou nao): o upload vai para uma sessao
+    // NOVA com a mesma configuracao. Antes ele sobrescrevia a fonte e apagava a saida do video
+    // anterior -- escolher um segundo arquivo na mesma sessao destruia o primeiro.
+    if (frag_session_exists(folder) && frag_session_has_media(folder))
+    {
+        char novo[80];
+        if (frag_session_fork(folder, novo, sizeof(novo)))
+        {
+            printf("[hls] sessao '%s' ja tem um video: o upload vai para a sessao nova '%s'\n", folder, novo);
+            strcpy_s(folder, sizeof(folder), novo);
+            sprintf_s(base, sizeof(base), "%s/%s", g_hls, folder);
+            sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
+        }
     }
 
     // Se a pasta e uma sessao, preserva o session.json e limpa so o que foi gerado.
@@ -413,6 +496,39 @@ Element* hls_prepare_video(Message* message)
         return 0;
     }
 
+    // Biblioteca: cada video na pasta do PROPRIO hash (metadados descritivos ou, sem eles, o
+    // conteudo). A sessao criada pela tela ganha aqui o nome definitivo; se o mesmo video ja
+    // foi preparado antes, ela se junta a pasta dele. Fora de sessao (pasta digitada, uso
+    // legado), nada muda.
+    Mp4Meta meta; memset(&meta, 0, sizeof(meta));
+    int por_meta = 0;
+    char arquivo[512] = { 0 };
+    if (frag_session_exists(folder))
+    {
+        char vid[32];
+        if (frag_video_id(source_path, vid, sizeof(vid), &por_meta, &meta))
+        {
+            int r = frag_session_adopt(folder, vid);
+            if (r < 0)
+            {
+                message->Response = message_response_create_text(HTTP_STATUS_CONFLICT,
+                    "Este video ja esta sendo preparado (outra sessao). Aguarde terminar ou cancele.");
+                return 0;
+            }
+            if (r > 0 && strcmp(folder, vid) != 0)
+            {
+                printf("[hls] sessao '%s' -> pasta do video '%s' (hash por %s)\n", folder, vid, por_meta ? "metadados" : "conteudo");
+                strcpy_s(folder, sizeof(folder), vid);
+                sprintf_s(base, sizeof(base), "%s/%s", g_hls, folder);
+                sprintf_s(source_path, sizeof(source_path), "%s/source.mp4", base);
+            }
+        }
+        char nome_raw[512];
+        read_header(message, "X-File-Name", nome_raw, sizeof(nome_raw));
+        url_decode(nome_raw, arquivo, sizeof(arquivo));
+        frag_session_set_media(folder, &meta, arquivo, por_meta, duration, source_width, source_height);
+    }
+
     // Estatisticas do fluxo de origem para o painel (sem ffprobe).
     char v_fps[16]; sprintf_s(v_fps, sizeof(v_fps), "%.3f", fps_d);
     const char* v_pixfmt = "yuv420p";   // H.264/H.265 8-bit tipico (parse nao le pix_fmt)
@@ -426,13 +542,17 @@ Element* hls_prepare_video(Message* message)
 
     // Retorna o plano de pistas (sem fragmentar ainda). A fragmentacao ocorre
     // no passo 2 via EventSource em /video/prepare-stream/<folder>.
-    char json[2048];
+    char e_tit[800], e_aut[800], e_arq[1600];
+    json_esc(meta.Titulo, e_tit, sizeof(e_tit)); json_esc(meta.Autor, e_aut, sizeof(e_aut)); json_esc(arquivo, e_arq, sizeof(e_arq));
+    char json[6144];
     int offset = sprintf_s(json, sizeof(json),
-        "{\"folder\":\"%s\",\"duration\":%.3f,\"width\":%d,\"height\":%d,\"segmentDuration\":%d,"
+        "{\"folder\":\"%s\",\"media\":{\"title\":\"%s\",\"author\":\"%s\",\"fileName\":\"%s\",\"hashFrom\":\"%s\"},"
+        "\"duration\":%.3f,\"width\":%d,\"height\":%d,\"segmentDuration\":%d,"
         "\"stream\":\"/api/video/prepare-stream/%s\",\"dashStream\":\"/api/video/prepare-dash/%s\","
         "\"source\":{\"vcodec\":\"%s\",\"pixfmt\":\"%s\",\"fps\":\"%s\",\"vbitrate\":%d,\"acodec\":\"%s\",\"achannels\":%d,\"asamplerate\":%d,\"abitrate\":%d},"
         "\"tracks\":[",
-        folder, duration, source_width, source_height, HLS_SEGMENT_SECONDS, folder, folder,
+        folder, e_tit, e_aut, e_arq, por_meta ? "metadata" : "content",
+        duration, source_width, source_height, HLS_SEGMENT_SECONDS, folder, folder,
         v_codec, v_pixfmt, v_fps, v_bitrate, a_codec, a_channels, a_sample, a_bitrate);
     for (int i = 0; i < track_count; i++)
     {
@@ -471,7 +591,7 @@ static VideoJob* video_job_novo(const char* folder)
     VideoJob* v = (VideoJob*)calloc(1, sizeof(VideoJob));
     if (!v) return 0;
     sprintf_s(v->folder, sizeof(v->folder), "%s", folder);
-    sprintf_s(v->base, sizeof(v->base), "web/hls/%s", folder);
+    sprintf_s(v->base, sizeof(v->base), "%s/%s", g_hls, folder);
     sprintf_s(v->source_path, sizeof(v->source_path), "%s/source.mp4", v->base);
     return v;
 }
@@ -579,6 +699,7 @@ static void job_dash(AppJob* job, void* arg)
 
     SseAdapter ad; memset(&ad, 0, sizeof(ad));
     ad.job = job; ad.mode = 2; ad.folder = v->folder; ad.duration = duration; ad.seg_ms = profile.SegmentMs;
+    ad.codec = (profile.VideoCodec == MEDIA_CODEC_AV1) ? "av1" : "vp9";   // o perfil da sessao pode ter trocado
     GwFeedback fb = { sse_feedback, &ad };
 
     MediaSource* src = source_file_open(v->source_path);
@@ -618,7 +739,8 @@ Element* dash_stream_video(Message* message)
 // ---- Conversao para ARQUIVO unico -----------------------------------------
 // GET /api/video/convert/<folder>/<codec>   (EventSource)
 // Transcodifica source.mp4 inteiro para um arquivo no codec escolhido.
-// codec: h264/h265 -> .mp4 ; vp9/av1 -> .webm. Sem HLS/DASH (arquivo direto).
+// codec: h264/h265 -> output.mp4 ; vp9/av1 -> output-vp9.mp4 / output-av1.mp4 (o AAC original
+// vai junto). Sem HLS/DASH (arquivo direto).
 
 static void job_convert(AppJob* job, void* arg)
 {
@@ -630,22 +752,25 @@ static void job_convert(AppJob* job, void* arg)
     mp4_video_info(v->source_path, &sw, &sh, 0, src_codec, &dur);
     if (dur <= 0.0) { app_job_publicar(job, 0, ERRO_FONTE); return; }
 
-    const char* ext = 0;
-    char out_path[MAX_PATH];
-
+    // VP9/AV1: MP4, pelo gateway, com o AAC original da fonte (se houver). No WebM o audio
+    // teria de virar Opus, e sem decoder de AAC o arquivo saia mudo; e a conversao antiga para
+    // WebM (embed_transcode_webm) falhou no teste mesmo com fonte sem audio.
     if (strcmp(codec, "vp9") == 0 || strcmp(codec, "av1") == 0)
     {
-        ext = "webm";
-        char start[128]; sprintf_s(start, sizeof(start), "{\"type\":\"start\",\"codec\":\"%s\",\"ext\":\"%s\"}", codec, ext);
-        app_job_publicar(job, 0, start);
+        MediaProfile profile; memset(&profile, 0, sizeof(profile));
+        profile.Container = CONT_MP4_FILE;
+        profile.VideoCodec = (strcmp(codec, "av1") == 0) ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9;
+        profile.AudioCodec = MEDIA_CODEC_AAC; profile.SegmentMs = 2000; profile.Mode = GW_VOD;
+        apply_session_output(v->folder, &profile);
 
-        sprintf_s(out_path, sizeof(out_path), "%s/output.%s", v->base, ext);
-        MediaCodec mc = (strcmp(codec, "av1") == 0) ? MEDIA_CODEC_AV1 : MEDIA_CODEC_VP9;
-        if (embed_transcode_webm(v->source_path, out_path, mc) != 0)
-        {
-            app_job_publicar(job, 0, "{\"type\":\"error\",\"message\":\"Conversao embutida falhou (verifique libs VP9/AV1/Opus).\"}");
-            return;
-        }
+        SseAdapter ad; memset(&ad, 0, sizeof(ad));
+        ad.job = job; ad.mode = 0; ad.folder = v->folder; ad.codec = codec; ad.ext = "mp4";
+        GwFeedback fb = { sse_feedback, &ad };
+
+        MediaSource* src = source_file_open(v->source_path);
+        if (!src) { app_job_publicar(job, 0, ERRO_FONTE); return; }
+        run_gateway_session(v->folder, src, &profile, v->base, &fb);   // fecha a fonte
+        return;
     }
     else if (strcmp(codec, "h264") == 0 || strcmp(codec, "h265") == 0)
     {
@@ -668,14 +793,9 @@ static void job_convert(AppJob* job, void* arg)
     }
     else
     {
+        // O "done" de quem converte sai do proprio gateway (sse_feedback), com o nome do arquivo.
         app_job_publicar(job, 0, "{\"type\":\"error\",\"message\":\"Codec desconhecido (use h264/h265/vp9/av1).\"}");
-        return;
     }
-
-    char done[256];
-    sprintf_s(done, sizeof(done),
-        "{\"type\":\"done\",\"codec\":\"%s\",\"file\":\"/hls/%s/output.%s\"}", codec, v->folder, ext);
-    app_job_publicar(job, 0, done);
 }
 
 Element* convert_file(Message* message)

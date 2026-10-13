@@ -189,6 +189,7 @@ void mframe_release(FrameIndex** frame)
 FrameIndexList* mframe_list_new(uint64_t initial_count)
 {
     FrameIndexList* db = (FrameIndexList*)memop_alloc_raw(sizeof(FrameIndexList));
+    memset(db, 0, sizeof(FrameIndexList));   // Metadata zerada: o release libera Sps/Pps/Vps
     db->Max    = initial_count;
     db->Count  = 0;
     db->Frames = (FrameIndex**)memop_alloc_raw(db->Max * sizeof(FrameIndexList*));
@@ -218,6 +219,11 @@ void mframe_list_release(FrameIndexList** list)
             ix++;
         }
         memop_free_raw((*list)->Frames);
+        // SPS/PPS/VPS vem do parse do MP4 (load_sps_pps) e passam a ser da lista em
+        // mp4builder_get_frames. Ninguem os liberava: 2 blocos perdidos a cada fonte aberta.
+        if ((*list)->Metadata.Sps.Data) memop_free_raw((*list)->Metadata.Sps.Data);
+        if ((*list)->Metadata.Pps.Data) memop_free_raw((*list)->Metadata.Pps.Data);
+        if ((*list)->Metadata.Vps.Data) memop_free_raw((*list)->Metadata.Vps.Data);
         memop_free_raw(*list);
         *list = 0;
     }

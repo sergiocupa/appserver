@@ -51,6 +51,9 @@ export class VideoPlayer extends HTMLElement
         this.volume_slider          = this.shadowRoot.querySelector('#volume');
         this.player_shell           = this.shadowRoot.querySelector('#player-shell');
         this.fullscreen_btn         = this.shadowRoot.querySelector('#fullscreen');
+        this.buffering_box          = this.shadowRoot.querySelector('#buffering');
+        this.buffering_text         = this.shadowRoot.querySelector('#buffering-text');
+        this.buffering_retry        = this.shadowRoot.querySelector('#buffering-retry');
         this.frag_head              = this.shadowRoot.querySelector('#frag-head');
         this.frag_head_pct          = this.shadowRoot.querySelector('#frag-head-pct');
         this.frag_head_fill         = this.shadowRoot.querySelector('#frag-head-fill');
@@ -58,6 +61,9 @@ export class VideoPlayer extends HTMLElement
         this.frag_head_total        = this.shadowRoot.querySelector('#frag-head-total');
         this.session_select         = this.shadowRoot.querySelector('#session-select');
         this.session_new_btn        = this.shadowRoot.querySelector('#session-new');
+        this.library_list           = this.shadowRoot.querySelector('#library-list');
+        this.library_empty          = this.shadowRoot.querySelector('#library-empty');
+        this.library_refresh_btn    = this.shadowRoot.querySelector('#library-refresh');
         this.session_name_field     = this.shadowRoot.querySelector('#session-name');
         this.session_delete_btn     = this.shadowRoot.querySelector('#session-delete');
         this.session_cancel_btn     = this.shadowRoot.querySelector('#session-cancel');
@@ -125,6 +131,7 @@ export class VideoPlayer extends HTMLElement
         this.frag_start_btn.addEventListener('click', () => this.on_frag_start());
         this.resolution_select.addEventListener('change', () => this.on_resolution_changed());
         this.session_new_btn.addEventListener('click', () => this.on_session_new());
+        if (this.library_refresh_btn) this.library_refresh_btn.addEventListener('click', () => this.refresh_sessions());
         this.session_delete_btn.addEventListener('click', () => this.on_session_delete());
         this.session_cancel_btn.addEventListener('click', () => this.on_session_cancel());
         this.session_select.addEventListener('change', () => this.on_session_changed());
@@ -218,6 +225,7 @@ export class VideoPlayer extends HTMLElement
         // Duplo clique no video: o gesto que todo player tem.
         this.video.addEventListener('dblclick', (e) => { e.preventDefault(); this.tela_cheia_alternar(); });
         if (this.fullscreen_btn) this.fullscreen_btn.addEventListener('click', () => this.tela_cheia_alternar());
+        this.buffering_init();
 
         // O estado tem de vir do EVENTO, e nao do clique: o Esc e o botao do proprio
         // navegador saem de tela cheia sem passar por aqui, e o icone ficaria mentindo.
@@ -226,7 +234,8 @@ export class VideoPlayer extends HTMLElement
         document.addEventListener('webkitfullscreenchange', this._on_fs_change);
 
         this.video.addEventListener('play',  () => this.update_player_control(PlayerControlOptions.PLAY));
-        this.video.addEventListener('pause', () => this.update_player_control(PlayerControlOptions.PAUSE));
+        // Pausa NOSSA (espera de buffer minimo): o botao continua em "tocando" -- e a intencao.
+        this.video.addEventListener('pause', () => { if (!this._esperando) this.update_player_control(PlayerControlOptions.PAUSE); });
         this.video.addEventListener('ended', () => this.update_player_control(PlayerControlOptions.STOP));
 
         // FLUXO DO VIDEO: clique fora fecha o painel; clique no video alterna (reabre).
@@ -259,6 +268,8 @@ export class VideoPlayer extends HTMLElement
 
     on_play()
     {
+        // Em espera de buffer o video esta pausado por nos: o play do usuario toca ja.
+        if (this._esperando) { this._esperando = false; this.buffering_esconder(); }
         if (this.video.paused)
         {
             if (!this.video.src)
@@ -274,6 +285,7 @@ export class VideoPlayer extends HTMLElement
         }
         else
         {
+            this._quer_tocar = false;   // pausa do usuario: a recuperacao nao retoma sozinha
             this.video.pause();
             this.update_player_control(PlayerControlOptions.PAUSE);
         }
@@ -305,6 +317,7 @@ export class VideoPlayer extends HTMLElement
     on_stop()
     {
         if (!this.video) return;
+        this._quer_tocar = false;
         this.video.pause();
         this.seek_to(0);
     }
@@ -883,13 +896,146 @@ export class VideoPlayer extends HTMLElement
             {
                 const opt = document.createElement('option');
                 opt.value = item.id;
-                opt.textContent = item.name && item.name !== item.id ? `${item.name} (${item.id})` : item.id;
+                // Video preparado: o titulo (metadados ou nome do arquivo); senao o nome da sessao.
+                const rotulo = this.media_title(item) || (item.name && item.name !== item.id ? item.name : '');
+                opt.textContent = rotulo ? `${rotulo} (${item.id})` : item.id;
                 this.session_select.appendChild(opt);
             });
             this.session_select.value = list.some(i => i.id === wanted) ? wanted : list[0].id;
         }
 
+        this.render_library(list);
         this.on_session_changed();
+    }
+
+    // ---- biblioteca: videos ja preparados -----------------------------------
+
+    media_title(item)
+    {
+        const m = item && item.media;
+        return m ? (m.title || m.fileName || '') : '';
+    }
+
+    // Formatos prontos de um video: o que a sessao registrou em "formats". O mesmo video pode
+    // ter HLS e DASH sobre os MESMOS segmentos (fMP4/CMAF), alem do DASH em VP9 ou AV1.
+    // Sessao antiga, sem a lista: so o ultimo formato preparado.
+    library_formats(item)
+    {
+        const ROTULOS = { 'hls': ['HLS', 'hls'], 'dash': ['DASH', 'dash'], 'dash-vp9': ['DASH VP9', 'dash'],
+                          'dash-av1': ['DASH AV1', 'dash'], 'mp4': ['MP4', 'mp4'] };
+        const f = (item && item.formats && Object.keys(item.formats).length) ? item.formats
+                : (item && item.playlist ? { [item.protocol || 'hls']: item.playlist } : {});
+        return Object.keys(ROTULOS).filter(k => f[k])
+                     .map(k => ({ key: k, label: ROTULOS[k][0], protocol: ROTULOS[k][1], url: f[k] }));
+    }
+
+    render_library(list)
+    {
+        if (!this.library_list) return;
+        const prontos = (list || []).filter(i => i.state === 'done' && i.playlist);
+        prontos.sort((a, b) => (b.updated || '').localeCompare(a.updated || ''));
+        this.library_list.replaceChildren();
+        if (this.library_empty) this.library_empty.hidden = prontos.length > 0;
+
+        for (const item of prontos)
+        {
+            const m = item.media || {};
+            const li = document.createElement('li');
+            li.className = 'library-item' + (item.id === this._library_playing ? ' is-current' : '');
+
+            const info = document.createElement('div');
+            info.className = 'library-info';
+            const titulo = document.createElement('div');
+            titulo.className = 'library-title';
+            titulo.textContent = this.media_title(item) || item.id;
+            titulo.title = `${titulo.textContent}\npasta: ${item.id} (hash por ${m.hashFrom === 'metadata' ? 'metadados' : 'conteúdo'})`;
+            const sub = document.createElement('div');
+            sub.className = 'library-sub';
+            const partes = [];
+            if (m.author) partes.push(m.author);
+            if (Number(m.duration) > 0) partes.push(this.format_time(Number(m.duration)));
+            if (Number(m.height) > 0) partes.push(`${m.height}p`);
+            if (m.date) partes.push(m.date);
+            sub.textContent = partes.join(' · ');
+            info.append(titulo, sub);
+
+            // Um botao por formato pronto: o mesmo video abre em HLS ou em DASH.
+            const acoes = document.createElement('div');
+            acoes.className = 'library-actions';
+            for (const fmt of this.library_formats(item))
+            {
+                const btn = document.createElement('button');
+                const atual = item.id === this._library_playing && fmt.key === this._library_format;
+                btn.className = 'btn' + (atual ? ' is-current' : '');
+                btn.type = 'button';
+                btn.textContent = fmt.label;
+                btn.title = `Assistir em ${fmt.label}`;
+                btn.addEventListener('click', () => this.play_from_library(item, fmt));
+                acoes.append(btn);
+            }
+
+            li.append(info, acoes);
+            this.library_list.append(li);
+        }
+    }
+
+    // Abre um video ja preparado sem fragmentar de novo: o manifesto gravado na sessao.
+    // As pistas (troca de resolucao) vem do proprio manifesto, como no fim da fragmentacao.
+    play_from_library(item, fmt)
+    {
+        fmt = fmt || this.library_formats(item)[0];
+        if (!fmt) return;
+        if (this.session_select && this.session_select.value !== item.id)
+        {
+            this.session_select.value = item.id;
+            this.on_session_changed();
+        }
+        this.reset_for_new_session();
+        this._library_playing = item.id;
+        this._library_format  = fmt.key;
+        this.render_library(this._sessions);
+        const titulo = this.media_title(item) || item.id;
+        this.status_field.hidden = false;
+        this.video.pause();
+        try { this.video.currentTime = 0; } catch {}
+
+        if (fmt.protocol === 'mp4')
+        {
+            if (this.hls) { this.hls.destroy(); this.hls = null; }
+            if (this._dash) { try { this._dash.destroy(); } catch {} this._dash = null; this._dashActive = false; }
+            this.video.src = `${fmt.url}?v=${Date.now()}`;
+            this.video.play().catch(() => {});
+            this.status_field.textContent = `Reproduzindo "${titulo}" (MP4).`;
+            return;
+        }
+
+        this._allReady = true;
+        const pistas = (lista) =>
+        {
+            const tracks = lista.map(l => ({ name: `${l.height}p`, width: l.width, height: l.height, ready: true }))
+                                .sort((a, b) => b.height - a.height);
+            this.manifest = { protocol: fmt.protocol, playlist: fmt.url, tracks };
+            this.populate_resolutions(tracks);
+        };
+
+        if (fmt.protocol === 'dash')
+        {
+            if (!this.open_dash(fmt.url, 0)) return;
+            this._dash.on(window.dashjs.MediaPlayer.events.STREAM_INITIALIZED, () =>
+                pistas(this._dash.getBitrateInfoListFor('video') || []));
+        }
+        else
+        {
+            if (!this.open_hls(fmt.url, 0)) return;
+            if (this.hls) this.hls.on(window.Hls.Events.MANIFEST_PARSED, (_e, data) => pistas(data.levels || []));
+        }
+        // Quem clicou em assistir QUER tocar, mesmo antes do primeiro quadro. Sem isto a primeira
+        // carga ficava de fora de tudo o que depende da intencao: nem aviso de carregamento,
+        // nem espera de buffer, nem o rebaixamento de qualidade em rede lenta (medido: pagina
+        // recem-aberta, 20 s de tela parada sem aviso nenhum).
+        this._quer_tocar = true;
+        this.aviso_de_abertura();
+        this.status_field.textContent = `Reproduzindo "${titulo}" (${fmt.label}).`;
     }
 
     // Recarrega a lista SO depois que o job realmente encerrou no servidor.
@@ -1048,6 +1194,14 @@ export class VideoPlayer extends HTMLElement
     // plano de pistas, o progresso e o player da sessao antiga.
     reset_for_new_session()
     {
+        clearTimeout(this._rec_timer);
+        this._tentativas = 0;
+        this._pos_retomar = 0; this._kbps_retomar = 0;
+        clearTimeout(this._dash_adia);
+        this._fonte = null;
+        this._esperando = false;
+        if (this.buffering_box) { this.buffering_box.classList.remove('is-failed'); }
+        this.buffering_esconder();
         if (this._live_on) this.live_stop();   // a transmissao pertence a sessao que saiu
         if (this.event_source) { this.event_source.close(); this.event_source = null; }
         this.manifest      = null;
@@ -1108,7 +1262,8 @@ export class VideoPlayer extends HTMLElement
             const response = await fetch('/api/video/prepare',
             {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/octet-stream', 'X-Hls-Folder': folder },
+                headers: { 'Content-Type': 'application/octet-stream', 'X-Hls-Folder': folder,
+                           'X-File-Name': encodeURIComponent(file.name) },
                 body: file
             });
             const text = await response.text();
@@ -1120,6 +1275,9 @@ export class VideoPlayer extends HTMLElement
             // Para aqui: selecionar o arquivo NAO fragmenta. O plano fica guardado e o
             // botao Fragmentar dispara o passo 2 com a SAIDA que estiver escolhida entao.
             this._plan = plan;
+            // A sessao passou a morar na pasta do hash do video (ou se juntou a do mesmo video,
+            // ja preparado antes): a lista e a selecao seguem o id definitivo.
+            if (plan.folder && plan.folder !== folder) await this.refresh_sessions(plan.folder);
             this.stats_dismissed = false;
             if (this.convert_link) this.convert_link.hidden = true;
             this.update_stats(plan);
@@ -1246,6 +1404,7 @@ export class VideoPlayer extends HTMLElement
                 this._allReady = true;                 // agora, e so agora, libera a selecao de qualidade
                 const started = (ev.protocol === 'dash') ? this.open_dash(ev.playlist)
                                                           : this.open_hls(ev.playlist);
+                if (started) { this._quer_tocar = true; this.aviso_de_abertura(); }   // acabou de preparar para assistir (ver play_from_library)
                 this.populate_resolutions(ev.tracks);  // habilita o combo (Auto + resolucoes)
                 const proto = ev.protocol === 'dash' ? 'DASH/VP9' : 'HLS/H.264';
                 // Tempo total da fragmentacao (do servidor): "2m 03s" ou "45.2s".
@@ -1305,11 +1464,18 @@ export class VideoPlayer extends HTMLElement
         };
     }
 
-    open_hls(playlist)
+    // 'inicio' (s): posicao de partida. Sem ele, mantem a posicao atual -- lida ANTES de
+    // destruir o player anterior (com a midia desanexada o currentTime ja e 0).
+    open_hls(playlist, inicio)
     {
+        const preserve = (typeof inicio === 'number') ? inicio : (this.video.currentTime || 0);
         if (this.hls) { this.hls.destroy(); this.hls = null; }
+        // O dash.js de um video anterior tambem sai: preso ao mesmo <video>, ele disputava a
+        // posicao com o hls.js (medido: abrir HLS depois de DASH partia da duracao do DASH).
+        clearTimeout(this._dash_adia);
+        if (this._dash) { try { this._dash.destroy(); } catch {} this._dash = null; }
+        this._dashActive = false;
         const url = `${playlist}?v=${Date.now()}`;
-        const preserve = this.video.currentTime || 0;
         const restore = () =>
         {
             if (preserve > 0) { try { this.video.currentTime = preserve; } catch {} }
@@ -1326,7 +1492,24 @@ export class VideoPlayer extends HTMLElement
         {
             this._hlsMaster = true;
             this.video.addEventListener('loadedmetadata', restore);
-            this.hls = new window.Hls({ startLevel: -1 });
+            // startPosition: o hls.js faz o proprio salto inicial depois do loadedmetadata e
+            // desfazia a posicao restaurada (medido: "Tentar de novo" voltava ao inicio).
+            this.hls = new window.Hls({ startLevel: -1, startPosition: preserve > 0 ? preserve : -1 });
+            // Garantia: o salto feito antes de haver dado pode ser revertido pelo navegador
+            // (medido com a pagina oculta: voltava a 0). Com o 1o segmento no buffer, reaplica.
+            if (preserve > 0)
+                this.hls.once(window.Hls.Events.FRAG_BUFFERED, () =>
+                {
+                    if (Math.abs(this.video.currentTime - preserve) > 1) { try { this.video.currentTime = preserve; } catch {} }
+                });
+            this._fonte = { protocol: 'hls', url: playlist };
+            this._rebaixou = false;   // fonte nova: o rebaixamento da primeira carga pode agir uma vez
+            this.hls.on(window.Hls.Events.ERROR, (_e, data) => this.hls_erro(data));
+            this.hls.on(window.Hls.Events.FRAG_LOADED, () => this.segmento_chegou());
+            // Segmento em carga: o contador de bytes dele diz se a rede esta viva (ver rede_viva).
+            // So o video: o audio e uma faixa a parte e o 'level' dele e o indice da faixa de audio
+            // (0), o que fazia o rebaixar_qualidade achar que a carga ja estava na menor qualidade.
+            this.hls.on(window.Hls.Events.FRAG_LOADING, (_e, d) => { if (d.frag.type !== 'main') return; this._frag_carga = d.frag; this._frag_bytes = 0; });
             this.hls.loadSource(url);
             this.hls.attachMedia(this.video);
             // Confirma na tela qual variante HLS esta de fato tocando.
@@ -1365,10 +1548,14 @@ export class VideoPlayer extends HTMLElement
     }
 
     // DASH/VP9 via dash.js. Mantem a posicao e reflete a variante no painel.
-    open_dash(url)
+    // 'retomada' (so na recuperacao de erro): { kbps } com a taxa medida antes da queda.
+    open_dash(url, inicio, retomada)
     {
+        const preserve = (typeof inicio === 'number') ? inicio : (this.video.currentTime || 0);
         if (this.hls) { this.hls.destroy(); this.hls = null; }
         this._hlsMaster = false;
+        clearTimeout(this._dash_adia);   // reabertura adiada do player anterior
+        clearTimeout(this._dash_reseek);
         if (this._dash) { try { this._dash.destroy(); } catch {} this._dash = null; }
 
         if (!window.dashjs || !window.dashjs.MediaPlayer)
@@ -1380,21 +1567,58 @@ export class VideoPlayer extends HTMLElement
             return false;
         }
 
-        const preserve = this.video.currentTime || 0;
         const events = window.dashjs.MediaPlayer.events;
         this._dash = window.dashjs.MediaPlayer().create();
         this._dashActive = true;
-        this._dash.initialize(this.video, `${url}?v=${Date.now()}`, true);
+        this._fonte = { protocol: 'dash', url };
+        // Rede instavel: mais tentativas por segmento antes de o dash.js desistir (o padrao
+        // desiste rapido e para em silencio).
+        try
+        {
+            this._dash.updateSettings({ streaming: {
+                retryAttempts:  { MPD: 5, MediaSegment: 6, InitializationSegment: 6 },
+                retryIntervals: { MPD: 1000, MediaSegment: 1000, InitializationSegment: 1000 } } });
+        }
+        catch {}
+        // Voltando de uma queda: o dash.js recomecaria pela qualidade padrao e tocaria sozinho.
+        // A 100 KB/s isso custou 11 s ate a primeira imagem (segmento de 1080p) e o video saia
+        // tocando com menos que o buffer minimo. Comeca pela qualidade que cabia na rede e
+        // quem da o play e a espera de buffer (concluir_espera).
+        if (retomada && retomada.kbps > 0)
+        {
+            try { this._dash.updateSettings({ streaming: { abr: { initialBitrate: { video: Math.max(200, Math.round(retomada.kbps * 0.7)) } } } }); }
+            catch {}
+        }
+        const tocar_ja = !(retomada && this._quer_tocar);
+        this._dash.on(events.ERROR, (e) => this.dash_erro(e));
+        // O dash.js dispara este evento tambem quando o download FALHA (com 'error'): so conta o que chegou.
+        this._dash.on(events.FRAGMENT_LOADING_COMPLETED, (e) => { if (!e || !e.error) this.segmento_chegou(); });
+        // Bytes chegando no meio de um download: e o que separa "rede lenta" de "sem resposta".
+        // O evento publico (FRAGMENT_LOADING_PROGRESS) nao dispara no dash.js 4.7 (medido: 0
+        // eventos em 22 s de download lento); o 'loadingProgress' interno dispara.
+        this._dash.on(events.FRAGMENT_LOADING_PROGRESS, () => { this._rede_viva = Date.now(); });
+        this._dash.on('loadingProgress', () => { this._rede_viva = Date.now(); });
+        this._dash.on(events.FRAGMENT_LOADING_ABANDONED, (e) => this.dash_abandonou(e));
+        this._dash.initialize(this.video, `${url}?v=${Date.now()}`, tocar_ja, preserve > 0 ? preserve : undefined);
 
         this._dash.on(events.STREAM_INITIALIZED, () =>
         {
             if (preserve > 0) { try { this.video.currentTime = preserve; } catch {} }
         });
-        // Confirma qual representation esta tocando (reflete no FLUXO DO VIDEO).
-        const vlabel = (this._protocol === 'dash-av1') ? 'AV1' : 'VP9';
+        // Confirma qual representation esta tocando (reflete no FLUXO DO VIDEO). Os codecs saem
+        // do manifesto: o DASH pode ser H.264 (mesmos segmentos do HLS), VP9 ou AV1, e o audio
+        // e AAC numa faixa propria.
+        const codecs = () =>
+        {
+            const de = (tipo) => { try { const t = this._dash.getCurrentTrackFor(tipo); return t ? String(t.codec || '') : ''; } catch { return ''; } };
+            const v = de('video'), a = de('audio');
+            return [ /avc[13]/.test(v) ? 'H264' : /av01/.test(v) ? 'AV1' : /vp0?9/.test(v) ? 'VP9' : 'video',
+                     /mp4a/.test(a) ? 'AAC' : /opus/i.test(a) ? 'Opus' : 'sem áudio' ];
+        };
         this._dash.on(events.QUALITY_CHANGE_RENDERED, (e) =>
         {
             if (e.mediaType !== 'video') return;
+            const [vlabel, alabel] = codecs();
             const list = this._dash.getBitrateInfoListFor('video') || [];
             const info = list[e.newQuality];
             if (info)
@@ -1403,7 +1627,7 @@ export class VideoPlayer extends HTMLElement
                 this.update_track_stats(info.width, info.height, info.bitrate);
             }
             // codec REAL de saida (so dispara quando o DASH renderiza de fato)
-            this.set_codec_stats(vlabel, 'Opus');
+            this.set_codec_stats(vlabel, alabel);
         });
         return true;
     }
@@ -2169,8 +2393,441 @@ export class VideoPlayer extends HTMLElement
         return `${Number.isInteger(khz) ? khz : khz.toFixed(1)} kHz`;
     }
 
+    // ---- carregando / sem rede / recuperacao de erro ---------------------------
+    // O player travava em silencio: sem listener de erro no hls.js/dash.js e sem indicador
+    // de buffering. Agora: travou, aparece "Carregando…"; parado por muito tempo ou sem rede,
+    // o texto diz isso e o carregamento e retomado; erro fatal e recuperado com espera
+    // crescente, e so depois de 8 tentativas aparece "Tentar de novo".
+    //
+    // BUFFER MINIMO: depois de travar (ou de se recuperar), o player NAO volta a tocar no
+    // primeiro quadro que chega -- numa rede lenta isso da um instante de video e trava de
+    // novo, em ciclo. Ele pausa por conta propria e so retoma com buffer_minimo() segundos a
+    // frente (ou com o fim do video ja baixado), mostrando "Carregando… X s de Y s".
+
+    // Segundos de buffer exigidos para retomar: VOD 4 s; ao vivo 1 s (mais que isso vira atraso).
+    buffer_minimo() { return this._live_on ? 1 : 4; }
+
+    // Chegaram bytes nos ultimos 4 s? Separa REDE LENTA (carregando, so devagar) de rede sem
+    // resposta. hls.js 1.x nao tem evento de progresso: le o contador do segmento em carga; o
+    // dash.js avisa por evento. Pedir a carga de novo com a rede lenta reiniciava um download
+    // que estava andando (medido a 100 KB/s: 27 s ate o primeiro dado).
+    rede_viva()
+    {
+        const f = this._frag_carga;
+        if (f && f.stats && f.stats.loaded > (this._frag_bytes || 0))
+        {
+            this._frag_bytes = f.stats.loaded;
+            this._rede_viva = Date.now();
+        }
+        return Date.now() - (this._rede_viva || 0) < 4000;
+    }
+
+    // Rede lenta com um segmento de qualidade alta em carga. O hls.js so abandona um download
+    // lento DURANTE a reproducao; parado e sem dado nenhum, ele espera o segmento inteiro
+    // (medido: 30 s a 100 KB/s para um segmento de 1080p). Aqui a taxa do proprio download
+    // escolhe a qualidade que cabe nela e a carga recomeca dali. Uma vez por espera.
+    rebaixar_qualidade()
+    {
+        const f = this._frag_carga, st = f && f.stats;
+        if (!this.hls || !st || !st.loading || !(st.loaded > 0)) return;
+        const dt = (performance.now() - st.loading.start) / 1000;
+        if (!(dt >= 1)) return;
+        const bps = st.loaded * 8 / dt;
+        const niveis = this.hls.levels || [];
+        let alvo = 0;
+        for (let i = 0; i < niveis.length; i++) if (niveis[i].bitrate <= bps * 0.7) alvo = i;   // niveis em ordem crescente
+        const atual = (typeof f.level === 'number') ? f.level : this.hls.loadLevel;
+        this._rebaixou = true;
+        if (alvo >= atual) return;   // a qualidade em carga ja cabe: e so esperar
+        console.warn(`[player] rede lenta (${Math.round(bps / 1000)} kbps): qualidade ${niveis[atual] ? niveis[atual].height : '?'}p -> ${niveis[alvo].height}p`);
+        try { this.hls.bandwidthEstimate = bps; } catch {}
+        this.hls.stopLoad();
+        this.hls.nextLoadLevel = alvo;
+        this.hls.startLoad(this.video.currentTime);
+    }
+
+    // Segundos ja baixados a partir da posicao atual (0 se a posicao esta num buraco).
+    buffer_a_frente()
+    {
+        // DASH com o audio em faixa propria: enquanto o video nao recebeu dados, o 'buffered' do
+        // elemento lista so o audio (medido a 100 KB/s: 4,9 s "prontos" e o aviso sumia 3,5 s
+        // antes do primeiro quadro). Vale a faixa MAIS ATRASADA.
+        if (this._dash && this._dashActive)
+        {
+            try
+            {
+                const frente = ['video', 'audio'].filter(tipo => !!this._dash.getCurrentTrackFor(tipo))
+                                                 .map(tipo => this._dash.getBufferLength(tipo) || 0);
+                if (frente.length) return Math.min(...frente);
+            }
+            catch {}
+        }
+        const v = this.video, t = v.currentTime, b = v.buffered;
+        for (let i = 0; i < b.length; i++)
+            if (b.start(i) <= t + 0.3 && b.end(i) > t) return b.end(i) - t;
+        return 0;
+    }
+
+    buffering_init()
+    {
+        this._tentativas = 0;
+        this._quer_tocar = false;
+        this._esperando  = false;   // em espera de buffer minimo: o video esta pausado POR NOS
+        // Intencao de tocar: liga quando o video toca de fato; so a pausa/parada do usuario e
+        // o FIM real desligam. Um erro fatal de rede encerra o fluxo de midia e o navegador
+        // dispara 'ended' no meio do video (medido: pausado em 180 s de 230 s) -- sem isto a
+        // recuperacao baixava o trecho e o video ficava parado esperando o play.
+        this.video.addEventListener('playing', () =>
+        {
+            this._quer_tocar = true;
+            if (!this._tentativas) { this._pos_retomar = 0; this._kbps_retomar = 0; }   // voltou a tocar: o guardado ja serviu
+        });
+        this.video.addEventListener('ended', () =>
+        {
+            // Fim REAL pela duracao do manifesto: a do elemento de video pode ter sido truncada
+            // no ponto em que o fluxo foi encerrado pelo erro.
+            const d = this.duracao_total();
+            if (!(d > 0) || this.video.currentTime >= d - 1) this._quer_tocar = false;
+        });
+        // Vigia: o 'waiting' nem sempre chega (salto para trecho nao baixado com o servidor
+        // fora: 20 s parado sem aviso, medido). Querendo tocar, sem dado e o tempo parado por
+        // mais de 1,5 s: entra na espera de buffer.
+        let ultimo_t = -1, parado_desde = 0;
+        this._buf_vigia = setInterval(() =>
+        {
+            const v = this.video;
+            const t = v.currentTime, andou = t !== ultimo_t;
+            ultimo_t = t;
+            if (this._esperando) { parado_desde = 0; return; }   // a espera tem o proprio relogio
+            // Logo depois de retomar o primeiro play() pode se perder na reacomodacao do
+            // player no ponto do salto: insiste por alguns segundos enquanto houver dado.
+            if (this._retomar_ate > Date.now() && this._quer_tocar && v.paused && v.readyState >= 3) v.play().catch(() => {});
+            // Tocando de novo (a rede voltou com o video ja em reproducao: nenhum 'playing'
+            // chega para esconder o aviso).
+            if (andou && !v.paused && this.buffering_box && !this.buffering_box.hidden
+                && !this.buffering_box.classList.contains('is-failed')) this.buffering_esconder();
+            const travado = this._fonte && this._quer_tocar && !andou && v.readyState < 3;
+            if (!travado) { parado_desde = 0; return; }
+            if (!parado_desde) parado_desde = Date.now();
+            else if (Date.now() - parado_desde > 1500 && this.buffering_box && this.buffering_box.hidden) this.esperar_buffer();
+        }, 1000);
+        const travou = () =>
+        {
+            if (this.video.paused || this.video.ended) return;
+            clearTimeout(this._buf_atraso);
+            // atraso curto: um 'waiting' de 100 ms (troca de segmento) nao pisca a tela nem pausa
+            this._buf_atraso = setTimeout(() => { if (this.video.readyState < 3) this.esperar_buffer(); }, 400);
+        };
+        // Durante a espera o video esta pausado por nos: 'pause'/'seeked' nao escondem o aviso.
+        // Nem durante a recuperacao: reabrir a fonte desmonta a midia ('pause', 'emptied') e o
+        // aviso sumia por ~4 s no meio do "Reconectando" (medido). Ali so esconde quem toca.
+        const esconder = (ev) =>
+        {
+            if (this._esperando) return;
+            if (this._tentativas > 0 && ev && ev.type !== 'playing' && ev.type !== 'canplaythrough') return;
+            this.buffering_esconder();
+        };
+        this.video.addEventListener('waiting', travou);
+        this.video.addEventListener('stalled', travou);
+        ['playing', 'pause', 'seeked', 'ended', 'emptied', 'canplaythrough'].forEach(ev => this.video.addEventListener(ev, esconder));
+
+        this._on_offline = () =>
+        {
+            if (this._fonte) this.buffering_mostrar('Sem conexão com a rede. A reprodução continua assim que ela voltar…');
+        };
+        this._on_online = () =>
+        {
+            if (!this._fonte) return;
+            this.buffering_mostrar('Conexão restabelecida. Retomando…');
+            this._tentativas = 0;
+            this.retomar_carga();
+        };
+        window.addEventListener('offline', this._on_offline);
+        window.addEventListener('online', this._on_online);
+        if (this.buffering_retry) this.buffering_retry.addEventListener('click', () => { this._tentativas = 0; this.reabrir_fonte('pedido do usuario'); });
+    }
+
+    // Abertura de um video: o aviso entra logo, sem esperar o vigia notar a tela parada (ele
+    // leva ~2 s -- medido: 2 s de tela preta sem aviso). 400 ms de folga para a rede rapida
+    // nao piscar o aviso; some sozinho quando a imagem aparece ('playing').
+    aviso_de_abertura()
+    {
+        clearTimeout(this._buf_atraso);
+        this._buf_atraso = setTimeout(() =>
+        {
+            if (this._fonte && this._quer_tocar && this.video.readyState < 3) this.buffering_mostrar();
+        }, 400);
+    }
+
+    // Travou ou acabou de se recuperar com a intencao de tocar: pausa e espera o buffer minimo.
+    // Sem a intencao (video parado pelo usuario), so mostra o aviso.
+    esperar_buffer(texto)
+    {
+        if (this._fonte && this._quer_tocar && !this._esperando)
+        {
+            this._esperando = true;
+            this._rebaixou = false;
+            this._espera_inicio = Date.now();
+            if (!this.video.paused) this.video.pause();
+        }
+        this.buffering_mostrar(texto);
+    }
+
+    // Buffer suficiente: volta a tocar.
+    concluir_espera()
+    {
+        this._esperando = false;
+        this._retomar_ate = Date.now() + 8000;
+        this.video.play().catch(() => {});
+        this.buffering_esconder();
+    }
+
+    // Mostra o aviso. 'texto' e a mensagem do momento (falha, nova tentativa, rede de volta);
+    // sem ele, o relogio abaixo escolhe: progresso do buffer, ha quanto tempo sem resposta.
+    buffering_mostrar(texto)
+    {
+        if (!this.buffering_box) return;
+        this.buffering_box.classList.remove('is-failed');
+        if (this.buffering_retry) this.buffering_retry.hidden = true;
+        this._buf_msg = texto || null;
+        if (this.buffering_box.hidden) this._buf_desde = Date.now();   // "ha N s" conta do primeiro aviso
+        this.buffering_box.hidden = false;
+
+        const tique = () =>
+        {
+            if (this.buffering_box.classList.contains('is-failed')) return;
+            const s = Math.round((Date.now() - this._buf_desde) / 1000);
+            const frente = this.buffer_a_frente(), minimo = this.buffer_minimo();
+            const viva = this.rede_viva();
+            if (this._esperando)
+            {
+                if (!this._quer_tocar) { this._esperando = false; this.buffering_esconder(); return; }   // o usuario parou
+                const d = this.duracao_total();
+                const ate_o_fim = d > 0 && this.video.currentTime + frente >= d - 0.5;
+                // 30 s de espera com pelo menos 1 s: rede lenta demais para o minimo -- toca o que tem
+                const cansou = Date.now() - this._espera_inicio > 30000 && frente >= 1;
+                // folga de 50 ms: um segmento "de 4 s" tem 3,999 s (arredondamento dos quadros), e
+                // sem ela a tela mostrava "4,0 s de 4 s" e esperava o segmento seguinte (medido: +6 s)
+                if (frente >= minimo - 0.05 || ate_o_fim || cansou) { this.concluir_espera(); return; }
+                // (vale tambem com um resto de buffer: depois de uma queda sobraram 3,1 s e o hls.js
+                // foi buscar o segmento seguinte em 1080p -- 25 s parado a 100 KB/s, medido)
+                if (!this._rebaixou && frente < minimo - 0.05 && viva && Date.now() - this._espera_inicio > 4000) this.rebaixar_qualidade();
+            }
+            // PRIMEIRA carga (o video ainda nao tocou, entao nao ha "espera" em curso). Se o
+            // hls.js comeca por uma qualidade pesada demais para a rede -- estimativa de banda
+            // otimista, ou o primeiro pedaco veio do cache -- ele baixa o segmento inteiro antes
+            // de mostrar qualquer coisa (medido: 20,7 s ate a primeira imagem a 100 KB/s com o
+            // primeiro segmento em 1080p). Mesma saida da espera: a taxa do download escolhe.
+            else if (this.hls && !this._rebaixou && frente < 0.05 && viva && s >= 4) this.rebaixar_qualidade();
+            let txt;
+            if (navigator.onLine === false)
+                txt = s >= 3 ? `Sem conexão com a rede há ${s} s. Aguardando a rede voltar…` : 'Sem conexão com a rede…';
+            else if (this._esperando && frente > 0.05)
+                txt = `Carregando… ${frente.toFixed(1).replace('.', ',')} s de ${minimo} s`;
+            else if (this._buf_msg)
+                txt = this._buf_msg;
+            else if (s >= 6 && viva)
+                txt = `Rede lenta. Carregando há ${s} s…`;
+            else if (s >= 6)
+                txt = `Sem resposta da rede há ${s} s. Tentando reconectar…`;
+            else
+                txt = 'Carregando…';
+            this.buffering_text.textContent = txt;
+            // Sem dado nenhum E sem bytes chegando: pede a carga de novo a cada 5 s.
+            if (s >= 6 && frente < 0.05 && !viva && navigator.onLine !== false && Date.now() - (this._buf_pediu || 0) > 5000)
+            {
+                this._buf_pediu = Date.now();
+                this.retomar_carga();
+            }
+        };
+        tique();
+        clearInterval(this._buf_relogio);
+        this._buf_relogio = setInterval(tique, 500);
+    }
+
+    buffering_esconder()
+    {
+        clearTimeout(this._buf_atraso);
+        clearInterval(this._buf_relogio);
+        this._buf_msg = null;
+        if (this.buffering_box && !this.buffering_box.classList.contains('is-failed')) this.buffering_box.hidden = true;
+    }
+
+    buffering_falhou(texto)
+    {
+        clearTimeout(this._buf_atraso);
+        clearInterval(this._buf_relogio);
+        this._esperando = false;
+        if (!this.buffering_box) return;
+        this.buffering_box.classList.add('is-failed');
+        this.buffering_text.textContent = texto;
+        if (this.buffering_retry) this.buffering_retry.hidden = false;
+        this.buffering_box.hidden = false;
+    }
+
+    // Chegou segmento: se estava se recuperando, zera as tentativas e passa a esperar o buffer
+    // minimo (que retoma a reproducao quando era para estar tocando).
+    segmento_chegou()
+    {
+        const recuperando = this._tentativas > 0 || (this.buffering_box && !this.buffering_box.hidden);
+        this._tentativas = 0;
+        this._rede_viva = Date.now();
+        if (!recuperando) return;
+        if (this.buffering_box) this.buffering_box.classList.remove('is-failed');
+        if (this._quer_tocar) this.esperar_buffer();
+        else this.buffering_esconder();
+    }
+
+    // Duracao do conteudo pelo manifesto (HLS: a playlist da variante; DASH: o MPD).
+    duracao_total()
+    {
+        try
+        {
+            if (this.hls && this.hls.levels && this.hls.levels.length)
+            {
+                const nivel = this.hls.levels[this.hls.currentLevel >= 0 ? this.hls.currentLevel : 0];
+                if (nivel && nivel.details && nivel.details.totalduration > 0) return nivel.details.totalduration;
+            }
+            if (this._dash) { const d = this._dash.duration(); if (d > 0) return d; }
+        }
+        catch {}
+        return this.video.duration;
+    }
+
+    // Pede ao player que volte a baixar a partir da posicao atual (depois de rede caida).
+    retomar_carga()
+    {
+        try
+        {
+            if (this.hls) this.hls.startLoad(this.video.currentTime || -1);
+            if (this._dash && this.video.paused === false) this.video.play().catch(() => {});
+        }
+        catch {}
+    }
+
+    // Espera crescente: 1, 2, 4, 8, 10, 10 s... ate RECUPERACAO_MAX tentativas.
+    agendar_recuperacao(motivo, acao)
+    {
+        const MAX = 8;
+        this._tentativas = (this._tentativas || 0) + 1;
+        if (this._tentativas > MAX)
+        {
+            this.buffering_falhou(`Não foi possível continuar a reprodução (${motivo}).`);
+            return;
+        }
+        const espera = Math.min(1000 * Math.pow(2, this._tentativas - 1), 10000);
+        this.buffering_mostrar(`${motivo}. Nova tentativa em ${Math.round(espera / 1000)} s (${this._tentativas}/${MAX})…`);
+        clearTimeout(this._rec_timer);
+        this._rec_timer = setTimeout(() =>
+        {
+            // Sem rede, nao adianta tentar: o 'online' retoma sozinho.
+            if (navigator.onLine === false) { this.buffering_mostrar(); return; }
+            this.buffering_mostrar(`Reconectando (${this._tentativas}/${MAX})…`);
+            acao();
+        }, espera);
+    }
+
+    // Reabre a fonte atual na mesma posicao (erro que o proprio player nao recupera).
+    reabrir_fonte(motivo)
+    {
+        if (!this._fonte) return;
+        console.warn('[player] reabrindo a fonte:', motivo);
+        const { protocol, url } = this._fonte;
+        // A posicao e guardada ANTES: o open_* destroi o player antigo e, com a midia
+        // desanexada, o currentTime ja e 0 quando ele tenta preservar.
+        // E vale ate a reproducao voltar: se a reabertura tambem falha (rede ainda fora), a
+        // midia ja esta zerada na tentativa seguinte (medido no DASH: depois de 28 s sem rede
+        // o video recomecava do zero em vez de voltar aos 47 s).
+        const pos = Math.max(this.video.currentTime || 0, this._pos_retomar || 0);
+        this._pos_retomar = pos;
+        if (protocol === 'dash')
+        {
+            // Taxa medida ate a queda (fica guardada entre as tentativas, como a posicao).
+            let kbps = 0;
+            try { kbps = this._dash ? (this._dash.getAverageThroughput('video') || 0) : 0; } catch {}
+            if (kbps > 0) this._kbps_retomar = kbps;
+            this.open_dash(url, pos, this._tentativas > 0 ? { kbps: this._kbps_retomar || 0 } : null);
+        }
+        else this.open_hls(url, pos);
+    }
+
+    hls_erro(data)
+    {
+        if (!data) return;
+        if (!data.fatal)
+        {
+            // Nao fatal: o hls.js tenta sozinho. So o buffer parado merece aviso na tela.
+            if (data.details === window.Hls.ErrorDetails.BUFFER_STALLED_ERROR && !this.video.paused) this.buffering_mostrar();
+            return;
+        }
+        console.warn('[player] erro fatal no HLS:', data.type, data.details);
+        const T = window.Hls.ErrorTypes;
+        if (data.type === T.NETWORK_ERROR)
+        {
+            this.agendar_recuperacao('Falha de rede', () => { if (this.hls) this.hls.startLoad(this.video.currentTime || -1); });
+        }
+        else if (data.type === T.MEDIA_ERROR)
+        {
+            // Erro de decodificacao: recover; repetido em seguida, troca o codec de audio e tenta de novo.
+            const agora = Date.now();
+            if (this._ultimo_media_erro && agora - this._ultimo_media_erro < 3000) { try { this.hls.swapAudioCodec(); } catch {} }
+            this._ultimo_media_erro = agora;
+            this.agendar_recuperacao('Erro ao decodificar', () => { if (this.hls) this.hls.recoverMediaError(); });
+        }
+        else
+        {
+            this.agendar_recuperacao('Erro no player', () => this.reabrir_fonte(data.details));
+        }
+    }
+
+    // Rede que caiu de repente + salto: o dash.js abandona o segmento pesado que cobre a
+    // posicao do salto e, por estar "em busca", NAO o pede de novo na qualidade menor -- segue
+    // para o seguinte, e a reproducao comeca ate um segmento adiante (medido: salto para 205 s
+    // comecou em 208 s; o pedido foi segmento 51 em 1080p, abandono, segmento 52 em 480p).
+    // Aqui o mesmo ponto e pedido outra vez: a qualidade ja foi rebaixada pelo abandono.
+    dash_abandonou(e)
+    {
+        const r = e && e.request;
+        if (!this._dash || !r || r.mediaType !== 'video' || r.type !== 'MediaSegment') return;
+        const t = this.video.currentTime;
+        if (!(t >= r.startTime - 0.05 && t < r.startTime + r.duration)) return;   // nao e o da posicao atual
+        let frente = 0;
+        try { frente = this._dash.getBufferLength('video') || 0; } catch {}
+        if (frente > 0.1) return;                                                 // ja ha imagem ali
+        // No maximo uma vez por qualidade: na menor o dash.js nao abandona mais.
+        if (this._reseek_seg !== r.index) { this._reseek_seg = r.index; this._reseek_n = 0; }
+        if (++this._reseek_n > 6) return;
+        console.warn(`[player] segmento ${r.index} abandonado na posicao do salto: pedindo de novo em ${t.toFixed(2)} s`);
+        clearTimeout(this._dash_reseek);
+        this._dash_reseek = setTimeout(() =>
+        {
+            // +10 ms: buscar EXATAMENTE a posicao atual e ignorado pelo dash.js (medido)
+            if (this._dash && Math.abs(this.video.currentTime - t) < 0.5) { try { this._dash.seek(t + 0.01); } catch {} }
+        }, 0);
+    }
+
+    dash_erro(e)
+    {
+        const erro = (e && e.error) || e || {};
+        console.warn('[player] erro no DASH:', erro.code, erro.message);
+        // O dash.js desistiu de baixar, mas o que ja esta no buffer continua tocando. Reabrir
+        // agora jogaria esse trecho fora (medido: a imagem sumia com 16 s ainda prontos), entao
+        // a reabertura espera o buffer acabar.
+        clearTimeout(this._dash_adia);
+        const tenta = () =>
+        {
+            if (!this._dash) return;
+            if (!this.video.paused && this.buffer_a_frente() > 1.5) { this._dash_adia = setTimeout(tenta, 500); return; }
+            this.agendar_recuperacao(navigator.onLine === false ? 'Sem conexão' : 'Falha ao carregar o vídeo', () => this.reabrir_fonte(`dash ${erro.code}`));
+        };
+        tenta();
+    }
+
     disconnectedCallback()
     {
+        if (this._on_offline) window.removeEventListener('offline', this._on_offline);
+        if (this._on_online)  window.removeEventListener('online', this._on_online);
+        clearTimeout(this._rec_timer); clearTimeout(this._dash_adia); clearInterval(this._buf_relogio); clearTimeout(this._buf_atraso); clearInterval(this._buf_vigia);
         if (this._on_fs_change)
         {
             document.removeEventListener('fullscreenchange', this._on_fs_change);

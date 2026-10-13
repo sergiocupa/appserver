@@ -239,8 +239,8 @@ void teste_gateway_dash_vp9(TestResult* r)
     T_ASSERT(r, !ev.erro,  "o gateway reportou erro");
     T_ASSERT(r, g_chunks > 0, "nenhum chunk foi gravado");
 
-    gw_path_join(mpd, sizeof(mpd), saida, "manifest.mpd");
-    T_ASSERT(r, gw_file_exists(mpd), "manifest.mpd nao foi gerado");
+    gw_path_join(mpd, sizeof(mpd), saida, "manifest-vp9.mpd");
+    T_ASSERT(r, gw_file_exists(mpd), "manifest-vp9.mpd nao foi gerado");
 }
 
 void teste_gateway_hls_h264(TestResult* r)
